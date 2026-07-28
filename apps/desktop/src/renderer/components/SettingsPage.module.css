@@ -1,0 +1,469 @@
+.page {
+  flex: 1;
+  display: flex;
+  flex-direction: row-reverse;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* ── Right nav ───────────────────────────────────────────────────────────── */
+
+.sidebar {
+  width: 180px;
+  min-width: 180px;
+  padding: 32px 12px 20px;
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-panel);
+  flex-shrink: 0;
+}
+
+.sidebarLabel {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0 8px 10px;
+}
+
+.sidebarNav {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.navItem {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: left;
+  transition: background 0.1s, color 0.1s;
+}
+
+.navItem:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+.navActive {
+  background: var(--bg-active);
+  color: var(--text-primary);
+}
+
+.autosaveNote {
+  margin-top: auto;
+  padding: 0 10px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+/* ── Content area ────────────────────────────────────────────────────────── */
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 40px 0;
+}
+
+/* ── Chapters ────────────────────────────────────────────────────────────── */
+
+/* Settings is one scrolling document; each chapter is a scroll anchor rather
+   than a separate sub-page. */
+.chapter {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 48px 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  /* Leave room under the sticky-ish heading when scrollIntoView lands here. */
+  scroll-margin-top: 24px;
+}
+
+.chapter + .chapter {
+  border-top: 1px solid var(--border);
+  padding-top: 40px;
+}
+
+.chapterTitle {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fieldLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.fieldHint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.textInput {
+  font-size: 14px;
+  color: var(--text-primary);
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+}
+
+.textInput:focus { border-color: var(--border-strong); }
+
+/* ── Slider ──────────────────────────────────────────────────────────────── */
+
+.sliderRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.sliderValue {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  min-width: 48px;
+  text-align: right;
+}
+
+/* Live sample of the chosen editor font size. */
+.fontPreview {
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-panel);
+  color: var(--text-secondary);
+  line-height: 1.55;
+  /* The point is to preview size, so don't let it reflow the layout. */
+  overflow: hidden;
+}
+
+/* ── Toggle ──────────────────────────────────────────────────────────────── */
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.toggle {
+  width: 40px;
+  height: 22px;
+  border-radius: 11px;
+  background: var(--bg-active);
+  border: 1px solid var(--border);
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.2s, border-color 0.2s;
+  cursor: pointer;
+}
+
+.toggleOn { background: var(--accent); border-color: var(--accent); }
+
+.toggleThumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: transform 0.2s, background 0.2s;
+}
+
+.toggleOn .toggleThumb { transform: translateX(18px); background: var(--accent-fg); }
+
+/* ── Digital palette ─────────────────────────────────────────────────────── */
+
+/* Hue families run across, shades run down — a swatch book rather than a
+   flat grid, so related colours read as related. */
+.palette {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-panel);
+}
+
+.paletteColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.distinctPalette {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(38px, 1fr));
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-panel);
+  max-width: 480px;
+}
+
+.colorSwatch {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm);
+  border: 2px solid transparent;
+  transition: transform 0.1s, border-color 0.1s, box-shadow 0.1s;
+}
+
+.colorSwatch:hover {
+  transform: scale(1.14);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.3);
+  z-index: 1;
+}
+
+.colorSelected {
+  border-color: var(--text-primary);
+  transform: scale(1.08);
+}
+
+/* ── Danger ──────────────────────────────────────────────────────────────── */
+
+.dangerLabel {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--danger);
+}
+
+/* The archive control is a HoldButton, which brings its own styling; it only
+   needs to stop stretching to the full column width. */
+.inlineHoldBtn { align-self: flex-start; }
+
+/* ── Tags ────────────────────────────────────────────────────────────────── */
+
+.tagList { list-style: none; display: flex; flex-direction: column; gap: 2px; }
+
+.tagRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  transition: background 0.1s;
+}
+
+.tagRow:hover { background: var(--bg-panel); }
+
+.tagDot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+.tagName { flex: 1; font-size: 13px; color: var(--text-primary); }
+
+.tagDeleteBtn {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  opacity: 0;
+  transition: opacity 0.1s, background 0.1s, color 0.1s;
+}
+
+.tagRow:hover .tagDeleteBtn { opacity: 1; }
+.tagDeleteBtn:hover { background: var(--danger-hover-bg); color: var(--danger); }
+
+/* ── Empty ───────────────────────────────────────────────────────────────── */
+
+.empty {
+  color: var(--text-muted);
+  font-size: 13px;
+  padding: 32px 0;
+  text-align: center;
+}
+
+/* ── Color mode (scheme) selector ───────────────────────────────────────── */
+
+.schemeRow {
+  display: flex;
+  gap: 6px;
+}
+
+.schemeBtn {
+  padding: 7px 18px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  color: var(--text-secondary);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
+}
+
+.schemeBtn:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+.schemeBtnActive {
+  background: var(--bg-active);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+/* ── Theme filter ────────────────────────────────────────────────────────── */
+
+.filterRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  height: 32px;
+  max-width: 636px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: border-color 0.15s;
+}
+
+.filterRow:focus-within { border-color: var(--border-strong); }
+
+.filterIcon { color: var(--text-muted); flex-shrink: 0; }
+
+.filterInput {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  outline: none;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.filterInput::placeholder { color: var(--text-muted); }
+
+.filterClear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: background 0.1s, color 0.1s;
+}
+
+.filterClear:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+/* ── Theme cards ─────────────────────────────────────────────────────────── */
+
+/* Fluid grid: as many 150px-min columns as fit, capped at 4 by the max-width
+   (4 * 150 + 3 * 12 gap = 636). Cards stretch to fill whatever fits. */
+.themeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  max-width: 636px;
+}
+
+.themeCard {
+  width: 100%;
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--border);
+  background: var(--bg-input);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color 0.15s, background 0.15s;
+  position: relative;
+  text-align: left;
+}
+
+.themeCard:hover { border-color: var(--border-strong); background: var(--bg-hover); }
+
+.themeCardActive {
+  border-color: var(--accent);
+  background: var(--bg-active);
+}
+
+/* Mini preview inside the card */
+.themePreview {
+  width: 100%;
+  height: 72px;
+  border-radius: var(--radius-sm);
+  background: #1a1a1a;
+  display: flex;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.previewSidebar {
+  width: 24px;
+  background: #212121;
+  flex-shrink: 0;
+}
+
+.previewContent {
+  flex: 1;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.previewAccent {
+  height: 7px;
+  width: 55%;
+  border-radius: 3px;
+}
+
+.previewLines {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.previewLines span {
+  display: block;
+  height: 4px;
+  border-radius: 2px;
+  background: #404040;
+  width: 100%;
+}
+
+.previewLines span:last-child { width: 60%; }
+
+.themeCardLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.themeCardDesc {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.themeCardCheck {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 700;
+}

@@ -1,0 +1,349 @@
+/* ── Rail ─────────────────────────────────────────────────────────────────── */
+
+.rail {
+  width: 50px;
+  min-width: 50px;
+  height: 100%;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0 10px;
+  user-select: none;
+  flex-shrink: 0;
+  transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              min-width 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.railExpanded {
+  width: 210px;
+  min-width: 210px;
+  align-items: stretch;
+}
+
+/* ── Section toggle — "VAULTS" header that also expands/collapses ─────────── */
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0 8px;
+  margin-bottom: 6px;
+  flex-shrink: 0;
+  gap: 2px;
+}
+
+.sectionToggleBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 1;
+  height: 28px;
+  padding: 0 4px;
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  transition: background 0.12s, color 0.12s;
+}
+
+.sectionToggleBtn:hover { background: var(--bg-hover); color: var(--text-secondary); }
+.railExpanded .sectionToggleBtn { padding: 0 6px; justify-content: flex-start; }
+
+.sectionToggleIcon { flex-shrink: 0; }
+
+.sectionToggleLabel {
+  flex: 1;
+  text-align: left;
+  animation: labelFadeIn 0.15s ease;
+}
+
+.addVaultBtn {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: background 0.12s, color 0.12s;
+}
+
+.addVaultBtn:hover { background: var(--bg-hover); color: var(--text-secondary); }
+
+.sectionDivider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 28px;
+  padding: 0 4px;
+  margin-top: 6px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.railExpanded .sectionDivider {
+  justify-content: flex-start;
+  padding: 0 6px;
+}
+
+.sectionDividerIcon { flex-shrink: 0; opacity: 0.7; }
+
+.sectionDividerLabel {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  animation: labelFadeIn 0.15s ease;
+}
+
+@keyframes labelFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Nav ──────────────────────────────────────────────────────────────────── */
+
+.topNav {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: 100%;
+  padding: 0 8px;
+  flex-shrink: 0;
+}
+
+/* Empty area below the vault list — clicking it toggles the rail. */
+.spacer {
+  flex: 1;
+  min-height: 16px;
+  cursor: pointer;
+}
+
+.bottomNav {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: 100%;
+  padding: 8px 8px 0;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.navBtn {
+  width: 100%;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  transition: background 0.1s, color 0.1s;
+  flex-shrink: 0;
+}
+
+.navBtn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.railExpanded .navBtn {
+  justify-content: flex-start;
+  padding: 0 10px;
+}
+
+.navBtn:not(:disabled):hover {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+
+.navActive {
+  background: var(--bg-elevated) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-strong) !important;
+}
+
+.navIcon { flex-shrink: 0; }
+
+.navLabel {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  animation: navLabelSlide 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes navLabelSlide {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ── Vault row + drag reorder ─────────────────────────────────────────────── */
+
+.vaultRow {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+  border-radius: var(--radius-sm);
+  /* Reserve the drop-indicator line so rows don't shift during a drag. */
+  border-top: 2px solid transparent;
+}
+
+/* The pill shares the row with the grip handle, so it must give up width to it
+   rather than keep its full 100% and overflow the rail. */
+.vaultRow .navBtn {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+}
+
+.vaultRowDragging {
+  opacity: 0.4;
+}
+
+.vaultRowDropTarget {
+  border-top-color: var(--accent);
+}
+
+.dragHandle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 32px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+  opacity: 0;
+  cursor: grab;
+  transition: opacity 0.12s, color 0.12s;
+}
+
+.vaultRow:hover .dragHandle { opacity: 0.55; }
+.dragHandle:hover { opacity: 1 !important; color: var(--text-secondary); }
+.dragHandle:active { cursor: grabbing; }
+
+/* ── Vault dot ────────────────────────────────────────────────────────────── */
+
+.vaultDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: transform 0.12s;
+}
+
+.navBtn:hover .vaultDot { transform: scale(1.25); }
+
+/* ── New vault ────────────────────────────────────────────────────────────── */
+
+.newVaultRow {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 3px 2px;
+  flex-shrink: 0;
+  animation: labelFadeIn 0.15s ease;
+}
+
+.newVaultInput {
+  flex: 1;
+  font-size: 12px;
+  padding: 4px 7px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  outline: none;
+  min-width: 0;
+  transition: border-color 0.15s;
+}
+
+.newVaultInput:focus { border-color: var(--accent); }
+
+.newVaultConfirm {
+  font-size: 11px;
+  padding: 4px 8px;
+  background: var(--bg-active);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  transition: background 0.1s, color 0.1s;
+  flex-shrink: 0;
+}
+
+.newVaultConfirm:hover:not(:disabled) {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+.newVaultConfirm:disabled { opacity: 0.4; cursor: default; }
+
+/* ── User row ─────────────────────────────────────────────────────────────── */
+
+.userRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  height: 34px;
+  padding: 0 8px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.userRow:hover { background: var(--bg-hover); }
+
+.railExpanded .userRow {
+  justify-content: flex-start;
+  padding: 0 10px;
+}
+
+.navInitial {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--bg-active);
+  border: 1px solid var(--border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  transition: border-color 0.12s;
+}
+
+.userRow:hover .navInitial { border-color: var(--text-muted); }
+
+.logoutBtn {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: background 0.1s, color 0.1s;
+}
+
+.logoutBtn:hover {
+  background: var(--danger-hover-bg);
+  color: var(--danger);
+}

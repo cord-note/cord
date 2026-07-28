@@ -1,0 +1,385 @@
+.panel {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  background: var(--bg-panel);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 14px 6px;
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.count {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.newBtn {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  transition: background 0.12s, color 0.12s, transform 0.1s;
+}
+
+.newBtn:hover {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  transform: scale(1.08);
+}
+
+.newBtn:active { transform: scale(0.95); }
+
+.newBtnActive {
+  background: var(--bg-active);
+  color: var(--text-secondary);
+}
+
+/* ── Vault name line ─────────────────────────────────────────────────────── */
+
+.vaultLine {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 14px 10px;
+  flex-shrink: 0;
+}
+
+.vaultDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.vaultName {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Tag filter dropdown ─────────────────────────────────────────────────── */
+
+.tagFilter {
+  padding: 4px 8px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex-shrink: 0;
+  animation: slideDown 0.14s ease;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.tagFilterItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-align: left;
+  transition: background 0.1s, color 0.1s;
+}
+
+.tagFilterItem:hover { background: var(--bg-hover); color: var(--text-primary); }
+.tagFilterActive {
+  background: var(--bg-active);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+}
+
+.tagFilterDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Search bar ──────────────────────────────────────────────────────────── */
+
+.searchBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 10px 10px;
+  padding: 7px 10px;
+  background: var(--bg-input);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.searchBar:focus-within {
+  border-color: var(--border-strong);
+  background: var(--bg-elevated);
+}
+
+.searchIcon { color: var(--text-muted); flex-shrink: 0; }
+
+.searchInput {
+  flex: 1;
+  font-size: 12px;
+  color: var(--text-primary);
+  min-width: 0;
+}
+
+.searchInput::placeholder { color: var(--text-muted); }
+
+.clearSearch {
+  color: var(--text-muted);
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background 0.1s, color 0.1s;
+}
+
+.clearSearch:hover { background: var(--bg-active); color: var(--text-secondary); }
+
+/* ── Tag active pill ─────────────────────────────────────────────────────── */
+
+.tagActivePill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 10px 8px;
+  padding: 5px 10px;
+  background: var(--bg-active);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  animation: slideDown 0.14s ease;
+}
+
+.tagPillClear {
+  margin-left: auto;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--text-muted);
+  transition: background 0.1s, color 0.1s;
+}
+
+.tagPillClear:hover { background: var(--bg-hover); color: var(--text-secondary); }
+
+/* ── Note list ───────────────────────────────────────────────────────────── */
+
+.list {
+  list-style: none;
+  overflow-y: auto;
+  flex: 1;
+  padding: 0 8px 12px;
+}
+
+.item {
+  padding: 8px 10px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background 0.1s, border-color 0.1s;
+  margin-bottom: 1px;
+  position: relative;
+  border: 1px solid transparent;
+}
+
+.item:hover {
+  background: var(--bg-hover);
+  border-color: var(--border);
+}
+
+.item.active {
+  background: var(--bg-elevated);
+  border-color: var(--border-strong);
+}
+
+.itemContent { flex: 1; min-width: 0; }
+
+.itemTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 3px;
+}
+
+.itemTitle {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.untitled { color: var(--text-muted); font-style: italic; }
+
+.itemActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.12s;
+  flex-shrink: 0;
+}
+
+.item:hover .itemActions,
+.item.active .itemActions { opacity: 1; }
+
+.pinBtn {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  transition: background 0.1s, color 0.1s, transform 0.1s;
+}
+
+.pinBtn:hover {
+  background: var(--bg-active);
+  color: var(--text-secondary);
+  transform: scale(1.1);
+}
+
+.pinBtn.pinned { color: var(--text-secondary); }
+
+.deleteBtn {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  transition: background 0.1s, color 0.1s, transform 0.1s;
+}
+
+.deleteBtn:hover {
+  background: var(--danger-hover-bg);
+  color: var(--danger);
+  transform: scale(1.1);
+}
+
+.itemMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.itemDate {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.itemExcerpt {
+  font-size: 12px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.55;
+}
+
+.itemTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 5px;
+}
+
+.itemTagChip {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 99px;
+  border: 1px solid var(--border-strong);
+  color: var(--text-muted);
+  transition: border-color 0.1s, color 0.1s;
+}
+
+.item:hover .itemTagChip {
+  border-color: var(--text-muted);
+  color: var(--text-secondary);
+}
+
+/* ── Empty state ─────────────────────────────────────────────────────────── */
+
+.empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: var(--text-muted);
+  font-size: 13px;
+  text-align: center;
+  padding: 24px;
+}
+
+.createFirst {
+  padding: 8px 18px;
+  background: var(--bg-active);
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  transition: background 0.15s, color 0.15s, transform 0.1s;
+  border: 1px solid var(--border-strong);
+}
+
+.createFirst:hover {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+.createFirst:active { transform: translateY(0); }

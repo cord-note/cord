@@ -1,0 +1,549 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   BASE TOKENS  (dark · mono — the default)
+   All other theme/scheme combos override only what changes.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --sidebar-width:    50px;
+  --note-list-width:  260px;
+
+  /* Backgrounds */
+  --bg:          #1a1a1a;
+  --bg-sidebar:  #212121;
+  --bg-panel:    #212121;
+  --bg-hover:    #2a2a2a;
+  --bg-active:   #333333;
+  --bg-input:    #252525;
+  --bg-elevated: #2a2a2a;
+
+  /* Borders */
+  --border:        #2e2e2e;
+  --border-strong: #404040;
+  --border-muted:  #2a2a2a;
+
+  /* Text */
+  --text-primary:   #e2e2e2;
+  --text-secondary: #707070;
+  --text-muted:     #505050;
+
+  /* Accent — mono dark default */
+  --accent:       #e2e2e2;
+  --accent-hover: #cccccc;
+  --accent-fg:    #1a1a1a;
+
+  /* Semantic */
+  --link-color:      #8a8a8a;
+  --link-underline:  rgba(138, 138, 138, 0.3);
+  --danger:          #e05c5c;
+  --danger-hover-bg: rgba(224, 92, 92, 0.12);
+  /* Muted, in the same family as --danger. The old #c42b1c was the Windows
+     system red and read far louder than every other destructive control. */
+  --close-hover-bg:  #c25b5b;
+  --close-hover-fg:  #fdf3f3;
+
+  /* Editor */
+  --code-color: #fff6d2;
+
+  /* Syntax */
+  --syntax-keyword:  #bb9af7;
+  --syntax-string:   #9ece6a;
+  --syntax-comment:  #565f89;
+  --syntax-number:   #ff9e64;
+  --syntax-function: #7aa2f7;
+  --syntax-type:     #e0af68;
+  --syntax-builtin:  #73daca;
+  --syntax-variable: #f7768e;
+  --syntax-tag:      #f7768e;
+  --syntax-attr:     #9ece6a;
+  --syntax-meta:     #2ac3de;
+  --syntax-operator: #89ddff;
+
+  /* Shape */
+  --radius:    10px;
+  --radius-sm: 6px;
+  --radius-lg: 14px;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   LIGHT MODE  (overrides backgrounds, borders, text)
+   ════════════════════════════════════════════════════════════════════════════ */
+
+html[data-scheme="light"] {
+  /* Light surfaces sit in the mid-tones rather than near-white — a full-bleed
+     near-white editor is fatiguing under sustained reading. */
+  --bg:          #e8e8e8;
+  --bg-sidebar:  #dedede;
+  --bg-panel:    #dedede;
+  --bg-hover:    #d4d4d4;
+  --bg-active:   #c8c8c8;
+  --bg-input:    #d9d9d9;
+  --bg-elevated: #e2e2e2;
+
+  --border:        #c6c6c6;
+  --border-strong: #ababab;
+  /* Previously only defined in :root, so light mode inherited a near-black
+     border colour. */
+  --border-muted:  #d2d2d2;
+
+  --text-primary:   #1a1a1a;
+  --text-secondary: #4f4f4f;
+  /* #aaa fell below 3:1 against the new background. */
+  --text-muted:     #7d7d7d;
+
+  /* mono-light accent */
+  --accent:       #1a1a1a;
+  --accent-hover: #333333;
+  --accent-fg:    #e8e8e8;
+
+  --link-color:      #666666;
+  --link-underline:  rgba(100, 100, 100, 0.3);
+  --danger:          #d94040;
+  --danger-hover-bg: rgba(217, 64, 64, 0.10);
+  --close-hover-bg:  #c05252;
+  --close-hover-fg:  #fdf3f3;
+  --code-color:      #1a7f9e;
+
+  --syntax-keyword:  #7c4dff;
+  --syntax-string:   #388e3c;
+  --syntax-comment:  #9e9e9e;
+  --syntax-number:   #e65100;
+  --syntax-function: #1565c0;
+  --syntax-type:     #f57f17;
+  --syntax-builtin:  #00695c;
+  --syntax-variable: #c62828;
+  --syntax-tag:      #c62828;
+  --syntax-attr:     #388e3c;
+  --syntax-meta:     #006064;
+  --syntax-operator: #0277bd;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   BLUE THEME — dark
+   ════════════════════════════════════════════════════════════════════════════ */
+
+html[data-theme="blue"] {
+  --accent:       #4a8ff5;
+  --accent-hover: #3a7ce0;
+  --accent-fg:    #ffffff;
+
+  --bg:          #11151c;
+  --bg-sidebar:  #151b25;
+  --bg-panel:    #19212e;
+  --bg-hover:    #212d40;
+  --bg-active:   #2c374b;
+  --bg-input:    #273246;
+  --bg-elevated: #313c51;
+
+  --border:        #212d40;
+  --border-strong: #364156;
+
+  --link-color:     #7aabf5;
+  --link-underline: rgba(122, 171, 245, 0.3);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   BLUE THEME — light
+   ════════════════════════════════════════════════════════════════════════════ */
+
+html[data-theme="blue"][data-scheme="light"] {
+  --accent:       #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-fg:    #ffffff;
+
+  --bg:          #dde5f4;
+  --bg-sidebar:  #d0dcf0;
+  --bg-panel:    #d0dcf0;
+  --bg-hover:    #c3d2e9;
+  --bg-active:   #b4c7e2;
+  --bg-input:    #ccd9ee;
+  --bg-elevated: #d7e1f2;
+
+  --border:        #b0c2df;
+  --border-strong: #90aacf;
+  --border-muted:  #c2d0e8;
+
+  --text-primary:   #0f1f3d;
+  --text-secondary: #33486a;
+  --text-muted:     #6a83a3;
+
+  --link-color:     #1d4ed8;
+  --link-underline: rgba(29, 78, 216, 0.3);
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════════
+   OLIVE THEME — dark (forest green + amber)
+   ════════════════════════════════════════════════════════════════════════════ */
+
+html[data-theme="olive"] {
+  --accent:       #c9a84c;
+  --accent-hover: #b8963e;
+  --accent-fg:    #1b1e14;
+
+  --bg:          #1b1e14;
+  --bg-sidebar:  #1f2318;
+  --bg-panel:    #232717;
+  --bg-hover:    #2b3020;
+  --bg-active:   #35402a;
+  --bg-input:    #262b1a;
+  --bg-elevated: #303520;
+
+  --border:        #2b3020;
+  --border-strong: #3d4530;
+
+  --link-color:     #c9a84c;
+  --link-underline: rgba(201, 168, 76, 0.3);
+}
+
+html[data-theme="olive"][data-scheme="light"] {
+  --accent:       #7a5c1e;
+  --accent-hover: #6a4e18;
+  --accent-fg:    #f5f0e8;
+
+  --bg:          #e9e2cd;
+  --bg-sidebar:  #e0d8c0;
+  --bg-panel:    #e0d8c0;
+  --bg-hover:    #d5ccb0;
+  --bg-active:   #c9bf9f;
+  --bg-input:    #dcd3ba;
+  --bg-elevated: #e4ddc6;
+
+  --border:        #c4bb9e;
+  --border-strong: #aca386;
+  --border-muted:  #d3caae;
+
+  --text-primary:   #2a2510;
+  --text-secondary: #52492b;
+  --text-muted:     #857b5c;
+
+  --link-color:     #7a5c1e;
+  --link-underline: rgba(122, 92, 30, 0.3);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   TEAL THEME — dark (deep sea + coral)
+   ════════════════════════════════════════════════════════════════════════════ */
+
+html[data-theme="teal"] {
+  --accent:       #e07a54;
+  --accent-hover: #cc6840;
+  --accent-fg:    #ffffff;
+
+  --bg:          #0e2323;
+  --bg-sidebar:  #122929;
+  --bg-panel:    #163030;
+  --bg-hover:    #1d3c3c;
+  --bg-active:   #264848;
+  --bg-input:    #1a3636;
+  --bg-elevated: #203838;
+
+  --border:        #1d3c3c;
+  --border-strong: #2e5050;
+
+  --link-color:     #e07a54;
+  --link-underline: rgba(224, 122, 84, 0.3);
+}
+
+html[data-theme="teal"][data-scheme="light"] {
+  --accent:       #c05a38;
+  --accent-hover: #a84828;
+  --accent-fg:    #ffffff;
+
+  --bg:          #d6e9e9;
+  --bg-sidebar:  #c7e0e0;
+  --bg-panel:    #c7e0e0;
+  --bg-hover:    #b8d8d8;
+  --bg-active:   #a8cfcf;
+  --bg-input:    #bfdcdc;
+  --bg-elevated: #cde4e4;
+
+  --border:        #a6cccc;
+  --border-strong: #8bbcbc;
+  --border-muted:  #b9d6d6;
+
+  --text-primary:   #0a2020;
+  --text-secondary: #244646;
+  --text-muted:     #5c8888;
+
+  --link-color:     #c05a38;
+  --link-underline: rgba(192, 90, 56, 0.3);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   MIDNIGHT THEME — dark (deep navy + rose)
+   ════════════════════════════════════════════════════════════════════════════ */
+
+html[data-theme="midnight"] {
+  --accent:       #f7768e;
+  --accent-hover: #e05070;
+  --accent-fg:    #ffffff;
+
+  --bg:          #16161e;
+  --bg-sidebar:  #1a1b26;
+  --bg-panel:    #1e1f2e;
+  --bg-hover:    #252636;
+  --bg-active:   #2f3148;
+  --bg-input:    #222336;
+  --bg-elevated: #2a2c40;
+
+  --border:        #252636;
+  --border-strong: #363855;
+
+  --link-color:     #bb9af7;
+  --link-underline: rgba(187, 154, 247, 0.3);
+}
+
+html[data-theme="midnight"][data-scheme="light"] {
+  --accent:       #d93060;
+  --accent-hover: #c02050;
+  --accent-fg:    #ffffff;
+
+  --bg:          #e4e4f0;
+  --bg-sidebar:  #d9d9ea;
+  --bg-panel:    #d9d9ea;
+  --bg-hover:    #cbcbe1;
+  --bg-active:   #bcbcd6;
+  --bg-input:    #d2d2e5;
+  --bg-elevated: #dedeec;
+
+  --border:        #b8b8d4;
+  --border-strong: #9e9ec2;
+  --border-muted:  #c9c9de;
+
+  --text-primary:   #0f0f20;
+  --text-secondary: #343457;
+  --text-muted:     #71719b;
+
+  --link-color:     #7c4dff;
+  --link-underline: rgba(124, 77, 255, 0.3);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   ROSEWOOD THEME — dark (warm brown + dusty rose)
+   ════════════════════════════════════════════════════════════════════════════ */
+
+html[data-theme="rosewood"] {
+  --accent:       #d4856b;
+  --accent-hover: #c06e56;
+  --accent-fg:    #ffffff;
+
+  --bg:          #221818;
+  --bg-sidebar:  #281e1e;
+  --bg-panel:    #2c2222;
+  --bg-hover:    #362828;
+  --bg-active:   #423232;
+  --bg-input:    #302424;
+  --bg-elevated: #3a2e2e;
+
+  --border:        #362828;
+  --border-strong: #4a3838;
+
+  --link-color:     #d4856b;
+  --link-underline: rgba(212, 133, 107, 0.3);
+}
+
+html[data-theme="rosewood"][data-scheme="light"] {
+  --accent:       #a05040;
+  --accent-hover: #884030;
+  --accent-fg:    #ffffff;
+
+  --bg:          #ebdcd8;
+  --bg-sidebar:  #e0cdc7;
+  --bg-panel:    #e0cdc7;
+  --bg-hover:    #d4bdb6;
+  --bg-active:   #c7aca4;
+  --bg-input:    #dbc5be;
+  --bg-elevated: #e5d4ce;
+
+  --border:        #c6aca6;
+  --border-strong: #b0958c;
+  --border-muted:  #d5bdb7;
+
+  --text-primary:   #2a1010;
+  --text-secondary: #573939;
+  --text-muted:     #8f6a6a;
+
+  --link-color:     #a05040;
+  --link-underline: rgba(160, 80, 64, 0.3);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   PARCHMENT THEME — dark (warm dark + caramel)
+   ════════════════════════════════════════════════════════════════════════════ */
+
+html[data-theme="parchment"] {
+  --accent:       #d4a572;
+  --accent-hover: #c08e5a;
+  --accent-fg:    #1e1a14;
+
+  --bg:          #1e1a14;
+  --bg-sidebar:  #241f18;
+  --bg-panel:    #28231c;
+  --bg-hover:    #322c24;
+  --bg-active:   #3e362c;
+  --bg-input:    #2c2620;
+  --bg-elevated: #363028;
+
+  --border:        #322c24;
+  --border-strong: #464030;
+
+  --link-color:     #d4a572;
+  --link-underline: rgba(212, 165, 114, 0.3);
+}
+
+html[data-theme="parchment"][data-scheme="light"] {
+  --accent:       #7c5835;
+  --accent-hover: #6a4828;
+  --accent-fg:    #e9e0ce;
+
+  --bg:          #e9e0ce;
+  --bg-sidebar:  #ded4bf;
+  --bg-panel:    #ded4bf;
+  --bg-hover:    #d3c8ae;
+  --bg-active:   #c6b99c;
+  --bg-input:    #d9cfb6;
+  --bg-elevated: #e3d9c3;
+
+  --border:        #c3b79c;
+  --border-strong: #ab9d80;
+  --border-muted:  #d2c7ad;
+
+  --text-primary:   #2a2018;
+  --text-secondary: #5c4c36;
+  --text-muted:     #8d7c5f;
+
+  --link-color:     #7c5835;
+  --link-underline: rgba(124, 88, 53, 0.3);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   BASE STYLES
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ════════════════════════════════════════════════════════════════════════════
+   TASK LIST  — global because CSS Modules :global() is unreliable for
+   Tiptap NodeView-built elements (label gets contenteditable="false" which
+   causes Chromium to treat it as block-level, breaking flex layouts).
+   ════════════════════════════════════════════════════════════════════════════ */
+
+.ProseMirror ul[data-type="taskList"] {
+  padding-left: 0 !important;
+  list-style: none !important;
+}
+
+.ProseMirror li[data-type="taskItem"] {
+  position: relative !important;
+  padding-left: 1.75em !important;
+  margin-bottom: 0.3em !important;
+  list-style: none !important;
+  display: block !important;
+}
+
+.ProseMirror li[data-type="taskItem"] > label {
+  position: absolute !important;
+  left: 0 !important;
+  top: 0.2em !important;
+  display: flex !important;
+  align-items: center !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  line-height: 1 !important;
+}
+
+.ProseMirror li[data-type="taskItem"] > div {
+  min-width: 0;
+}
+
+.ProseMirror li[data-type="taskItem"] > div > p {
+  margin: 0 !important;
+}
+
+.ProseMirror li[data-type="taskItem"] input[type="checkbox"] {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  display: block !important;
+  width: 13px !important;
+  height: 13px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  flex-shrink: 0;
+  position: relative;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 3px;
+  background: transparent;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  box-sizing: border-box;
+}
+
+.ProseMirror li[data-type="taskItem"] input[type="checkbox"]:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+.ProseMirror li[data-type="taskItem"] input[type="checkbox"]:checked {
+  background: var(--accent) !important;
+  border-color: var(--accent) !important;
+}
+
+.ProseMirror li[data-type="taskItem"] input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 0px;
+  width: 7px;
+  height: 4px;
+  border-left: 2px solid var(--accent-fg);
+  border-bottom: 2px solid var(--accent-fg);
+  transform: rotate(-45deg);
+}
+
+.ProseMirror li[data-type="taskItem"][data-checked="true"] > div {
+  color: var(--text-muted);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--text-muted) 50%, transparent);
+}
+
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+:focus-visible {
+  outline: 2px solid var(--border-strong);
+  outline-offset: 2px;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+}
+
+input, textarea {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  outline: none;
+}

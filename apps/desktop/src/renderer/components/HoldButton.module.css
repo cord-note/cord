@@ -1,0 +1,103 @@
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  /* The hold is the interaction — a drag off the button must cancel it, not
+     start a text selection. */
+  user-select: none;
+  touch-action: none;
+  transition: color 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.label {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.holding .fill {
+  opacity: 1;
+}
+
+/* --- icon variant: progress ring ------------------------------------- */
+
+.icon {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+}
+
+.icon:hover:not(:disabled) {
+  color: var(--danger);
+  background: var(--danger-hover-bg);
+}
+
+.icon .fill {
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--danger) calc(var(--hold-progress, 0) * 360deg),
+    transparent 0deg
+  );
+  /* Punch the middle out so the icon stays legible under the ring. */
+  mask: radial-gradient(circle, transparent 0 62%, #000 64% 100%);
+  -webkit-mask: radial-gradient(circle, transparent 0 62%, #000 64% 100%);
+}
+
+.icon.holding {
+  color: var(--danger);
+}
+
+/* --- text variant: filling background -------------------------------- */
+
+.text {
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--danger);
+  border-color: var(--danger);
+  background: transparent;
+}
+
+.text:hover:not(:disabled) {
+  background: var(--danger-hover-bg);
+}
+
+.text .fill {
+  background: var(--danger);
+  /* Wipe in from the left rather than fading, so partial progress is
+     unambiguous at a glance. */
+  transform-origin: left center;
+  transform: scaleX(var(--hold-progress, 0));
+}
+
+.text.holding {
+  color: var(--accent-fg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn {
+    transition: none;
+  }
+}

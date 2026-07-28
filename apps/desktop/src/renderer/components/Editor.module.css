@@ -1,0 +1,529 @@
+.editor {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ── Title row (title + tags inline) ─────────────────────────────────────── */
+
+.titleRow {
+  width: 100%;
+  max-width: calc(var(--editor-line-width, 720px) + 96px);
+  margin: 0 auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 36px 48px 10px;
+  flex-shrink: 0;
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  display: block;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  outline: none;
+  letter-spacing: -0.01em;
+  padding: 0;
+  line-height: 1.2;
+}
+
+.title::placeholder {
+  color: var(--text-muted);
+}
+
+/* ── Tag panel (sits below title, same max-width) ────────────────────────── */
+
+.tagPanel {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 0 48px 12px;
+  max-width: calc(var(--editor-line-width, 720px) + 96px);
+  margin: 0 auto;
+  width: 100%;
+  flex-shrink: 0;
+  min-height: 28px;
+}
+
+.tagChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 3px 8px;
+  border-radius: 99px;
+  background: var(--bg-active);
+  border: 1px solid var(--border-strong);
+  font-size: 11px;
+  color: var(--text-secondary);
+  transition: border-color 0.1s;
+}
+
+.tagChip:hover { border-color: var(--border-strong); }
+
+.tagChipDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tagChipRemove {
+  color: var(--text-muted);
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.1s, color 0.1s;
+  margin-left: 1px;
+}
+
+.tagChipRemove:hover { background: var(--danger-hover-bg); color: var(--danger); }
+
+.addTagBtn {
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 3px 10px;
+  border-radius: 99px;
+  border: 1px dashed var(--border-strong);
+  transition: border-color 0.1s, color 0.1s, background 0.1s;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.addTagBtn:hover {
+  border-color: var(--text-muted);
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+}
+
+.tagPickerInline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+
+.tagPickerItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  background: var(--bg-active);
+  border: 1px solid var(--border);
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
+}
+
+.tagPickerItem:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.tagPickerDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tagPickerInput {
+  font-size: 12px;
+  padding: 3px 0;
+  background: none;
+  color: var(--text-primary);
+  outline: none;
+  min-width: 80px;
+  border: none;
+}
+
+/* ── Formatting toolbar ───────────────────────────────────────────────────── */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 3px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.toolbarBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 24px;
+  padding: 0 5px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+  border: none;
+  background: none;
+  font-family: inherit;
+}
+
+.toolbarBtn:hover {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+
+.toolbarBtnActive {
+  background: var(--bg-active);
+  color: var(--text-primary);
+}
+
+.toolbarDivider {
+  width: 1px;
+  height: 14px;
+  background: var(--border);
+  margin: 0 3px;
+  flex-shrink: 0;
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 48px 48px;
+  position: relative;
+}
+
+/* Tiptap prose styles */
+.content :global(.ProseMirror) {
+  outline: none;
+  min-height: 200px;
+  color: var(--text-primary);
+  line-height: 1.7;
+  font-size: var(--editor-font-size, 15px);
+  max-width: var(--editor-line-width, 720px);
+  margin: 0 auto;
+}
+
+.content :global(.ProseMirror p) {
+  margin-bottom: 0.6em;
+}
+
+.content :global(.ProseMirror h1) { font-size: 1.8em; font-weight: 700; margin: 1.2em 0 0.4em; }
+.content :global(.ProseMirror h2) { font-size: 1.4em; font-weight: 600; margin: 1em 0 0.4em; }
+.content :global(.ProseMirror h3) { font-size: 1.15em; font-weight: 600; margin: 0.8em 0 0.3em; }
+
+.content :global(.ProseMirror ul),
+.content :global(.ProseMirror ol) {
+  padding-left: 1.5em;
+  margin-bottom: 0.6em;
+}
+
+.content :global(.ProseMirror li) {
+  margin-bottom: 0.2em;
+}
+
+.content :global(.ProseMirror blockquote) {
+  border-left: 3px solid var(--accent);
+  padding-left: 1em;
+  color: var(--text-secondary);
+  margin: 0.8em 0;
+}
+
+.content :global(.ProseMirror code) {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  background: var(--bg-active);
+  padding: 0.15em 0.4em;
+  border-radius: 3px;
+  color: var(--code-color);
+}
+
+.content :global(.ProseMirror pre) {
+  background: var(--bg-active);
+  border-radius: var(--radius);
+  padding: 1em 1.2em;
+  margin: 0.8em 0;
+  overflow-x: auto;
+}
+
+.content :global(.ProseMirror pre code) {
+  background: none;
+  padding: 0;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.content :global(.ProseMirror hr) {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1.5em 0;
+}
+
+/* Placeholder */
+.content :global(.ProseMirror p.is-editor-empty:first-child::before) {
+  content: attr(data-placeholder);
+  color: var(--text-muted);
+  pointer-events: none;
+  float: left;
+  height: 0;
+}
+
+/* ── Regular hyperlinks ──────────────────────────────────────────────────── */
+.content :global(.ProseMirror a) {
+  color: var(--link-color);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.content :global(.ProseMirror a:hover) {
+  color: var(--text-secondary);
+}
+
+/* ── Wiki links ─────────────────────────────────────────────────────────── */
+.content :global(.wiki-link) {
+  display: inline;
+  color: var(--accent);
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  padding: 0 1px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: color 0.1s, border-color 0.1s, background 0.1s;
+  user-select: none;
+}
+
+.content :global(.wiki-link:hover) {
+  color: var(--text-primary);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border-bottom-color: var(--accent);
+}
+
+.content :global(.wiki-link-edit) {
+  display: inline;
+  color: var(--text-primary);
+  background: var(--bg-active);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  padding: 0 4px;
+  font-size: inherit;
+  font-family: inherit;
+  outline: none;
+  min-width: 60px;
+  width: auto;
+}
+
+
+/* ── Math nodes ─────────────────────────────────────────────────────────── */
+.content :global(.math-inline) {
+  display: inline;
+  cursor: pointer;
+  padding: 1px 2px;
+  border-radius: 3px;
+  transition: background 0.1s;
+}
+
+.content :global(.math-inline:hover) {
+  background: var(--bg-hover);
+}
+
+.content :global(.math-block) {
+  display: block;
+  text-align: center;
+  padding: 12px 0;
+  cursor: pointer;
+  border-radius: var(--radius);
+  transition: background 0.1s;
+  overflow-x: auto;
+}
+
+.content :global(.math-block:hover) {
+  background: var(--bg-hover);
+}
+
+.content :global(.math-input-inline) {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  background: var(--bg-active);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  color: var(--text-primary);
+  padding: 1px 6px;
+  outline: none;
+  width: 16ch;
+  min-width: 8ch;
+  max-width: 40ch;
+}
+
+.content :global(.math-input-block) {
+  display: block;
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  background: var(--bg-active);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  padding: 10px 14px;
+  outline: none;
+  resize: vertical;
+  line-height: 1.5;
+  margin: 4px 0;
+}
+
+/* ── Fragment block highlight ────────────────────────────────────────────── */
+.content :global(.ProseMirror [data-block-id].fragment-highlight) {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  outline: 1px solid rgba(255, 255, 255, 0.15);
+  transition: background 0.15s, outline-color 0.15s;
+}
+
+/* ── Status bar ──────────────────────────────────────────────────────────── */
+.statusBar {
+  border-top: 1px solid var(--border);
+  padding: 6px 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  gap: 12px;
+}
+
+.statusBacklinks {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.statusBacklinkCount {
+  font-size: 11px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.backlinkChip {
+  padding: 2px 8px;
+  background: var(--bg-active);
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+}
+
+.backlinkChip:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.statusStats {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.statusDim {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.statusDot {
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.statusDividerDot {
+  font-size: 11px;
+  color: var(--text-muted);
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.statusUnlinkedLabel {
+  font-size: 11px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.unlinkedChip {
+  border: 1px dashed var(--border-strong);
+  background: transparent;
+}
+
+.unlinkedChip:hover {
+  background: var(--bg-hover);
+  border-style: solid;
+}
+
+/* ── Unlinked mention squiggly underline ─────────────────────────────────── */
+.content :global(.unlinked-mention) {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='3'%3E%3Cpath d='M0 2 Q1.5 0.5 3 2 Q4.5 3.5 6 2' fill='none' stroke='%23ffffff' stroke-width='0.9' stroke-opacity='0.45'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-position: 0 100%;
+  background-size: 6px 3px;
+  padding-bottom: 1px;
+  cursor: default;
+}
+
+/* ── Syntax highlighting ─────────────────────────────────────────────────── */
+.content :global(.ProseMirror pre .hljs-keyword),
+.content :global(.ProseMirror pre .hljs-selector-tag),
+.content :global(.ProseMirror pre .hljs-section) { color: var(--syntax-keyword); }
+
+.content :global(.ProseMirror pre .hljs-string),
+.content :global(.ProseMirror pre .hljs-attribute),
+.content :global(.ProseMirror pre .hljs-addition) { color: var(--syntax-string); }
+
+.content :global(.ProseMirror pre .hljs-comment),
+.content :global(.ProseMirror pre .hljs-quote) { color: var(--syntax-comment); font-style: italic; }
+
+.content :global(.ProseMirror pre .hljs-number),
+.content :global(.ProseMirror pre .hljs-literal),
+.content :global(.ProseMirror pre .hljs-bullet) { color: var(--syntax-number); }
+
+.content :global(.ProseMirror pre .hljs-title),
+.content :global(.ProseMirror pre .hljs-title\.function_),
+.content :global(.ProseMirror pre .hljs-function) { color: var(--syntax-function); }
+
+.content :global(.ProseMirror pre .hljs-type),
+.content :global(.ProseMirror pre .hljs-class),
+.content :global(.ProseMirror pre .hljs-title\.class_) { color: var(--syntax-type); }
+
+.content :global(.ProseMirror pre .hljs-built_in),
+.content :global(.ProseMirror pre .hljs-selector-id) { color: var(--syntax-builtin); }
+
+.content :global(.ProseMirror pre .hljs-variable),
+.content :global(.ProseMirror pre .hljs-template-variable),
+.content :global(.ProseMirror pre .hljs-deletion) { color: var(--syntax-variable); }
+
+.content :global(.ProseMirror pre .hljs-tag),
+.content :global(.ProseMirror pre .hljs-name) { color: var(--syntax-tag); }
+
+.content :global(.ProseMirror pre .hljs-meta),
+.content :global(.ProseMirror pre .hljs-meta .hljs-keyword) { color: var(--syntax-meta); }
+
+.content :global(.ProseMirror pre .hljs-operator),
+.content :global(.ProseMirror pre .hljs-punctuation) { color: var(--syntax-operator); }
+
+.content :global(.ProseMirror pre .hljs-emphasis) { font-style: italic; }
+.content :global(.ProseMirror pre .hljs-strong) { font-weight: 700; }

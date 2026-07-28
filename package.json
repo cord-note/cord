@@ -1,0 +1,12 @@
+{
+  "name": "cord",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter @cord/desktop dev",
+    "build": "pnpm --filter @cord/desktop build"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  }
+}
