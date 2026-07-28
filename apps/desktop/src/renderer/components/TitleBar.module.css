@@ -1,0 +1,227 @@
+/* ── Bar ─────────────────────────────────────────────────────────────────── */
+
+.bar {
+  height: 40px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  background: var(--bg-sidebar);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  -webkit-app-region: drag;
+  user-select: none;
+  position: relative;
+  z-index: 100;
+}
+
+/* ── Left: logo ──────────────────────────────────────────────────────────── */
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+}
+
+.dragIcon {
+  color: var(--text-secondary);
+  opacity: 0.65;
+  flex-shrink: 0;
+}
+
+.appName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.01em;
+}
+
+/* ── Center: command pill ────────────────────────────────────────────────── */
+
+.pillWrap {
+  position: relative;
+  -webkit-app-region: no-drag;
+}
+
+.pill {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 10px;
+  width: 420px;
+  height: 26px;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  cursor: text;
+  transition: background 0.12s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.pill:hover { border-color: var(--text-muted); }
+
+.pillOpen {
+  background: var(--bg-input);
+  border-color: var(--text-muted);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom-color: var(--border);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.04);
+}
+
+.pillIcon {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.pillInput {
+  flex: 1;
+  font-size: 12px;
+  color: var(--text-primary);
+  background: none;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  min-width: 0;
+  -webkit-app-region: no-drag;
+}
+
+.pillInput::placeholder { color: var(--text-muted); }
+
+/* ── Dropdown ────────────────────────────────────────────────────────────── */
+
+.dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--text-muted);
+  border-top: none;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255,255,255,0.03);
+  overflow: hidden;
+  z-index: 9999;
+  animation: dropRoll 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: top center;
+}
+
+@keyframes dropRoll {
+  from { clip-path: inset(0 0 100% 0 round 0 0 8px 8px); }
+  to   { clip-path: inset(0 0 0%   0 round 0 0 8px 8px); }
+}
+
+/* List */
+.dropList {
+  overflow-y: auto;
+  max-height: 340px;
+  padding: 4px;
+}
+
+.dropSection {
+  padding: 8px 10px 3px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+.dropRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: left;
+  transition: background 0.07s, color 0.07s;
+  font-family: inherit;
+  border: 1px solid transparent;
+}
+
+.dropRow:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.dropRowActive {
+  background: var(--bg-active);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.dropRowIcon {
+  width: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.dropRowActive .dropRowIcon,
+.dropRow:hover .dropRowIcon { color: var(--text-secondary); }
+
+.dropRowDimmed { opacity: 0.4; cursor: default; }
+
+.dropRowLabel {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Keyboard shortcut — simple monospace text, no fancy pill */
+.dropRowKbd {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+}
+
+.dropRowActive .dropRowKbd { color: var(--text-secondary); }
+
+.untitled { color: var(--text-muted); }
+
+.pinIcon {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.dropEmpty {
+  padding: 20px 16px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* ── Right: window controls ──────────────────────────────────────────────── */
+
+.controls {
+  display: flex;
+  height: 100%;
+  justify-content: flex-end;
+}
+
+.btn {
+  width: 42px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+  -webkit-app-region: no-drag;
+}
+
+.btn:hover { background: var(--bg-hover); color: var(--text-secondary); }
+
+.closeBtn:hover { background: var(--close-hover-bg); color: var(--close-hover-fg); }

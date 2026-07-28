@@ -1,0 +1,100 @@
+.layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* ── Animated notes panel wrapper ───────────────────────────────────────── */
+
+.notePanel {
+  width: var(--note-list-width);
+  min-width: var(--note-list-width);
+  height: 100%;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: width 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+              min-width 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.notePanelCollapsed {
+  width: 0 !important;
+  min-width: 0 !important;
+}
+
+/* ── Note panel toggle ───────────────────────────────────────────────────── */
+
+.noteToggle {
+  translate: -1px 0;
+  width: 0;
+  min-width: 0;
+  height: 100%;
+  position: relative;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.noteToggle::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 48px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.noteToggle:hover::after {
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
+}
+
+.noteToggle svg {
+  position: absolute;
+  left: 1px;
+  top: 50%;
+  transform: translateY(-50%) rotate(180deg);
+  transition: transform 0.2s, opacity 0.12s;
+  z-index: 1;
+  color: var(--border-strong);
+  opacity: 1;
+}
+
+.noteToggle:hover svg {
+  color: var(--text-secondary);
+}
+
+.noteToggleClosed::after {
+  translate: 1px 0;
+  background: var(--bg-sidebar);
+  border-color: var(--border);
+}
+
+.noteToggleClosed svg {
+  transform: translateY(-50%) rotate(0deg);
+}

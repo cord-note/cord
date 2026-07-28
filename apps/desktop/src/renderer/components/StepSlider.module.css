@@ -1,0 +1,96 @@
+.wrap {
+  position: relative;
+  flex: 1;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+/* Visible track, drawn under the transparent native input. */
+.track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--bg-active);
+  pointer-events: none;
+}
+
+.fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.notch {
+  position: absolute;
+  top: 50%;
+  width: 1px;
+  height: 7px;
+  margin-left: -0.5px;
+  transform: translateY(-50%);
+  background: var(--border-strong);
+  border-radius: 1px;
+}
+
+.notchFilled {
+  background: var(--accent);
+  opacity: 0.55;
+}
+
+/* --- native input, transparent but interactive ----------------------- */
+
+.input {
+  position: relative;
+  width: 100%;
+  margin: 0;
+  background: transparent;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.input:focus { outline: none; }
+
+.input::-webkit-slider-runnable-track {
+  height: 18px;
+  background: transparent;
+}
+
+.input::-moz-range-track {
+  height: 18px;
+  background: transparent;
+}
+
+.input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: 3px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+  transition: transform 0.12s;
+}
+
+.input::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+  transition: transform 0.12s;
+}
+
+.input:hover::-webkit-slider-thumb { transform: scale(1.15); }
+.input:hover::-moz-range-thumb     { transform: scale(1.15); }
+
+.input:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px var(--danger-hover-bg); }
+.input:focus-visible::-moz-range-thumb     { box-shadow: 0 0 0 3px var(--danger-hover-bg); }

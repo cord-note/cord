@@ -1,0 +1,13 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1782045042980,
+      "tag": "0000_smart_black_widow",
+      "breakpoints": true
+    }
+  ]
+}

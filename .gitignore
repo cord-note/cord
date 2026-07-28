@@ -1,0 +1,16 @@
+# Dependencies / build output
+node_modules/
+dist/
+target/
+
+# Local app data
+.cord/
+*.db
+*.db-shm
+*.db-wal
+
+# Tauri generated + prebuilt sidecar binaries.
+# Leading **/ so these match under apps/desktop/, not just the repo root —
+# a mid-string slash without it anchors the pattern to this file's directory.
+**/src-tauri/gen/
+**/src-tauri/binaries/
