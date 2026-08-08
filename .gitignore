@@ -14,3 +14,6 @@ target/
 # a mid-string slash without it anchors the pattern to this file's directory.
 **/src-tauri/gen/
 **/src-tauri/binaries/
+
+# Tooling caches
+.impeccable/

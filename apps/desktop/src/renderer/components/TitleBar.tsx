@@ -5,6 +5,7 @@ import {
   Monitor, BookOpen, PinOff, Bold, Italic,
   Heading1, Heading2, Heading3, Code2, CheckSquare, Minus,
   Sun, Moon, Laptop, PanelLeftClose,
+  LayoutList, ArrowUp, ArrowDown, Copy, Blocks, Repeat,
 } from 'lucide-react';
 import AppIcon from './icons/AppIcon';
 import { useUIStore } from '../store/ui';
@@ -21,11 +22,14 @@ interface Cmd {
   hotkey?: string;
   icon: React.ElementType;
   group?: string;
+  /** Only offered while a notepad is open — meaningless for a plain note. */
+  notepadOnly?: boolean;
 }
 
 const COMMANDS: Cmd[] = [
   // Navigation
   { id: 'new-note',    label: 'New Note',            hotkey: 'Ctrl+N', icon: FilePlus,      group: 'Navigation' },
+  { id: 'new-notepad', label: 'New Notepad',                            icon: LayoutList,    group: 'Navigation' },
   { id: 'notes-view',  label: 'Go to Notes',                            icon: BookOpen,      group: 'Navigation' },
   { id: 'pin-note',    label: 'Pin / Unpin Note',                       icon: Pin,           group: 'Navigation' },
   { id: 'trash',       label: 'Toggle Trash',         hotkey: 'Ctrl+T', icon: Trash2,        group: 'Navigation' },
@@ -47,6 +51,13 @@ const COMMANDS: Cmd[] = [
   { id: 'fmt-code',    label: 'Code Block',                              icon: Code2,         group: 'Editor'     },
   { id: 'fmt-task',    label: 'Task List',                               icon: CheckSquare,   group: 'Editor'     },
   { id: 'fmt-hr',      label: 'Insert Divider',                          icon: Minus,         group: 'Editor'     },
+  { id: 'convert',     label: 'Convert Note ↔ Notepad',                  icon: Repeat,        group: 'Editor'     },
+  // Blocks — notepad only
+  { id: 'blk-up',       label: 'Move Block Up',      hotkey: 'Alt+↑',   icon: ArrowUp,       group: 'Blocks', notepadOnly: true },
+  { id: 'blk-down',     label: 'Move Block Down',    hotkey: 'Alt+↓',   icon: ArrowDown,     group: 'Blocks', notepadOnly: true },
+  { id: 'blk-dup',      label: 'Duplicate Block',    hotkey: 'Ctrl+Shift+D', icon: Copy,     group: 'Blocks', notepadOnly: true },
+  { id: 'blk-del',      label: 'Delete Block',                            icon: Trash2,      group: 'Blocks', notepadOnly: true },
+  { id: 'blk-ref',      label: 'Insert Block Reference',                  icon: Blocks,      group: 'Blocks', notepadOnly: true },
   // Account
   { id: 'logout',      label: 'Log Out',                                 icon: LogOut,        group: 'Account'    },
 ];
@@ -124,7 +135,8 @@ type Row = { kind: 'cmd'; data: Cmd } | { kind: 'note'; data: Note };
 function CommandPill() {
   const { commandsOpen, openCommands, closeCommands, openSettings, setView, view } = useUIStore();
   const { logout }    = useAuthStore();
-  const { notes, activeNoteId, createNote, updateNote, setActiveNote, loadLinks } = useNoteStore();
+  const { notes, activeNoteId, createNote, updateNote, setActiveNote, loadLinks,
+          convertNote, conversionImpact } = useNoteStore();
   const { vaults, activeVaultId, setActiveVault } = useVaultStore();
   const { setColorScheme } = useThemeStore();
 
@@ -143,8 +155,15 @@ function CommandPill() {
     .filter((v) => v.id !== activeVaultId)
     .map((v) => ({ id: `vault:${v.id}`, label: `Switch to ${v.name}`, icon: BookOpen, group: 'Vaults' }));
 
+  // Block commands only exist for a notepad, so offering them elsewhere would
+  // list actions that silently do nothing.
+  const activeNote = notes.find((n) => n.id === activeNoteId);
+  const isNotepad = activeNote?.kind === 'notepad';
+
   const allCmds = [...COMMANDS, ...vaultCmds];
-  const filteredCmds  = allCmds.filter((c) => !q || c.label.toLowerCase().includes(q));
+  const filteredCmds = allCmds
+    .filter((c) => !c.notepadOnly || isNotepad)
+    .filter((c) => !q || c.label.toLowerCase().includes(q));
   const filteredNotes: Note[] = q
     ? notes.filter((n) => (n.title || '').toLowerCase().includes(q)).slice(0, 8)
     : notes.slice(0, 6);
@@ -213,6 +232,51 @@ function CommandPill() {
       case 'new-note':
         if (activeVaultId) { setView('notes'); await createNote({ vaultId: activeVaultId }); }
         break;
+      case 'new-notepad':
+        if (activeVaultId) {
+          setView('notes');
+          await createNote({ vaultId: activeVaultId, kind: 'notepad' });
+        }
+        break;
+      case 'convert': {
+        const note = notes.find((n) => n.id === activeNoteId);
+        if (!note) break;
+        const to = note.kind === 'notepad' ? 'note' : 'notepad';
+
+        // Going back to a plain note loses block structure, and any reference
+        // pointing into this note breaks. State the cost in specifics before
+        // asking, and skip the prompt entirely when there is nothing to lose.
+        if (to === 'note') {
+          const impact = await conversionImpact(note.id);
+          const losses: string[] = [];
+          if (impact.blockTagCount > 0) {
+            losses.push(`${impact.blockTagCount} block tag${impact.blockTagCount === 1 ? '' : 's'}`);
+          }
+          if (impact.blockLinkCount > 0) {
+            losses.push(`${impact.blockLinkCount} block link${impact.blockLinkCount === 1 ? '' : 's'}`);
+          }
+          if (losses.length > 0 || impact.inboundRefCount > 0) {
+            const lines = ['Convert this notepad to a plain note?', ''];
+            if (losses.length > 0) {
+              lines.push(`${losses.join(' and ')} will stop being shown.`);
+              lines.push('Converting back restores them.');
+            }
+            if (impact.inboundRefCount > 0) {
+              lines.push('');
+              lines.push(
+                `${impact.inboundRefCount} reference${impact.inboundRefCount === 1 ? '' : 's'} ` +
+                'from other notepads will break permanently.',
+              );
+            }
+            if (!confirm(lines.join('\n'))) break;
+          }
+        }
+
+        await convertNote(note.id, to);
+        // The editor keys its instance off kind, so it rebuilds on this change.
+        await setActiveNote(note.id);
+        break;
+      }
       case 'notes-view':  setView('notes'); break;
       case 'pin-note': {
         const note = notes.find((n) => n.id === activeNoteId);
@@ -235,6 +299,11 @@ function CommandPill() {
       case 'fmt-code':     editorCmd('codeBlock');       break;
       case 'fmt-task':     editorCmd('taskList');        break;
       case 'fmt-hr':       editorCmd('hr');              break;
+      case 'blk-up':       editorCmd('block:moveUp');    break;
+      case 'blk-down':     editorCmd('block:moveDown');  break;
+      case 'blk-dup':      editorCmd('block:duplicate'); break;
+      case 'blk-del':      editorCmd('block:delete');    break;
+      case 'blk-ref':      editorCmd('block:insertRef'); break;
       case 'logout':       if (confirm('Log out?')) await logout(); break;
       default:
         if (row.data.id.startsWith('vault:')) {
@@ -242,7 +311,7 @@ function CommandPill() {
         }
         break;
     }
-  }, [close, activeVaultId, activeNoteId, createNote, updateNote, notes, loadLinks, logout, openSettings, setActiveNote, setView, view, setColorScheme, setActiveVault]);
+  }, [close, activeVaultId, activeNoteId, createNote, updateNote, notes, loadLinks, logout, openSettings, setActiveNote, setView, view, setColorScheme, setActiveVault, convertNote, conversionImpact]);
 
   // ── Input handlers ────────────────────────────────────────────────────────
 

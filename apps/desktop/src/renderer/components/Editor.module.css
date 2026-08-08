@@ -275,6 +275,48 @@
 }
 
 /* Placeholder */
+/* ── Notepad blocks ─────────────────────────────────────────────────────────
+ *
+ * A block is a unit of the page, not a card: no border, no background, no
+ * shadow. The only visible difference from a plain note is that the vertical
+ * rhythm belongs to the block rather than to the paragraph inside it, so
+ * reordering never changes the spacing around what moved.
+ *
+ * Room on the left for the gutter controls, which are absolutely positioned
+ * from the measured block rect. */
+.notepad {
+  padding-left: 60px;
+}
+
+.notepad :global(.ProseMirror > div[data-block]) {
+  position: relative;
+  margin: 2px 0;
+}
+
+/* The block owns the spacing, so the content inside it must not double up. */
+.notepad :global(.ProseMirror > div[data-block] > *) {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+/* Headings keep their space above, since that separation is what makes a
+ * document scannable — but it comes off the block, not the heading. */
+.notepad :global(.ProseMirror > div[data-block]:has(> h1)) { margin-top: 1.2em; }
+.notepad :global(.ProseMirror > div[data-block]:has(> h2)) { margin-top: 1em; }
+.notepad :global(.ProseMirror > div[data-block]:has(> h3)) { margin-top: 0.8em; }
+.notepad :global(.ProseMirror > div[data-block]:first-child) { margin-top: 0; }
+
+/* Faint ground under the block the gutter controls currently act on.
+ *
+ * Keyed off an attribute set by BlockChrome rather than `:hover`, because the
+ * controls live outside the block: with `:hover` the highlight would drop away
+ * exactly when the pointer moved to the handle, which is when it matters most.
+ * Nearly invisible by design — it marks a target, it does not decorate. */
+.notepad :global(.ProseMirror > div[data-block][data-block-active]) {
+  background: color-mix(in srgb, var(--text-primary) 3.5%, transparent);
+  border-radius: var(--radius-sm);
+}
+
 .content :global(.ProseMirror p.is-editor-empty:first-child::before) {
   content: attr(data-placeholder);
   color: var(--text-muted);
