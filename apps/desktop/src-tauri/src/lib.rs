@@ -44,6 +44,12 @@ pub fn run() {
             commands::notes::notes_search,
             commands::notes::notes_permanent_delete,
             commands::notes::notes_unlinked_mentions,
+            commands::notes::notes_convert,
+            commands::notes::notes_conversion_impact,
+            // blocks
+            commands::blocks::blocks_list_for_note,
+            commands::blocks::blocks_resolve_ref,
+            commands::blocks::blocks_reproject,
             // tags
             commands::tags::tags_list,
             commands::tags::tags_create,

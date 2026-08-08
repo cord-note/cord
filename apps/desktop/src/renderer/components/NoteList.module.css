@@ -67,6 +67,94 @@
   color: var(--text-secondary);
 }
 
+/* Split new-note control. The caret is deliberately small and quiet — creating a
+ * plain note is the overwhelmingly common action, and the kind choice should not
+ * compete with it for attention. */
+.newGroup {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.newCaret {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  transition: background 0.12s, color 0.12s;
+}
+
+.newCaret:hover {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+
+/* Catches the next click anywhere so the menu dismisses without a document
+ * listener that has to be sequenced against the click that opened it. */
+.kindBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+}
+
+.kindMenu {
+  position: absolute;
+  top: 30px;
+  right: 0;
+  z-index: 61;
+  width: 226px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-input);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 20%);
+}
+
+.kindItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 8px;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  text-align: left;
+}
+
+.kindItem:hover {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+
+.kindText {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.kindTitle {
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.kindHint {
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+/* Sits on the title's baseline rather than beside it, so rows stay aligned
+ * whether or not a note is a notepad. */
+.kindIcon {
+  margin-right: 5px;
+  color: var(--text-muted);
+  vertical-align: -1px;
+}
+
 /* ── Vault name line ─────────────────────────────────────────────────────── */
 
 .vaultLine {

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type {
-  Note, NoteListItem, NoteLink,
-  CreateNoteInput, UpdateNoteInput,
+  Note, NoteListItem, NoteLink, NoteKind,
+  CreateNoteInput, UpdateNoteInput, ConversionImpact,
   Tag, UnlinkedMention,
 } from '@shared/types';
 import { api } from '@renderer/ipc';
@@ -28,6 +28,8 @@ interface NoteStore {
   setActiveNote:        (id: string | null) => Promise<void>;
   createNote:           (input: CreateNoteInput) => Promise<Note>;
   updateNote:           (id: string, input: UpdateNoteInput) => Promise<Note>;
+  convertNote:          (id: string, kind: NoteKind) => Promise<Note>;
+  conversionImpact:     (id: string) => Promise<ConversionImpact>;
   deleteNote:           (id: string) => Promise<void>;
   restoreNote:          (id: string) => Promise<Note>;
   permanentDeleteNote:  (id: string) => Promise<void>;
@@ -42,7 +44,7 @@ interface NoteStore {
 }
 
 function toNote(item: NoteListItem): Note {
-  return { ...item, bodyJson: '{}', bodyMarkdown: '' };
+  return { ...item, bodyJson: '{}' };
 }
 
 export const useNoteStore = create<NoteStore>((set, get) => ({
@@ -99,7 +101,7 @@ export const useNoteStore = create<NoteStore>((set, get) => ({
         set((s) => ({
           notes: s.notes.map((n) =>
             n.id === id
-              ? { ...n, bodyJson: fullNote.bodyJson, bodyMarkdown: fullNote.bodyMarkdown }
+              ? { ...n, bodyJson: fullNote.bodyJson, kind: fullNote.kind }
               : n,
           ),
         }));
@@ -129,6 +131,16 @@ export const useNoteStore = create<NoteStore>((set, get) => ({
     }));
     return note;
   },
+
+  convertNote: async (id, kind) => {
+    const note = await api.notes.convert(id, kind);
+    set((s) => ({
+      notes: s.notes.map((n) => (n.id === id ? { ...n, ...note } : n)),
+    }));
+    return note;
+  },
+
+  conversionImpact: (id) => api.notes.conversionImpact(id),
 
   deleteNote: async (id) => {
     await api.notes.delete(id);

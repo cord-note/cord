@@ -52,12 +52,19 @@ export interface UpdateVaultInput {
 
 // ─── Note ─────────────────────────────────────────────────────────────────────
 
+/**
+ * A plain `note` is one continuous document. A `notepad` is a flat sequence of
+ * addressable blocks — its document schema is `doc → block+`, so no content can
+ * exist outside a block.
+ */
+export type NoteKind = 'note' | 'notepad';
+
 export interface Note {
   id: string;
   vaultId: string;
   title: string;
-  bodyJson: string;       // serialised Tiptap JSON document
-  bodyMarkdown: string;   // derived on save — never edited directly
+  bodyJson: string;       // serialised Tiptap JSON document — source of truth
+  kind: NoteKind;
   isPinned: boolean;
   createdAt: number;
   updatedAt: number;
@@ -68,6 +75,7 @@ export interface NoteListItem {
   id: string;
   vaultId: string;
   title: string;
+  kind: NoteKind;
   isPinned: boolean;
   createdAt: number;
   updatedAt: number;
@@ -78,13 +86,12 @@ export interface CreateNoteInput {
   vaultId: string;
   title?: string;
   bodyJson?: string;
-  bodyMarkdown?: string;
+  kind?: NoteKind;
 }
 
 export interface UpdateNoteInput {
   title?: string;
   bodyJson?: string;
-  bodyMarkdown?: string;
   isPinned?: boolean;
 }
 
@@ -92,6 +99,46 @@ export interface UnlinkedMention {
   noteId: string;
   noteTitle: string;
   excerpt: string;
+  /** Block the match was found in — lets the UI scroll straight to it. */
+  blockId: string;
+}
+
+/** Cost of a notepad → note conversion, shown before it is confirmed. */
+export interface ConversionImpact {
+  blockTagCount: number;
+  blockLinkCount: number;
+  /** blockRefs in other notes that would be left unresolved. */
+  inboundRefCount: number;
+}
+
+// ─── Block ────────────────────────────────────────────────────────────────────
+
+/**
+ * A row of the `blocks` index. Derived from `notes.body_json` on every save and
+ * replaced wholesale — never authored directly, never the source of truth.
+ * Authored per-block data (tags, links) lives in `fragments` under the same id.
+ */
+export interface Block {
+  id: string;
+  noteId: string;
+  vaultId: string;
+  type: string;
+  sort: number;
+  level: number | null;
+  text: string;
+  refBlockId: string | null;
+  createdAt: number;
+  updatedAt: number;
+}
+
+/** Resolved target of a `blockRef` node. */
+export interface BlockRefTarget {
+  blockId: string;
+  noteId: string;
+  noteTitle: string;
+  type: string;
+  /** The source block's Tiptap content, rendered read-only at the ref site. */
+  contentJson: string;
 }
 
 // ─── Link ─────────────────────────────────────────────────────────────────────
