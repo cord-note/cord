@@ -1,140 +1,22 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { X, List, ListOrdered, CheckSquare, Quote, Code2, Minus, Sigma, Tag } from 'lucide-react';
-import { useEditor, EditorContent } from '@tiptap/react';
-import { Extension } from '@tiptap/core';
-import { Plugin, PluginKey } from '@tiptap/pm/state';
-import { BlockId } from './editor/BlockId';
-import { FragmentLinkNode } from './editor/FragmentLinkNode';
+import { EditorContent } from '@tiptap/react';
 import { FragmentOverlay } from './editor/FragmentOverlay';
 import { EditorContextMenu } from './editor/EditorContextMenu';
 import { useFragmentStore } from '../store/fragments';
-import StarterKit from '@tiptap/starter-kit';
-import Placeholder from '@tiptap/extension-placeholder';
-import TaskList from '@tiptap/extension-task-list';
-import { CustomTaskItem } from './editor/CustomTaskItem';
-import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
-import { common, createLowlight } from 'lowlight';
 import { useNoteStore } from '../store/notes';
 import { useTagStore } from '../store/tags';
 import { useVaultStore } from '../store/vaults';
 import { useSettingsStore } from '../store/settings';
 import { useUIStore } from '../store/ui';
-import { api } from '../ipc';
 import type { Note } from '@shared/types';
 import styles from './Editor.module.css';
 
-import { SlashCommand } from './editor/SlashCommand';
-import { WikiLink } from './editor/WikiLink';
-import { MathInline, MathBlock } from './editor/Math';
 import { WikiLinkPills } from './editor/WikiLinkPills';
-import { UnlinkedMentionDecorations } from './editor/UnlinkedMentionDecorations';
-import { markdownClipboardProps } from './editor/markdownClipboard';
-
-const lowlight = createLowlight(common);
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function collectLinkIds(doc: any): Set<string> {
-  const ids = new Set<string>();
-  doc.descendants((node: { type: { name: string }; attrs: Record<string, unknown> }) => {
-    if (node.type.name === 'fragmentLinkNode' && node.attrs.linkId) {
-      ids.add(node.attrs.linkId as string);
-    }
-  });
-  return ids;
-}
-
-function escapeRe(s: string) {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-/** A valid, empty ProseMirror document. */
-function emptyDoc(): Record<string, unknown> {
-  return { type: 'doc', content: [{ type: 'paragraph' }] };
-}
-
-/**
- * Parse a stored body into a ProseMirror document.
- *
- * A new note's body_json is '{}' — the column default — which parses cleanly
- * but is NOT a valid doc, so Tiptap throws "Unknown node type: undefined".
- * Guarding with try/catch alone is not enough: the shape has to be checked,
- * not just the JSON syntax.
- */
-function parseBody(bodyJson: string): Record<string, unknown> {
-  try {
-    const parsed: unknown = JSON.parse(bodyJson);
-    if (
-      parsed !== null &&
-      typeof parsed === 'object' &&
-      (parsed as { type?: unknown }).type === 'doc'
-    ) {
-      return parsed as Record<string, unknown>;
-    }
-  } catch {
-    // Malformed JSON — fall through to an empty document.
-  }
-  return emptyDoc();
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function computeOutboundMentions(doc: any, notes: Note[], currentNoteId: string): Note[] {
-  const linkedIds = new Set<string>();
-  const textParts: string[] = [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  doc.descendants((node: any) => {
-    if (node.type.name === 'wikiLink') {
-      if (node.attrs.id) linkedIds.add(node.attrs.id as string);
-      return false;
-    }
-    if (node.isText && node.text) textParts.push(node.text as string);
-  });
-  const fullText = textParts.join(' ');
-  return notes.filter((n) => {
-    if (n.id === currentNoteId || linkedIds.has(n.id)) return false;
-    const title = (n.title || '').trim();
-    if (title.length < 3) return false;
-    return new RegExp(`(?<![\\w])${escapeRe(title)}(?![\\w])`, 'i').test(fullText);
-  });
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function collectWikiLinkTargets(doc: any): Set<string> {
-  const ids = new Set<string>();
-  doc.descendants((node: { type: { name: string }; attrs: Record<string, unknown> }) => {
-    if (node.type.name === 'wikiLink' && node.attrs.id) {
-      ids.add(node.attrs.id as string);
-    }
-  });
-  return ids;
-}
-
-const AltGrSupport = Extension.create({
-  name: 'altGrSupport',
-  addProseMirrorPlugins() {
-    return [new Plugin({
-      key: new PluginKey('altGrSupport'),
-      props: {
-        handleKeyDown(_view, event) {
-          if (event.ctrlKey && event.altKey) return false;
-          return false;
-        },
-      },
-    })];
-  },
-});
-
-const ToggleTaskItem = Extension.create({
-  name: 'toggleTaskItem',
-  addKeyboardShortcuts() {
-    return {
-      'Mod-Enter': ({ editor }) => {
-        if (!editor.isActive('taskItem')) return false;
-        const { checked } = editor.getAttributes('taskItem');
-        return editor.commands.updateAttributes('taskItem', { checked: !checked });
-      },
-    };
-  },
-});
+import { useNoteDoc } from './editor/useNoteDoc';
+import BlockChrome from './editor/BlockChrome';
+import BlockRefPicker from './editor/BlockRefPicker';
+import { OPEN_REF_PICKER_EVENT } from './editor/blockTarget';
 
 const SAVE_DEBOUNCE_MS = 750;
 
@@ -152,24 +34,19 @@ export default function Editor({ note }: Props) {
   const { setView } = useUIStore();
   const [showTagPicker, setShowTagPicker] = useState(false);
   const [newTagName, setNewTagName] = useState('');
-  const [wordCount, setWordCount] = useState(0);
-  const [charCount, setCharCount] = useState(0);
-  const [outboundMentions, setOutboundMentions] = useState<Note[]>([]);
+  const [showRefPicker, setShowRefPicker] = useState(false);
 
   const noteIdRef = useRef(note.id);
-  const notesRef  = useRef(notes);
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const titleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const activeLinkIds = useRef<Set<string>>(new Set());
-  const activeWikiTargets = useRef<Set<string>>(new Set());
-  const outboundTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { loadForNote: loadFragments, pendingScroll, setPendingScroll } = useFragmentStore();
 
   const [localTitle, setLocalTitle] = useState(note.title);
 
-  notesRef.current = notes;
+  // The editor instance, its save cycle and its counters.
+  const { editor, wordCount, charCount, outboundMentions } = useNoteDoc(note);
+  const isNotepad = note.kind === 'notepad';
 
   useEffect(() => {
     noteIdRef.current = note.id;
@@ -180,79 +57,12 @@ export default function Editor({ note }: Props) {
     setShowTagPicker(false);
   }, [note.id, note.title]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const editor = useEditor({
-    extensions: [
-      AltGrSupport,
-      StarterKit.configure({ codeBlock: false }),
-      Placeholder.configure({ placeholder: 'Start writing… or type / for commands' }),
-      TaskList,
-      CustomTaskItem,
-      ToggleTaskItem,
-      CodeBlockLowlight.configure({ lowlight }),
-      SlashCommand,
-      WikiLink,
-      MathInline,
-      MathBlock,
-      BlockId,
-      FragmentLinkNode,
-      UnlinkedMentionDecorations,
-    ],
-    content: parseBody(note.bodyJson),
-    // Pasted markdown renders as real nodes; copied selections leave as
-    // markdown text rather than flattened plain text.
-    editorProps: markdownClipboardProps,
-    onUpdate: ({ editor }) => {
-      const currentIds = collectLinkIds(editor.state.doc);
-      for (const id of activeLinkIds.current) {
-        if (!currentIds.has(id)) {
-          api.fragments.deleteLink(id).catch(() => {});
-        }
-      }
-      activeLinkIds.current = currentIds;
-
-      const currentTargets = collectWikiLinkTargets(editor.state.doc);
-      let linkDeleted = false;
-      for (const toId of activeWikiTargets.current) {
-        if (!currentTargets.has(toId)) {
-          api.links.delete(noteIdRef.current, toId).catch(() => {});
-          linkDeleted = true;
-        }
-      }
-      activeWikiTargets.current = currentTargets;
-      if (linkDeleted) loadLinks(noteIdRef.current);
-
-      const text = editor.getText();
-      setCharCount(text.length);
-      setWordCount(text.trim() === '' ? 0 : text.trim().split(/\s+/).length);
-
-      if (outboundTimer.current) clearTimeout(outboundTimer.current);
-      outboundTimer.current = setTimeout(() => {
-        setOutboundMentions(computeOutboundMentions(editor.state.doc, notesRef.current, noteIdRef.current));
-      }, 800);
-
-      if (saveTimer.current) clearTimeout(saveTimer.current);
-      saveTimer.current = setTimeout(() => {
-        updateNote(noteIdRef.current, {
-          bodyJson: JSON.stringify(editor.getJSON()),
-        });
-      }, SAVE_DEBOUNCE_MS);
-    },
-  });
-
+  // The slash menu cannot open a React modal itself, so it asks for one.
   useEffect(() => {
-    if (!editor || editor.isDestroyed) return;
-    if (saveTimer.current) {
-      clearTimeout(saveTimer.current);
-      saveTimer.current = null;
-    }
-    editor.commands.setContent(parseBody(note.bodyJson), false);
-    activeLinkIds.current    = collectLinkIds(editor.state.doc);
-    activeWikiTargets.current = collectWikiLinkTargets(editor.state.doc);
-    const text = editor.getText();
-    setCharCount(text.length);
-    setWordCount(text.trim() === '' ? 0 : text.trim().split(/\s+/).length);
-    setOutboundMentions(computeOutboundMentions(editor.state.doc, notesRef.current, note.id));
-  }, [note.id]); // eslint-disable-line react-hooks/exhaustive-deps
+    function onOpen() { setShowRefPicker(true); }
+    window.addEventListener(OPEN_REF_PICKER_EVENT, onOpen);
+    return () => window.removeEventListener(OPEN_REF_PICKER_EVENT, onOpen);
+  }, []);
 
   useEffect(() => {
     if (!pendingScroll || !editor) return;
@@ -276,18 +86,34 @@ export default function Editor({ note }: Props) {
         case 'h3':        editor.chain().focus().toggleHeading({ level: 3 }).run(); break;
         case 'codeBlock': editor.chain().focus().toggleCodeBlock().run(); break;
         case 'taskList':  editor.chain().focus().toggleTaskList().run(); break;
-        case 'hr':        editor.chain().focus().setHorizontalRule().run(); break;
+        case 'hr':
+          // In a notepad a divider is its own block; setHorizontalRule would
+          // try to place one inside the current block, where it cannot go.
+          if (isNotepad) {
+            editor.chain().focus().command(({ commands, state }) =>
+              commands.replaceBlockWith(state.selection.from, [{ type: 'horizontalRule' }]),
+            ).run();
+          } else {
+            editor.chain().focus().setHorizontalRule().run();
+          }
+          break;
+
+        // Notepad-only. The command bar hides these for a plain note, but guard
+        // anyway — the event is on `window` and anything can dispatch it.
+        case 'block:moveUp':    if (isNotepad) editor.commands.moveBlock(editor.state.selection.from, -1); break;
+        case 'block:moveDown':  if (isNotepad) editor.commands.moveBlock(editor.state.selection.from, 1); break;
+        case 'block:duplicate': if (isNotepad) editor.commands.duplicateBlock(editor.state.selection.from); break;
+        case 'block:delete':    if (isNotepad) editor.commands.deleteBlock(editor.state.selection.from); break;
+        case 'block:insertRef': if (isNotepad) setShowRefPicker(true); break;
       }
     }
     window.addEventListener('corddb:editor-command', onCmd);
     return () => window.removeEventListener('corddb:editor-command', onCmd);
-  }, [editor]);
+  }, [editor, isNotepad]);
 
   useEffect(() => {
     return () => {
-      if (saveTimer.current)    clearTimeout(saveTimer.current);
-      if (titleTimer.current)   clearTimeout(titleTimer.current);
-      if (outboundTimer.current) clearTimeout(outboundTimer.current);
+      if (titleTimer.current) clearTimeout(titleTimer.current);
     };
   }, []);
 
@@ -525,8 +351,16 @@ export default function Editor({ note }: Props) {
         </div>
       )}
 
-      <div className={styles.content} ref={contentRef}>
+      <div className={`${styles.content} ${isNotepad ? styles.notepad : ''}`} ref={contentRef}>
         <EditorContent editor={editor} />
+        {editor && isNotepad && (
+          <BlockChrome
+            editor={editor}
+            noteId={note.id}
+            vaultId={note.vaultId}
+            contentEl={contentRef.current}
+          />
+        )}
         {editor && (
           <FragmentOverlay
             editor={editor}
@@ -543,6 +377,14 @@ export default function Editor({ note }: Props) {
       </div>
 
       {editor && <EditorContextMenu editor={editor} noteId={note.id} />}
+
+      {editor && showRefPicker && (
+        <BlockRefPicker
+          editor={editor}
+          currentNoteId={note.id}
+          onClose={() => setShowRefPicker(false)}
+        />
+      )}
 
       <div className={styles.statusBar}>
         <div className={styles.statusBacklinks}>

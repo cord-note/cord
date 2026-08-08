@@ -24,27 +24,29 @@ describe('NoteService', () => {
     expect(note.vaultId).toBe(VAULT_ID);
     expect(note.title).toBe('');
     expect(note.bodyJson).toBe('{}');
-    expect(note.bodyMarkdown).toBe('');
+    expect(note.kind).toBe('note');
     expect(note.deletedAt).toBeNull();
     expect(note.isPinned).toBe(false);
   });
 
   it('creates a note with provided fields', () => {
     const note = service.create({
-      vaultId:      VAULT_ID,
-      title:        'Hello',
-      bodyJson:     '{"type":"doc"}',
-      bodyMarkdown: '# Hello',
+      vaultId:  VAULT_ID,
+      title:    'Hello',
+      bodyJson: '{"type":"doc","content":[{"type":"paragraph"}]}',
     });
     expect(note.title).toBe('Hello');
-    expect(note.bodyMarkdown).toBe('# Hello');
+    expect(note.bodyJson).toContain('paragraph');
   });
 
-  it('updates title and bodyMarkdown', () => {
+  it('updates title and body', () => {
     const note = service.create({ vaultId: VAULT_ID, title: 'Old' });
-    const updated = service.update(note.id, { title: 'New', bodyMarkdown: '# New' });
+    const updated = service.update(note.id, {
+      title: 'New',
+      bodyJson: '{"type":"doc","content":[{"type":"paragraph"}]}',
+    });
     expect(updated.title).toBe('New');
-    expect(updated.bodyMarkdown).toBe('# New');
+    expect(updated.bodyJson).toContain('paragraph');
   });
 
   it('soft-deletes a note (sets deletedAt)', () => {

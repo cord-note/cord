@@ -6,12 +6,14 @@ import { LinkService }     from './services/LinkService';
 import { TagService }      from './services/TagService';
 import { AuthService }     from './services/AuthService';
 import { FragmentService } from './services/FragmentService';
+import { BlockIndexService } from './services/BlockIndexService';
 import { registerVaultHandlers }    from './handlers/vaults';
 import { registerNoteHandlers }     from './handlers/notes';
 import { registerTagHandlers }      from './handlers/tags';
 import { registerLinkHandlers }     from './handlers/links';
 import { registerFragmentHandlers } from './handlers/fragments';
 import { registerAuthHandlers }     from './handlers/auth';
+import { registerBlockHandlers }    from './handlers/blocks';
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 
@@ -21,10 +23,16 @@ runMigrations();
 
 const auth      = new AuthService();
 const vaults    = new VaultService();
-const notes     = new NoteService();
+const blocks    = new BlockIndexService();
+const notes     = new NoteService(blocks);
 const links     = new LinkService();
 const tags      = new TagService();
 const fragments = new FragmentService();
+
+// Existing notes predate the block index; back-fill so search works on first
+// launch after upgrade. Idempotent, and a no-op once every note has rows.
+const rebuilt = blocks.backfillMissing();
+if (rebuilt > 0) console.info(`[db] block index built for ${rebuilt} notes`);
 
 // ── Router ────────────────────────────────────────────────────────────────────
 
@@ -36,6 +44,7 @@ registerNoteHandlers(router, notes, auth);
 registerTagHandlers(router, tags, auth);
 registerLinkHandlers(router, links, auth);
 registerFragmentHandlers(router, fragments, auth);
+registerBlockHandlers(router, blocks, auth);
 
 // ── Server ────────────────────────────────────────────────────────────────────
 

@@ -5,7 +5,9 @@
 import { invoke } from '@tauri-apps/api/core';
 import type {
   Vault, CreateVaultInput, UpdateVaultInput,
-  Note, NoteListItem, CreateNoteInput, UpdateNoteInput, NoteLinks, UnlinkedMention,
+  Note, NoteListItem, NoteKind, CreateNoteInput, UpdateNoteInput, NoteLinks, UnlinkedMention,
+  ConversionImpact,
+  Block, BlockRefTarget,
   Tag, CreateTagInput, NoteTagRow,
   NoteLink,
   FragmentAnnotationMap, CreateFragmentLinkInput, FragmentLink,
@@ -32,6 +34,14 @@ export const api = {
     search:           (vaultId: string, query: string)           => invoke<NoteListItem[]>('notes_search', { vaultId, query }),
     permanentDelete:  (id: string)                               => invoke<void>('notes_permanent_delete', { id }),
     unlinkedMentions: (noteId: string, vaultId: string)          => invoke<UnlinkedMention[]>('notes_unlinked_mentions', { noteId, vaultId }),
+    convert:          (id: string, kind: NoteKind)               => invoke<Note>('notes_convert', { id, kind }),
+    conversionImpact: (id: string)                               => invoke<ConversionImpact>('notes_conversion_impact', { id }),
+  },
+
+  blocks: {
+    listForNote: (noteId: string)   => invoke<Block[]>('blocks_list_for_note', { noteId }),
+    resolveRef:  (blockId: string)  => invoke<BlockRefTarget | null>('blocks_resolve_ref', { blockId }),
+    reproject:   (noteId: string)   => invoke<Block[]>('blocks_reproject', { noteId }),
   },
 
   tags: {

@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { Search, X, Plus, Pin, PinOff, Trash2, SlidersHorizontal } from 'lucide-react';
+import {
+  Search, X, Plus, Pin, PinOff, Trash2, SlidersHorizontal,
+  FileText, LayoutList, ChevronDown,
+} from 'lucide-react';
+import type { NoteKind } from '@shared/types';
 import { useVaultStore } from '../store/vaults';
 import { useNoteStore } from '../store/notes';
 import { useTagStore } from '../store/tags';
@@ -46,6 +50,7 @@ export default function NoteList() {
 
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showTagFilter, setShowTagFilter] = useState(false);
+  const [showKindMenu, setShowKindMenu] = useState(false);
 
   useEffect(() => {
     return () => { if (searchTimer.current) clearTimeout(searchTimer.current); };
@@ -69,10 +74,12 @@ export default function NoteList() {
     await loadLinks(id);
   }
 
-  async function handleNewNote() {
+  async function handleNewNote(kind: NoteKind = 'note') {
     if (!activeVaultId) return;
+    setShowKindMenu(false);
     try {
-      await createNote({ vaultId: activeVaultId });
+      await createNote({ vaultId: activeVaultId, kind });
+      setView('notes');
     } catch (err) {
       console.error('Failed to create note:', err);
     }
@@ -136,9 +143,48 @@ export default function NoteList() {
               <SlidersHorizontal size={13} strokeWidth={2} />
             </button>
           )}
-          <button className={styles.newBtn} onClick={handleNewNote} title="New note (Ctrl+N)">
-            <Plus size={15} strokeWidth={2} />
-          </button>
+          {/* Split control: the common case stays one click, and the kind
+              choice is a deliberate second gesture rather than a dialog. */}
+          <div className={styles.newGroup}>
+            <button
+              className={styles.newBtn}
+              onClick={() => handleNewNote('note')}
+              title="New note (Ctrl+N)"
+            >
+              <Plus size={15} strokeWidth={2} />
+            </button>
+            <button
+              className={`${styles.newCaret} ${showKindMenu ? styles.newBtnActive : ''}`}
+              onClick={() => setShowKindMenu((v) => !v)}
+              title="Choose what to create"
+              aria-label="Choose what to create"
+              aria-expanded={showKindMenu}
+            >
+              <ChevronDown size={11} strokeWidth={2.5} />
+            </button>
+
+            {showKindMenu && (
+              <>
+                <div className={styles.kindBackdrop} onClick={() => setShowKindMenu(false)} />
+                <div className={styles.kindMenu}>
+                  <button className={styles.kindItem} onClick={() => handleNewNote('note')}>
+                    <FileText size={13} strokeWidth={1.75} />
+                    <span className={styles.kindText}>
+                      <span className={styles.kindTitle}>Note</span>
+                      <span className={styles.kindHint}>One page. Quick capture.</span>
+                    </span>
+                  </button>
+                  <button className={styles.kindItem} onClick={() => handleNewNote('notepad')}>
+                    <LayoutList size={13} strokeWidth={1.75} />
+                    <span className={styles.kindText}>
+                      <span className={styles.kindTitle}>Notepad</span>
+                      <span className={styles.kindHint}>Blocks you can reorder and reference.</span>
+                    </span>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -207,7 +253,7 @@ export default function NoteList() {
           ) : (
             <>
               <p>No notes yet</p>
-              <button className={styles.createFirst} onClick={handleNewNote}>
+              <button className={styles.createFirst} onClick={() => handleNewNote('note')}>
                 Create your first note
               </button>
             </>
@@ -230,6 +276,16 @@ export default function NoteList() {
                 <div className={styles.itemContent}>
                   <div className={styles.itemTitleRow}>
                     <span className={styles.itemTitle}>
+                      {/* Marks notepads only. Labelling the common case too
+                          would just add noise to every row. */}
+                      {note.kind === 'notepad' && (
+                        <LayoutList
+                          size={11}
+                          strokeWidth={2}
+                          className={styles.kindIcon}
+                          aria-label="Notepad"
+                        />
+                      )}
                       {note.title || <em className={styles.untitled}>Untitled</em>}
                     </span>
                     <div className={styles.itemActions}>

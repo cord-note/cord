@@ -34,18 +34,52 @@ export const vaults = sqliteTable('vaults', {
 export const notes = sqliteTable(
   'notes',
   {
-    id:           text('id').primaryKey(),
-    vaultId:      text('vault_id').notNull().references(() => vaults.id),
-    title:        text('title').notNull().default(''),
-    bodyJson:     text('body_json').notNull().default('{}'),
-    bodyMarkdown: text('body_markdown').notNull().default(''),
-    isPinned:     integer('is_pinned', { mode: 'boolean' }).notNull().default(false),
-    createdAt:    integer('created_at').notNull(),
-    updatedAt:    integer('updated_at').notNull(),
-    deletedAt:    integer('deleted_at'),
+    id:        text('id').primaryKey(),
+    vaultId:   text('vault_id').notNull().references(() => vaults.id),
+    title:     text('title').notNull().default(''),
+    bodyJson:  text('body_json').notNull().default('{}'),
+    kind:      text('kind').notNull().default('note'),   // 'note' | 'notepad'
+    isPinned:  integer('is_pinned', { mode: 'boolean' }).notNull().default(false),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+    deletedAt: integer('deleted_at'),
   },
   (t) => ({
     vaultIdx: index('idx_notes_vault').on(t.vaultId, t.deletedAt),
+  }),
+);
+
+// ─── Blocks ───────────────────────────────────────────────────────────────────
+
+/**
+ * Derived index over `notes.body_json` — one row per top-level node, for every
+ * note kind. Rebuilt wholesale on save (see BlockIndexService.reproject), so it
+ * is disposable by design: nothing here is authored, and losing it costs only a
+ * reproject. Authored per-block data lives in `fragments` under the same id.
+ *
+ * `id` === the node's `blockId` attribute === `fragments.id`, so all three join
+ * without a mapping table. Nodes that carry no blockId (list nodes in plain
+ * notes) get the deterministic synthetic id `${noteId}:${sort}`; those rows are
+ * searchable but are not valid blockRef targets.
+ */
+export const blocks = sqliteTable(
+  'blocks',
+  {
+    id:         text('id').primaryKey(),
+    noteId:     text('note_id').notNull().references(() => notes.id),
+    vaultId:    text('vault_id').notNull().references(() => vaults.id),
+    type:       text('type').notNull(),
+    sort:       integer('sort').notNull(),
+    level:      integer('level'),
+    text:       text('text').notNull().default(''),
+    refBlockId: text('ref_block_id'),
+    createdAt:  integer('created_at').notNull(),
+    updatedAt:  integer('updated_at').notNull(),
+  },
+  (t) => ({
+    noteIdx: index('idx_blocks_note').on(t.noteId, t.sort),
+    typeIdx: index('idx_blocks_type').on(t.vaultId, t.type),
+    refIdx:  index('idx_blocks_ref').on(t.refBlockId),
   }),
 );
 
@@ -152,6 +186,7 @@ export const schema = {
   users,
   vaults,
   notes,
+  blocks,
   noteLinks,
   tags,
   noteTags,
