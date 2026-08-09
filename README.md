@@ -1,5 +1,8 @@
 # Cord
 
+[![CI](https://github.com/cord-note/cord/actions/workflows/ci.yml/badge.svg)](https://github.com/cord-note/cord/actions/workflows/ci.yml)
+[![License: AGPL v3](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
+
 Local-first desktop note-taking app. Vaults → Notes → Links → Tags — a knowledge graph, not a filing cabinet.
 
 **Status:** v1.6 — migrating from Electron + Next.js (see the older `CordDB` repo) to Tauri + a Bun sidecar, carrying the existing React frontend across.
@@ -66,6 +69,8 @@ Requires Node 20+, pnpm 9+, [Bun](https://bun.sh), and the
 [Tauri prerequisites](https://tauri.app/start/prerequisites/) for your platform.
 
 ```bash
+git clone https://github.com/cord-note/cord.git
+cd cord
 pnpm install
 pnpm dev          # tauri dev — Vite + Bun sidecar + Rust shell
 pnpm test         # bun test
