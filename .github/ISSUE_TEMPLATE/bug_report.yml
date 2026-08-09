@@ -1,0 +1,74 @@
+name: Bug report
+description: Something in Cord behaves differently than it should
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Cord stores everything locally, so we cannot see your data or reproduce
+        from a server log — the details below are all we have to go on.
+
+        **Do not report security problems here.** Use
+        [private reporting](https://github.com/cord-note/cord/security/advisories/new)
+        instead.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, and what Cord did instead of what you expected.
+      placeholder: |
+        I held the delete button on a note in the list and…
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Number them if you can. "Sometimes" is useful information too — say so.
+      placeholder: |
+        1. Create a notepad
+        2. Type `---` on a new line
+        3. …
+    validations:
+      required: true
+
+  - type: dropdown
+    id: note-kind
+    attributes:
+      label: Which note kind
+      description: Notes and notepads use different document schemas, so this narrows it down a lot.
+      options:
+        - Not relevant / not sure
+        - Note
+        - Notepad
+        - Both
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Cord version or commit
+      placeholder: v1.6.0, or the commit SHA if you built from source
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: Windows 11 · macOS 15 · Fedora 41
+    validations:
+      required: true
+
+  - type: textarea
+    id: console
+    attributes:
+      label: Console output
+      description: >
+        If the app is misbehaving visibly, the webview console often says why.
+        Open devtools in a dev build, or attach the sidecar output if you
+        launched from a terminal. Optional.
+      render: shell

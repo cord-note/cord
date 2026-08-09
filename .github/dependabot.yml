@@ -1,0 +1,54 @@
+version: 2
+
+updates:
+  # Workspace root — pnpm catalogue and tooling.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: npm
+    directory: /apps/desktop
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # Tiptap ships its packages in lockstep and they share a ProseMirror
+      # schema registry; upgrading them one PR at a time produces a tree with
+      # two @tiptap/core versions, which breaks node parsing in ways that look
+      # nothing like a version conflict.
+      tiptap:
+        patterns:
+          - "@tiptap/*"
+      prosemirror:
+        patterns:
+          - "prosemirror-*"
+          - "@tiptap/pm"
+      react:
+        patterns:
+          - react
+          - react-dom
+          - "@types/react"
+          - "@types/react-dom"
+      tauri:
+        patterns:
+          - "@tauri-apps/*"
+      dev-tooling:
+        dependency-type: development
+
+  - package-ecosystem: cargo
+    directory: /apps/desktop/src-tauri
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+    groups:
+      tauri:
+        patterns:
+          - tauri
+          - tauri-*
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
