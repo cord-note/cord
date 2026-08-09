@@ -8,8 +8,9 @@ import { useVaultStore } from '../store/vaults';
 import { useNoteStore } from '../store/notes';
 import { useTagStore } from '../store/tags';
 import { useUIStore } from '../store/ui';
+import { matchesBinding } from '../store/keybindings';
 import { HoldButton } from './HoldButton';
-import { HOLD_DELETE_MS } from '@shared/constants';
+import { HOLD_NOTE_DELETE_MS } from '@shared/constants';
 import styles from './NoteList.module.css';
 
 const EXCERPT_LENGTH = 80;
@@ -58,9 +59,13 @@ export default function NoteList() {
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if ((e.metaKey || (e.ctrlKey && !e.altKey)) && e.key === 'n') {
+      if (matchesBinding(e, 'app.newNote')) {
         e.preventDefault();
-        handleNewNote();
+        handleNewNote('note');
+      }
+      if (matchesBinding(e, 'app.newNotepad')) {
+        e.preventDefault();
+        handleNewNote('notepad');
       }
     }
     window.addEventListener('keydown', onKey);
@@ -299,7 +304,7 @@ export default function NoteList() {
                           : <PinOff size={12} strokeWidth={1.75} />}
                       </button>
                       <HoldButton
-                        durationMs={HOLD_DELETE_MS}
+                        durationMs={HOLD_NOTE_DELETE_MS}
                         onComplete={() => handleDeleteNote(note.id)}
                         size={20}
                         title="Hold to move to trash"

@@ -56,6 +56,95 @@ export const DISTINCT_VAULT_COLORS: readonly string[] = [
 
 export const DEFAULT_VAULT_COLOR = '#7c6af7';
 
+const DISTINCT_SET = new Set(DISTINCT_VAULT_COLORS.map((c) => c.toLowerCase()));
+
+/** True when a colour is already part of the curated distinct set. */
+export function isDistinctVaultColor(color: string | null | undefined): boolean {
+  return color !== null && color !== undefined && DISTINCT_SET.has(color.toLowerCase());
+}
+
+/** Fallback when a vault has no colour, or an unparseable one. */
+export const DEFAULT_DISTINCT_COLOR: string = DISTINCT_VAULT_COLORS[0] ?? DEFAULT_VAULT_COLOR;
+
+interface Hsl { h: number; s: number; l: number }
+
+function hexToHsl(hex: string): Hsl | null {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m || !m[1]) return null;
+  const n = parseInt(m[1], 16);
+  const r = ((n >> 16) & 255) / 255;
+  const g = ((n >> 8) & 255) / 255;
+  const b = (n & 255) / 255;
+
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const d = max - min;
+  const l = (max + min) / 2;
+  if (d === 0) return { h: 0, s: 0, l };
+
+  const s = d / (1 - Math.abs(2 * l - 1));
+  let h: number;
+  if (max === r)      h = 60 * (((g - b) / d) % 6);
+  else if (max === g) h = 60 * ((b - r) / d + 2);
+  else                h = 60 * ((r - g) / d + 4);
+  return { h: (h + 360) % 360, s, l };
+}
+
+/** Shortest way round the colour wheel, 0–180. */
+function hueDistance(a: number, b: number): number {
+  const d = Math.abs(a - b) % 360;
+  return d > 180 ? 360 - d : d;
+}
+
+/** Below this, a colour reads as a neutral and its hue is essentially noise. */
+const NEUTRAL_SATURATION = 0.25;
+
+/**
+ * The distinct-set colour closest to `color`.
+ *
+ * Matching is done in HSL and led by hue, not by RGB distance. Plain RGB
+ * distance is dominated by lightness, which sent pale green to slate — the
+ * four shades of one hue family have to land on that family's curated colour,
+ * because that is the whole promise of the setting.
+ *
+ * Near-greys are matched among the curated neutrals only, by lightness: their
+ * hue carries no information worth honouring.
+ */
+export function nearestDistinctColor(color: string | null | undefined): string {
+  const target = color ? hexToHsl(color) : null;
+  if (!target) return DEFAULT_DISTINCT_COLOR;
+
+  const candidates = DISTINCT_VAULT_COLORS
+    .map((hex) => ({ hex, hsl: hexToHsl(hex) }))
+    .filter((c): c is { hex: string; hsl: Hsl } => c.hsl !== null);
+
+  // Neutrals and chromatics are matched within their own group. Crossing the
+  // line is always wrong in one direction or the other: a vivid sky blue sits
+  // one degree of hue from slate and would otherwise turn grey.
+  const isNeutral = target.s < NEUTRAL_SATURATION;
+  const pool = candidates.filter((c) => (c.hsl.s < NEUTRAL_SATURATION) === isNeutral);
+  const searched = pool.length > 0 ? pool : candidates;
+
+  let best = searched[0]?.hex ?? DEFAULT_DISTINCT_COLOR;
+  let bestScore = Number.POSITIVE_INFINITY;
+
+  for (const c of searched) {
+    // Among chromatics hue leads and the rest breaks ties. Among neutrals
+    // lightness leads, with just enough hue weight to keep a cool grey cool.
+    const score = isNeutral
+      ? Math.abs(target.l - c.hsl.l) * 10 + hueDistance(target.h, c.hsl.h) * 0.15
+      : hueDistance(target.h, c.hsl.h)
+        + Math.abs(target.s - c.hsl.s) * 12
+        + Math.abs(target.l - c.hsl.l) * 8;
+
+    if (score < bestScore) {
+      bestScore = score;
+      best = c.hex;
+    }
+  }
+  return best;
+}
+
 /** Colours offered by the picker, narrowed when distinct mode is enabled. */
 export function vaultColorOptions(distinctOnly: boolean): readonly string[] {
   return distinctOnly ? DISTINCT_VAULT_COLORS : VAULT_COLORS;

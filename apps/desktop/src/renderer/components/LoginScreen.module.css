@@ -48,6 +48,7 @@
   font-weight: 700;
   color: var(--text-primary);
   margin: 0 0 6px;
+  animation: copyFade 0.24s ease both;
 }
 
 .subheading {
@@ -55,11 +56,21 @@
   color: var(--text-muted);
   margin: 0 0 22px;
   line-height: 1.5;
+  /* Two lines' worth, always. The register copy wraps and the sign-in copy
+     does not, and letting the box resize moved the whole card. */
+  min-height: 39px;
+  animation: copyFade 0.24s ease both;
+}
+
+@keyframes copyFade {
+  from { opacity: 0; transform: translateY(-2px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* ── Tabs ────────────────────────────────────────────────────────────────── */
 
 .tabs {
+  position: relative;
   display: flex;
   border-radius: 8px;
   background: var(--bg-active);
@@ -67,7 +78,25 @@
   margin-bottom: 22px;
 }
 
+/* The selected-tab pill. One element that slides, rather than a background
+   that blinks from one button to the other. */
+.tabThumb {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc(50% - 3px);
+  border-radius: 6px;
+  background: var(--bg-panel);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tabThumbRight { transform: translateX(100%); }
+
 .tab {
+  position: relative;
+  z-index: 1;
   flex: 1;
   padding: 7px;
   border-radius: 6px;
@@ -77,7 +106,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: color 0.2s;
   font-family: inherit;
 }
 
@@ -86,9 +115,7 @@
 }
 
 .tabActive {
-  background: var(--bg-panel);
   color: var(--text-primary);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 
 /* ── Form ────────────────────────────────────────────────────────────────── */
@@ -113,23 +140,30 @@
   letter-spacing: 0.06em;
 }
 
+/* Borderless by design: the filled surface already separates the field from
+   the card, and the extra outline read as a second, competing edge. Focus is
+   carried by a ring, which never shifts layout the way a border can. */
 .input {
   width: 100%;
-  padding: 9px 12px;
-  background: var(--bg-active);
-  border: 1px solid var(--border);
+  padding: 10px 12px;
+  background: var(--bg-input);
+  border: none;
   border-radius: var(--radius);
   font-size: 14px;
   color: var(--text-primary);
   outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: background 0.15s, box-shadow 0.15s;
   font-family: inherit;
   box-sizing: border-box;
 }
 
+.input:hover:not(:disabled) {
+  background: var(--bg-active);
+}
+
 .input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.12);
+  background: var(--bg-active);
+  box-shadow: inset 0 0 0 1.5px var(--accent);
 }
 
 .input:disabled {
@@ -162,6 +196,35 @@
 
 .showPwBtn:hover {
   opacity: 1;
+}
+
+/* ── Collapsible rows ────────────────────────────────────────────────────── */
+
+/* A row that opens and closes without unmounting. Height animates through
+   grid-template-rows (0fr → 1fr) so nothing has to measure the content, and
+   the card grows instead of snapping to a new size. */
+.collapsible {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  /* The form's flex gap applies even to a zero-height row, so it is cancelled
+     while collapsed and paid back in step with the reveal. */
+  margin-bottom: -14px;
+  transition: grid-template-rows 0.26s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.18s ease,
+              margin-bottom 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.collapsibleOpen {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  margin-bottom: 0;
+}
+
+/* min-height:0 is what lets a grid row actually shrink below its content. */
+.collapsibleInner {
+  overflow: hidden;
+  min-height: 0;
 }
 
 /* ── Error ───────────────────────────────────────────────────────────────── */
@@ -209,4 +272,12 @@
   color: var(--text-muted);
   text-align: center;
   line-height: 1.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heading,
+  .subheading { animation: none; }
+
+  .tabThumb,
+  .collapsible { transition: none; }
 }

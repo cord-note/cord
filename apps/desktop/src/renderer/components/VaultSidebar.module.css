@@ -112,6 +112,56 @@
 
 /* ── Nav ──────────────────────────────────────────────────────────────────── */
 
+/* ── Scrolling section (vaults + connections) ─────────────────────────────── */
+
+.scrollWrap {
+  position: relative;
+  flex: 1;
+  /* Without this a flex child refuses to shrink past its content, and the
+     bottom nav would be pushed off the rail instead of the list scrolling. */
+  min-height: 0;
+  width: 100%;
+  display: flex;
+}
+
+.scrollArea {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* No visible track: the rail is 50px wide when collapsed, and a scrollbar
+     would take a real bite out of it. The edge fades are the cue instead. */
+  scrollbar-width: none;
+}
+
+.scrollArea::-webkit-scrollbar { width: 0; height: 0; }
+
+.scrollCue {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 20px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 1;
+}
+
+.scrollCueVisible { opacity: 1; }
+
+.scrollCueTop {
+  top: 0;
+  background: linear-gradient(to bottom, var(--bg-sidebar), transparent);
+}
+
+.scrollCueBottom {
+  bottom: 0;
+  background: linear-gradient(to top, var(--bg-sidebar), transparent);
+}
+
 .topNav {
   display: flex;
   flex-direction: column;
@@ -121,10 +171,10 @@
   flex-shrink: 0;
 }
 
-/* Empty area below the vault list — clicking it toggles the rail. */
+/* Empty area below the vault list — clicking it toggles the rail. It also
+   absorbs the leftover height, so a short list keeps the fades off screen. */
 .spacer {
-  flex: 1;
-  min-height: 16px;
+  flex: 1 0 16px;
   cursor: pointer;
 }
 
@@ -155,6 +205,11 @@
   opacity: 0.35;
   cursor: default;
 }
+
+/* Connections is shipping later. The cursor changing on hover is the only
+   feedback a disabled control can give, and "unavailable" is the honest
+   message — a pointer would promise a click that does nothing. */
+.comingSoon:disabled { cursor: not-allowed; }
 
 .railExpanded .navBtn {
   justify-content: flex-start;
@@ -197,8 +252,9 @@
   gap: 2px;
   width: 100%;
   border-radius: var(--radius-sm);
-  /* Reserve the drop-indicator line so rows don't shift during a drag. */
+  /* Reserve both indicator lines so rows don't shift during a drag. */
   border-top: 2px solid transparent;
+  border-bottom: 2px solid transparent;
 }
 
 /* The pill shares the row with the grip handle, so it must give up width to it
@@ -213,9 +269,9 @@
   opacity: 0.4;
 }
 
-.vaultRowDropTarget {
-  border-top-color: var(--accent);
-}
+/* The line marks the slot the vault will actually land in, above or below. */
+.vaultRowDropAbove { border-top-color: var(--accent); }
+.vaultRowDropBelow { border-bottom-color: var(--accent); }
 
 .dragHandle {
   display: flex;
@@ -257,20 +313,24 @@
   animation: labelFadeIn 0.15s ease;
 }
 
+/* Filled, not outlined — see the note on the login fields. */
 .newVaultInput {
   flex: 1;
   font-size: 12px;
-  padding: 4px 7px;
+  padding: 5px 8px;
   background: var(--bg-input);
-  border: 1px solid var(--border-strong);
+  border: none;
   border-radius: var(--radius-sm);
   color: var(--text-primary);
   outline: none;
   min-width: 0;
-  transition: border-color 0.15s;
+  transition: background 0.15s, box-shadow 0.15s;
 }
 
-.newVaultInput:focus { border-color: var(--accent); }
+.newVaultInput:focus {
+  background: var(--bg-active);
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
 
 .newVaultConfirm {
   font-size: 11px;

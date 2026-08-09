@@ -4,6 +4,7 @@ import { useVaultStore } from '../store/vaults';
 import { useNoteStore } from '../store/notes';
 import { useTagStore } from '../store/tags';
 import { useUIStore } from '../store/ui';
+import { matchesBinding } from '../store/keybindings';
 import VaultSidebar from '../components/VaultSidebar';
 import NoteList from '../components/NoteList';
 import TrashView from '../components/TrashView';
@@ -46,30 +47,38 @@ export default function NotesPage() {
     else setPanelCollapsed(true);
   }, [activeVaultId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Global keyboard shortcuts
+  function stepVault(delta: number) {
+    const idx = vaults.findIndex((v) => v.id === activeVaultId);
+    if (idx === -1 || vaults.length < 2) return;
+    const next = (idx + delta + vaults.length) % vaults.length;
+    const target = vaults[next];
+    if (target) setActiveVault(target.id);
+  }
+
+  // Global keyboard shortcuts. Chords come from the keybinding store rather
+  // than being spelled out here, so Settings → Keyboard can rebind them.
   const handleGlobalKeyDown = useCallback((e: KeyboardEvent) => {
-    if ((e.metaKey || (e.ctrlKey && !e.altKey)) && e.key === ',') {
+    if (matchesBinding(e, 'app.settings')) {
       e.preventDefault();
       openSettings('app');
     }
-    if ((e.metaKey || (e.ctrlKey && !e.altKey)) && e.key === 't') {
+    if (matchesBinding(e, 'app.toggleTrash')) {
       e.preventDefault();
       setView(view === 'trash' ? 'notes' : 'trash');
     }
-    if ((e.metaKey || (e.ctrlKey && !e.altKey)) && e.key === '\\') {
+    if (matchesBinding(e, 'app.toggleNotesPanel')) {
       e.preventDefault();
       setPanelCollapsed((v) => !v);
     }
-    if ((e.metaKey || (e.ctrlKey && !e.altKey)) && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+    if (matchesBinding(e, 'app.prevVault')) {
       e.preventDefault();
-      const idx = vaults.findIndex((v) => v.id === activeVaultId);
-      if (idx === -1 || vaults.length < 2) return;
-      const next = e.key === 'ArrowDown'
-        ? (idx + 1) % vaults.length
-        : (idx - 1 + vaults.length) % vaults.length;
-      const target = vaults[next];
-      if (target) setActiveVault(target.id);
+      stepVault(-1);
     }
+    if (matchesBinding(e, 'app.nextVault')) {
+      e.preventDefault();
+      stepVault(1);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openSettings, setView, view, vaults, activeVaultId, setActiveVault]);
 
   // Toggle panel from command palette

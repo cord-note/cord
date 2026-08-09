@@ -43,6 +43,9 @@
   -webkit-app-region: no-drag;
 }
 
+/* Borderless: the pill sits on the title bar's own surface, and an outline
+   around it plus the dropdown's outline read as two nested frames. The fill
+   alone is enough to mark it as a field. */
 .pill {
   display: flex;
   align-items: center;
@@ -50,22 +53,20 @@
   padding: 0 10px;
   width: 420px;
   height: 26px;
-  background: var(--bg-sidebar);
-  border: 1px solid var(--border-strong);
+  background: var(--bg-input);
+  border: none;
   border-radius: 8px;
   cursor: text;
-  transition: background 0.12s, border-color 0.15s, box-shadow 0.15s;
+  transition: background 0.12s;
 }
 
-.pill:hover { border-color: var(--text-muted); }
+.pill:hover { background: var(--bg-hover); }
 
 .pillOpen {
   background: var(--bg-input);
-  border-color: var(--text-muted);
+  /* Square off where the dropdown joins on. */
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
-  border-bottom-color: var(--border);
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.04);
 }
 
 .pillIcon {
@@ -95,8 +96,7 @@
   left: 0;
   width: 100%;
   background: var(--bg-input);
-  border: 1px solid var(--text-muted);
-  border-top: none;
+  border: none;
   border-bottom-left-radius: 8px;
   border-bottom-right-radius: 8px;
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255,255,255,0.03);
