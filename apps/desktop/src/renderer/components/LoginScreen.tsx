@@ -17,6 +17,10 @@ export default function LoginScreen() {
   const [loading, setLoading]   = useState(false);
 
   const usernameRef = useRef<HTMLInputElement>(null);
+  // The error panel collapses rather than unmounting, so it needs the last
+  // message to stay rendered while it animates shut.
+  const lastError = useRef('');
+  if (error) lastError.current = error;
 
   useEffect(() => { usernameRef.current?.focus(); }, [mode]);
 
@@ -70,10 +74,11 @@ export default function LoginScreen() {
           <span className={styles.logoName}>Cord</span>
         </div>
 
-        <h1 className={styles.heading}>
+        {/* Keyed so the copy crossfades on mode change instead of snapping. */}
+        <h1 key={`h-${mode}`} className={styles.heading}>
           {isLogin ? 'Welcome back' : 'Create your account'}
         </h1>
-        <p className={styles.subheading}>
+        <p key={`s-${mode}`} className={styles.subheading}>
           {isLogin
             ? 'Sign in to access your notes'
             : 'Set a username and password to protect your notes'}
@@ -81,14 +86,24 @@ export default function LoginScreen() {
 
         {/* Tab switcher — only shown when users exist */}
         {hasUsers && (
-          <div className={styles.tabs}>
+          <div className={styles.tabs} role="tablist">
+            {/* One moving pill rather than a background that jumps between two
+                buttons — the motion is what tells you which way you switched. */}
+            <span
+              className={`${styles.tabThumb} ${isLogin ? '' : styles.tabThumbRight}`}
+              aria-hidden="true"
+            />
             <button
+              role="tab"
+              aria-selected={isLogin}
               className={`${styles.tab} ${isLogin ? styles.tabActive : ''}`}
               onClick={() => switchMode('login')}
             >
               Sign in
             </button>
             <button
+              role="tab"
+              aria-selected={!isLogin}
               className={`${styles.tab} ${!isLogin ? styles.tabActive : ''}`}
               onClick={() => switchMode('register')}
             >
@@ -143,28 +158,36 @@ export default function LoginScreen() {
             </div>
           </div>
 
-          {/* Confirm password (register only) */}
-          {!isLogin && (
-            <div className={styles.fieldGroup}>
-              <label className={styles.label} htmlFor="auth-confirm">Confirm Password</label>
-              <input
-                id="auth-confirm"
-                className={styles.input}
-                type={showPw ? 'text' : 'password'}
-                autoComplete="new-password"
-                placeholder="Repeat your password"
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-                disabled={loading}
-                required
-              />
+          {/* Confirm password (register only).
+              Rendered in both modes and collapsed with a grid-row transition:
+              mounting and unmounting it is what made the card jump. */}
+          <div className={`${styles.collapsible} ${!isLogin ? styles.collapsibleOpen : ''}`}>
+            <div className={styles.collapsibleInner}>
+              <div className={styles.fieldGroup}>
+                <label className={styles.label} htmlFor="auth-confirm">Confirm Password</label>
+                <input
+                  id="auth-confirm"
+                  className={styles.input}
+                  type={showPw ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  placeholder="Repeat your password"
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                  disabled={loading || isLogin}
+                  tabIndex={isLogin ? -1 : undefined}
+                  aria-hidden={isLogin}
+                  required={!isLogin}
+                />
+              </div>
             </div>
-          )}
+          </div>
 
-          {/* Error */}
-          {error && (
-            <div className={styles.error} role="alert">{error}</div>
-          )}
+          {/* Error — collapses for the same reason. */}
+          <div className={`${styles.collapsible} ${error ? styles.collapsibleOpen : ''}`}>
+            <div className={styles.collapsibleInner}>
+              <div className={styles.error} role="alert">{error || lastError.current}</div>
+            </div>
+          </div>
 
           {/* Submit */}
           <button type="submit" className={styles.submitBtn} disabled={loading || !username || !password}>

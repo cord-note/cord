@@ -1,11 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { X, Search } from 'lucide-react';
+import { X, Search, RotateCcw } from 'lucide-react';
 import { api } from '../ipc';
 import { useVaultStore } from '../store/vaults';
 import { useTagStore } from '../store/tags';
 import { useSettingsStore } from '../store/settings';
 import { useUIStore, type SettingsTab } from '../store/ui';
 import { useThemeStore, type Theme, type ColorScheme } from '../store/theme';
+import {
+  KEYBINDINGS,
+  KEYBINDING_GROUPS,
+  conflictsFor,
+  eventToAccel,
+  formatAccel,
+  keybindingDef,
+  useKeybindingStore,
+  type KeybindingId,
+} from '../store/keybindings';
 import { HoldButton } from './HoldButton';
 import { StepSlider } from './StepSlider';
 import { HOLD_ARCHIVE_MS } from '@shared/constants';
@@ -20,12 +30,14 @@ import styles from './SettingsPage.module.css';
 /** Debounce before a typed vault name is written back to the sidecar. */
 const NAME_SAVE_DEBOUNCE_MS = 600;
 
-type ChapterId = 'appearance' | 'editor' | 'vault' | 'tags';
+type ChapterId = 'appearance' | 'editor' | 'keyboard' | 'vault' | 'tags';
 
+/** Nav order, and the order the chapters are rendered in — keep the two in step. */
 const CHAPTERS: { id: ChapterId; label: string }[] = [
-  { id: 'appearance', label: 'Appearance' },
   { id: 'editor',     label: 'Editor'     },
   { id: 'vault',      label: 'Vault'      },
+  { id: 'appearance', label: 'Appearance' },
+  { id: 'keyboard',   label: 'Keyboard'   },
   { id: 'tags',       label: 'Tags'       },
 ];
 
@@ -45,7 +57,9 @@ export default function SettingsPage() {
   const settingsTab = useUIStore((s) => s.settingsTab);
   const scrollRef = useRef<HTMLDivElement>(null);
   const chapterRefs = useRef<Partial<Record<ChapterId, HTMLElement | null>>>({});
-  const [activeChapter, setActiveChapter] = useState<ChapterId>('appearance');
+  // Replaced on mount by whichever chapter the caller asked for; seeded with
+  // the first one so the nav highlight matches the top of the page.
+  const [activeChapter, setActiveChapter] = useState<ChapterId>('editor');
 
   function scrollTo(id: ChapterId) {
     chapterRefs.current[id]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -105,9 +119,10 @@ export default function SettingsPage() {
       </div>
 
       <div className={styles.content} ref={scrollRef}>
-        <AppearanceChapter sectionRef={setChapterRef('appearance')} />
         <EditorChapter sectionRef={setChapterRef('editor')} />
         <VaultChapter sectionRef={setChapterRef('vault')} />
+        <AppearanceChapter sectionRef={setChapterRef('appearance')} />
+        <KeyboardChapter sectionRef={setChapterRef('keyboard')} />
         <TagsChapter sectionRef={setChapterRef('tags')} />
       </div>
     </div>
@@ -239,6 +254,22 @@ const FONT_PREVIEW_TEXT =
 function EditorChapter({ sectionRef }: ChapterProps) {
   const { editorFontSize, editorLineWidth, spellCheck, distinctVaultColors, update } =
     useSettingsStore();
+  const applyDistinctColors = useVaultStore((s) => s.applyDistinctColors);
+
+  /**
+   * Turning the setting on is not just a filter on the picker — it repaints
+   * the vaults you already have. A rail where half the dots come from the
+   * curated set and half don't defeats the point of the setting.
+   */
+  async function handleDistinctToggle(on: boolean) {
+    await update({ distinctVaultColors: on });
+    if (!on) return;
+    try {
+      await applyDistinctColors();
+    } catch (err) {
+      console.error('Failed to remap vault colors:', err);
+    }
+  }
 
   return (
     <section className={styles.chapter} data-chapter="editor" ref={sectionRef}>
@@ -290,9 +321,9 @@ function EditorChapter({ sectionRef }: ChapterProps) {
 
       <ToggleField
         label="Use distinct vault colors"
-        hint="Limits the vault palette to a curated set of high-contrast hues"
+        hint="Limits the palette to a curated set of high-contrast hues, and repaints existing vaults with their nearest match"
         checked={distinctVaultColors}
-        onChange={(v) => update({ distinctVaultColors: v })}
+        onChange={handleDistinctToggle}
       />
     </section>
   );
@@ -324,6 +355,114 @@ function ToggleField({ label, hint, checked, onChange }: ToggleFieldProps) {
         </button>
       </div>
     </div>
+  );
+}
+
+// ── Keyboard ──────────────────────────────────────────────────────────────────
+
+function KeyboardChapter({ sectionRef }: ChapterProps) {
+  const { bindings, setBinding, clearBinding, resetBinding, resetAll } = useKeybindingStore();
+  const [recording, setRecording] = useState<KeybindingId | null>(null);
+
+  // While recording, the whole keyboard belongs to the row being edited —
+  // otherwise the chord you are trying to assign fires the action it is
+  // currently assigned to.
+  useEffect(() => {
+    if (!recording) return;
+
+    function onKeyDown(e: KeyboardEvent) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.key === 'Escape') { setRecording(null); return; }
+      if (e.key === 'Backspace' && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
+        if (recording) clearBinding(recording);
+        setRecording(null);
+        return;
+      }
+      const accel = eventToAccel(e);
+      // A bare modifier press is the user still assembling the chord.
+      if (!accel || !recording) return;
+      setBinding(recording, accel);
+      setRecording(null);
+    }
+
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => window.removeEventListener('keydown', onKeyDown, true);
+  }, [recording, setBinding, clearBinding]);
+
+  return (
+    <section className={styles.chapter} data-chapter="keyboard" ref={sectionRef}>
+      <h2 className={styles.chapterTitle}>Keyboard</h2>
+
+      <div className={styles.field}>
+        <div className={styles.fieldHint}>
+          Click a shortcut to record a new one. Esc cancels, Backspace unbinds.
+          Editor shortcuts take precedence over the ones the editor ships with.
+        </div>
+      </div>
+
+      {KEYBINDING_GROUPS.map((group) => (
+        <div key={group} className={styles.field}>
+          <div className={styles.fieldLabel}>{group}</div>
+          <ul className={styles.keyList}>
+            {KEYBINDINGS.filter((d) => d.group === group).map((def) => {
+              const accel = bindings[def.id];
+              const conflicts = conflictsFor(bindings, def.id);
+              const isRecording = recording === def.id;
+              return (
+                <li key={def.id} className={styles.keyRow}>
+                  <div className={styles.keyLabelCol}>
+                    <span className={styles.keyLabel}>{def.label}</span>
+                    {def.hint && <span className={styles.keyHint}>{def.hint}</span>}
+                    {conflicts.length > 0 && (
+                      <span className={styles.keyConflict}>
+                        Also bound to {conflicts.map((id) => keybindingDef(id).label).join(', ')}
+                      </span>
+                    )}
+                  </div>
+
+                  <button
+                    className={[
+                      styles.keyChord,
+                      isRecording ? styles.keyChordRecording : '',
+                      !accel ? styles.keyChordUnset : '',
+                      conflicts.length > 0 ? styles.keyChordConflict : '',
+                    ].filter(Boolean).join(' ')}
+                    onClick={() => setRecording(isRecording ? null : def.id)}
+                    title={isRecording ? 'Press a key combination' : 'Click to rebind'}
+                  >
+                    {isRecording ? 'Press keys…' : (formatAccel(accel) || 'Unbound')}
+                  </button>
+
+                  <button
+                    className={styles.keyReset}
+                    onClick={() => { setRecording(null); resetBinding(def.id); }}
+                    disabled={accel === def.defaultAccel}
+                    title={
+                      def.defaultAccel
+                        ? `Reset to ${formatAccel(def.defaultAccel)}`
+                        : 'Reset to unbound'
+                    }
+                    aria-label={`Reset ${def.label} shortcut`}
+                  >
+                    <RotateCcw size={13} strokeWidth={1.75} />
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+
+      <div className={styles.field}>
+        <button
+          className={styles.secondaryBtn}
+          onClick={() => { setRecording(null); resetAll(); }}
+        >
+          Reset all shortcuts
+        </button>
+      </div>
+    </section>
   );
 }
 

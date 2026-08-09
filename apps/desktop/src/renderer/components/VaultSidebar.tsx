@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Database, Trash2, Settings, LogOut, Plus, Link2, GripVertical } from 'lucide-react';
 import { useVaultStore } from '../store/vaults';
 import { useNoteStore } from '../store/notes';
@@ -24,8 +24,15 @@ export default function VaultSidebar({ activeView, onOpenTrash }: Props) {
   const [draggingId, setDraggingId]   = useState<string | null>(null);
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
 
+  // Which edges of the vault list have more content past them. Drives the
+  // fade cues — the rail hides its scrollbar, so without these there is no
+  // sign that the list continues.
+  const [canScrollUp, setCanScrollUp]     = useState(false);
+  const [canScrollDown, setCanScrollDown] = useState(false);
+
   const inputRef   = useRef<HTMLInputElement>(null);
   const sidebarRef = useRef<HTMLElement>(null);
+  const scrollRef  = useRef<HTMLDivElement>(null);
 
   const { vaults, activeVaultId, setActiveVault, createVault, reorderVaults } = useVaultStore();
   const { loadNotes } = useNoteStore();
@@ -47,6 +54,30 @@ export default function VaultSidebar({ activeView, onOpenTrash }: Props) {
     document.addEventListener('click', handleOutsideClick);
     return () => document.removeEventListener('click', handleOutsideClick);
   }, [expanded]);
+
+  const updateScrollCues = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    // 1px of slack: fractional scroll heights otherwise leave the bottom cue
+    // showing permanently on a list that is already fully scrolled.
+    setCanScrollUp(el.scrollTop > 1);
+    setCanScrollDown(el.scrollTop + el.clientHeight < el.scrollHeight - 1);
+  }, []);
+
+  // Re-measure whenever the list can have changed size.
+  useEffect(() => {
+    updateScrollCues();
+  }, [vaults.length, expanded, creatingVault, updateScrollCues]);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    // The rail animates its width, which rewraps labels and changes the
+    // scrollable height partway through the transition.
+    const observer = new ResizeObserver(updateScrollCues);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [updateScrollCues]);
 
   function toggleExpanded() {
     setExpanded((v) => !v);
@@ -112,6 +143,19 @@ export default function VaultSidebar({ activeView, onOpenTrash }: Props) {
     e.dataTransfer.setData('text/plain', id);
   }
 
+  /**
+   * Where the drop line goes for a given target row.
+   *
+   * The splice below removes before it inserts, so dropping onto a row *below*
+   * the dragged one lands after it, and onto a row above lands before it. The
+   * indicator has to say the same thing, or the drop appears to be off by one.
+   */
+  function dropsBelow(targetId: string): boolean {
+    if (!draggingId) return false;
+    const ids = vaults.map((v) => v.id);
+    return ids.indexOf(draggingId) < ids.indexOf(targetId);
+  }
+
   function handleDragOver(e: React.DragEvent, id: string) {
     if (!draggingId || draggingId === id) return;
     e.preventDefault();
@@ -157,75 +201,98 @@ export default function VaultSidebar({ activeView, onOpenTrash }: Props) {
         )}
       </div>
 
-      <nav className={styles.topNav}>
-        {vaults.map((v) => (
-          <div
-            key={v.id}
-            className={[
-              styles.vaultRow,
-              draggingId === v.id ? styles.vaultRowDragging : '',
-              dropTargetId === v.id ? styles.vaultRowDropTarget : '',
-            ].filter(Boolean).join(' ')}
-            draggable={dragArmedId === v.id}
-            onDragStart={(e) => handleDragStart(e, v.id)}
-            onDragOver={(e) => handleDragOver(e, v.id)}
-            onDragLeave={() => setDropTargetId((cur) => (cur === v.id ? null : cur))}
-            onDrop={(e) => handleDrop(e, v.id)}
-            onDragEnd={resetDrag}
-          >
-            <button
-              className={`${styles.navBtn} ${v.id === activeVaultId ? styles.navActive : ''}`}
-              onClick={() => handleSelectVault(v.id)}
-              title={v.name}
-            >
-              <span className={styles.vaultDot} style={{ background: v.color ?? 'var(--text-muted)' }} />
-              {expanded && <span className={styles.navLabel}>{v.name}</span>}
-            </button>
-            {expanded && (
-              <span
-                className={styles.dragHandle}
-                title="Drag to reorder"
-                aria-hidden="true"
-                onPointerDown={() => setDragArmedId(v.id)}
-                onPointerUp={() => setDragArmedId(null)}
+      {/* Vaults + Connections scroll; the account/settings/trash block below
+          never does, so those controls are always reachable. */}
+      <div className={styles.scrollWrap}>
+        <div className={styles.scrollArea} ref={scrollRef} onScroll={updateScrollCues}>
+          <nav className={styles.topNav}>
+            {vaults.map((v) => (
+              <div
+                key={v.id}
+                className={[
+                  styles.vaultRow,
+                  draggingId === v.id ? styles.vaultRowDragging : '',
+                  dropTargetId === v.id
+                    ? (dropsBelow(v.id) ? styles.vaultRowDropBelow : styles.vaultRowDropAbove)
+                    : '',
+                ].filter(Boolean).join(' ')}
+                draggable={dragArmedId === v.id}
+                onDragStart={(e) => handleDragStart(e, v.id)}
+                onDragOver={(e) => handleDragOver(e, v.id)}
+                onDragLeave={() => setDropTargetId((cur) => (cur === v.id ? null : cur))}
+                onDrop={(e) => handleDrop(e, v.id)}
+                onDragEnd={resetDrag}
               >
-                <GripVertical size={13} strokeWidth={1.75} />
-              </span>
+                <button
+                  className={`${styles.navBtn} ${v.id === activeVaultId ? styles.navActive : ''}`}
+                  onClick={() => handleSelectVault(v.id)}
+                  title={v.name}
+                >
+                  <span className={styles.vaultDot} style={{ background: v.color ?? 'var(--text-muted)' }} />
+                  {expanded && <span className={styles.navLabel}>{v.name}</span>}
+                </button>
+                {expanded && (
+                  <span
+                    className={styles.dragHandle}
+                    title="Drag to reorder"
+                    aria-hidden="true"
+                    onPointerDown={() => setDragArmedId(v.id)}
+                    onPointerUp={() => setDragArmedId(null)}
+                  >
+                    <GripVertical size={13} strokeWidth={1.75} />
+                  </span>
+                )}
+              </div>
+            ))}
+
+            {expanded && creatingVault && (
+              <div className={styles.newVaultRow}>
+                <input
+                  ref={inputRef}
+                  autoFocus
+                  className={styles.newVaultInput}
+                  placeholder="Vault name…"
+                  value={newVaultName}
+                  onChange={(e) => setNewVaultName(e.target.value)}
+                  onKeyDown={handleNewVaultKeyDown}
+                />
+                <button className={styles.newVaultConfirm} onClick={handleCreateVault} disabled={!newVaultName.trim()}>
+                  Add
+                </button>
+              </div>
             )}
-          </div>
-        ))}
 
-        {expanded && creatingVault && (
-          <div className={styles.newVaultRow}>
-            <input
-              ref={inputRef}
-              autoFocus
-              className={styles.newVaultInput}
-              placeholder="Vault name…"
-              value={newVaultName}
-              onChange={(e) => setNewVaultName(e.target.value)}
-              onKeyDown={handleNewVaultKeyDown}
-            />
-            <button className={styles.newVaultConfirm} onClick={handleCreateVault} disabled={!newVaultName.trim()}>
-              Add
+            <button
+              className={`${styles.navBtn} ${styles.comingSoon}`}
+              title="Connections (coming soon)"
+              disabled
+            >
+              <Link2 size={17} strokeWidth={1.75} className={styles.navIcon} />
+              {expanded && <span className={styles.navLabel}>Connections</span>}
             </button>
-          </div>
-        )}
+          </nav>
 
-        <button className={styles.navBtn} title="Connections (coming soon)" disabled>
-          <Link2 size={17} strokeWidth={1.75} className={styles.navIcon} />
-          {expanded && <span className={styles.navLabel}>Connections</span>}
-        </button>
-      </nav>
+          {/* Empty rail area doubles as the expand/collapse target. */}
+          <div
+            className={styles.spacer}
+            role="button"
+            tabIndex={-1}
+            aria-label={expanded ? 'Collapse sidebar' : 'Expand sidebar'}
+            onClick={toggleExpanded}
+          />
+        </div>
 
-      {/* Empty rail area doubles as the expand/collapse target. */}
-      <div
-        className={styles.spacer}
-        role="button"
-        tabIndex={-1}
-        aria-label={expanded ? 'Collapse sidebar' : 'Expand sidebar'}
-        onClick={toggleExpanded}
-      />
+        {/* Fades, not a scrollbar: the rail is narrow enough that a track
+            would eat a meaningful slice of it. */}
+        <span
+          className={`${styles.scrollCue} ${styles.scrollCueTop} ${canScrollUp ? styles.scrollCueVisible : ''}`}
+          aria-hidden="true"
+        />
+        <span
+          className={`${styles.scrollCue} ${styles.scrollCueBottom} ${canScrollDown ? styles.scrollCueVisible : ''}`}
+          aria-hidden="true"
+        />
+      </div>
 
       <div className={styles.bottomNav}>
         <button

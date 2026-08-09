@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { Vault, CreateVaultInput } from '@shared/types';
 import { api } from '@renderer/ipc';
+import { isDistinctVaultColor, nearestDistinctColor } from '@shared/constants/vaultColors';
 
 /**
  * Vault display order lives in localStorage rather than the database.
@@ -53,6 +54,11 @@ interface VaultStore {
   createVault:    (input: CreateVaultInput) => Promise<Vault>;
   archiveVault:   (id: string) => Promise<void>;
   reorderVaults:  (ids: string[]) => void;
+  /**
+   * Rewrites every vault colour to its nearest match in the distinct palette.
+   * Returns how many vaults changed.
+   */
+  applyDistinctColors: () => Promise<number>;
   reset:          () => void;
 }
 
@@ -92,6 +98,19 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
       writeOrder(ids);
       return { vaults: next };
     });
+  },
+
+  applyDistinctColors: async () => {
+    const stale = get().vaults.filter((v) => !isDistinctVaultColor(v.color));
+    if (stale.length === 0) return 0;
+
+    // Sequential rather than parallel: each update appends to operation_log,
+    // and a burst of concurrent writes buys nothing on a handful of vaults.
+    for (const vault of stale) {
+      await api.vaults.update(vault.id, { color: nearestDistinctColor(vault.color) });
+    }
+    await get().loadVaults();
+    return stale.length;
   },
 
   reset: () => set({ vaults: [], activeVaultId: null }),

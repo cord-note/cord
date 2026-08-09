@@ -8,8 +8,10 @@ export interface HoldButtonProps {
   onComplete: () => void;
   children: ReactNode;
   /**
-   * `icon` draws a progress ring around a compact icon button (note rows).
-   * `text` fills the button background left-to-right (danger-zone buttons).
+   * `icon` wipes the icon itself with the danger colour, left to right
+   * (note rows). `text` wipes the button background the same way
+   * (danger-zone buttons). Both reveal rather than scale, so the button's
+   * rounded corners stay square-on-true at every point in the hold.
    */
   variant?: 'icon' | 'text' | undefined;
   /** Replaces `children` while the hold is in progress. */
@@ -58,7 +60,12 @@ export function HoldButton({
       }}
       {...handlers}
     >
-      <span className={styles.fill} aria-hidden="true" />
+      {/* For `icon`, the wipe is a second copy of the icon in the danger
+          colour, clipped to the elapsed fraction and stacked over the first.
+          For `text` it is a plain background wipe and holds no content. */}
+      <span className={styles.fill} aria-hidden="true">
+        {variant === 'icon' ? children : null}
+      </span>
       <span className={styles.label}>{holding && holdingLabel ? holdingLabel : children}</span>
     </button>
   );
