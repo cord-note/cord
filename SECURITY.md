@@ -6,14 +6,14 @@
 
 Use GitHub's private reporting instead:
 [Report a vulnerability](https://github.com/cord-note/cord/security/advisories/new).
-That opens a private advisory visible only to the maintainers.
+That opens a private advisory visible only to me.
 
 Please include what you need to reproduce it — the version or commit, your OS,
 and the steps. A proof of concept helps but is not required to report something.
 
-You should get an acknowledgement within a week. Cord is a small project, so a
-fix may take longer than that; you will be told where it stands rather than left
-waiting.
+You should get an acknowledgement within a week. Cord is written by one person,
+so a fix may take longer than that; you will be told where it stands rather than
+left waiting.
 
 ## What is in scope
 

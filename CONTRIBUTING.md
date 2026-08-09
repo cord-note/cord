@@ -1,7 +1,9 @@
 # Contributing to Cord
 
-Thanks for looking. Cord is small and opinionated, so it is worth reading this
-before spending time on a change.
+Thanks for looking. Cord is written and maintained by one person, and it is
+small and opinionated, so it is worth reading this before spending time on a
+change. Reviews come from me alone — expect them to be considered rather than
+instant.
 
 ## Before you start
 
