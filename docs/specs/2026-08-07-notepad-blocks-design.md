@@ -4,6 +4,11 @@
 **Status:** implemented — see "Deviations from this design" at the end
 **Owners:** Sajon (schema, services, IPC, editor nodes), CompressedDuck (block chrome UI)
 
+> This is a dated design record, kept as written. It refers throughout to
+> `CLAUDE.md`, an internal working document that is not published with this
+> repository — the architecture rules it describes are summarised in the
+> [README](../../README.md) and [CONTRIBUTING.md](../../CONTRIBUTING.md).
+
 ---
 
 ## 1. Summary

@@ -1,0 +1,33 @@
+name: Feature request
+description: Suggest something Cord should do
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Some parts of Cord are settled on purpose — the stack, the storage model,
+        two note kinds, read-only transclusion, flat blocks. Those are listed in
+        [CONTRIBUTING.md](https://github.com/cord-note/cord/blob/main/CONTRIBUTING.md#before-you-start)
+        and are not up for revisiting casually. Everything else is fair game.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do
+      description: >
+        Describe the problem rather than the solution. "I cannot find notes I
+        wrote last month" leads somewhere better than "add a date filter".
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you have in mind
+      description: Optional. If you already have a shape in mind, describe it.
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What you do instead today
+      description: Workarounds are strong evidence that something is missing.
