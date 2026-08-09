@@ -2,6 +2,7 @@
   "name": "@cord/desktop",
   "version": "1.6.0",
   "private": true,
+  "license": "AGPL-3.0-or-later",
   "type": "module",
   "scripts": {
     "dev": "tauri dev",
