@@ -37,7 +37,7 @@
     "@tiptap/pm": "^2.27.2",
     "@tiptap/react": "^2.4.0",
     "@tiptap/starter-kit": "^2.4.0",
-    "@tiptap/suggestion": "^2.27.2",
+    "@tiptap/suggestion": "^3.29.2",
     "drizzle-orm": "^0.30.10",
     "katex": "^0.16.45",
     "lowlight": "^3.1.0",
