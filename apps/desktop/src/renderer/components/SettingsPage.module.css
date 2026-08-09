@@ -114,19 +114,27 @@
   margin-top: 2px;
 }
 
+/* Filled rather than outlined. Settings is already a heavily ruled page —
+   section rules, palette frames, cards — and one more box around every field
+   was pure noise. The fill marks the field; focus is a ring. */
 .textInput {
   font-size: 14px;
   color: var(--text-primary);
-  background: var(--bg-panel);
-  border: 1px solid var(--border);
+  background: var(--bg-input);
+  border: none;
   border-radius: var(--radius);
-  padding: 10px 14px;
+  padding: 11px 14px;
   outline: none;
-  transition: border-color 0.15s;
+  transition: background 0.15s, box-shadow 0.15s;
   width: 100%;
 }
 
-.textInput:focus { border-color: var(--border-strong); }
+.textInput:hover { background: var(--bg-hover); }
+
+.textInput:focus {
+  background: var(--bg-active);
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
 
 /* ── Slider ──────────────────────────────────────────────────────────────── */
 
@@ -242,6 +250,96 @@
   transform: scale(1.08);
 }
 
+/* ── Keyboard shortcuts ──────────────────────────────────────────────────── */
+
+.keyList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  max-width: 636px;
+}
+
+.keyRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  transition: background 0.1s;
+}
+
+.keyRow:hover { background: var(--bg-panel); }
+
+.keyLabelCol {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.keyLabel { font-size: 13px; color: var(--text-primary); }
+
+.keyHint { font-size: 11px; color: var(--text-muted); }
+
+.keyConflict { font-size: 11px; color: var(--danger); }
+
+/* The chord itself is the control — click it and it starts listening. */
+.keyChord {
+  min-width: 132px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-align: center;
+  flex-shrink: 0;
+  transition: background 0.12s, color 0.12s, box-shadow 0.12s;
+}
+
+.keyChord:hover { background: var(--bg-active); }
+
+.keyChordUnset { color: var(--text-muted); font-family: inherit; font-style: italic; }
+
+.keyChordRecording {
+  background: var(--bg-active);
+  color: var(--accent);
+  font-family: inherit;
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+
+.keyChordConflict { color: var(--danger); }
+
+.keyReset {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: background 0.1s, color 0.1s, opacity 0.1s;
+}
+
+.keyReset:hover:not(:disabled) { background: var(--bg-hover); color: var(--text-primary); }
+
+.keyReset:disabled { opacity: 0.25; cursor: default; }
+
+.secondaryBtn {
+  align-self: flex-start;
+  padding: 8px 14px;
+  border-radius: var(--radius);
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  font-size: 13px;
+  transition: background 0.1s, color 0.1s;
+}
+
+.secondaryBtn:hover { background: var(--bg-active); color: var(--text-primary); }
+
 /* ── Danger ──────────────────────────────────────────────────────────────── */
 
 .dangerLabel {
@@ -331,15 +429,18 @@
   align-items: center;
   gap: 8px;
   padding: 0 10px;
-  height: 32px;
+  height: 34px;
   max-width: 636px;
   background: var(--bg-input);
-  border: 1px solid var(--border);
+  border: none;
   border-radius: var(--radius);
-  transition: border-color 0.15s;
+  transition: background 0.15s, box-shadow 0.15s;
 }
 
-.filterRow:focus-within { border-color: var(--border-strong); }
+.filterRow:focus-within {
+  background: var(--bg-active);
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
 
 .filterIcon { color: var(--text-muted); flex-shrink: 0; }
 

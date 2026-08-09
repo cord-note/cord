@@ -13,13 +13,17 @@ import { useAuthStore } from '../store/auth';
 import { useNoteStore } from '../store/notes';
 import { useVaultStore } from '../store/vaults';
 import { useThemeStore } from '../store/theme';
+import {
+  IS_MAC, formatAccel, matchesBinding, useKeybindingStore, type KeybindingId,
+} from '../store/keybindings';
 import type { Note } from '@shared/types';
 import styles from './TitleBar.module.css';
 
 interface Cmd {
   id: string;
   label: string;
-  hotkey?: string;
+  /** Shortcut shown on the row, resolved live from the keybinding store. */
+  binding?: KeybindingId;
   icon: React.ElementType;
   group?: string;
   /** Only offered while a notepad is open — meaningless for a plain note. */
@@ -28,14 +32,14 @@ interface Cmd {
 
 const COMMANDS: Cmd[] = [
   // Navigation
-  { id: 'new-note',    label: 'New Note',            hotkey: 'Ctrl+N', icon: FilePlus,      group: 'Navigation' },
-  { id: 'new-notepad', label: 'New Notepad',                            icon: LayoutList,    group: 'Navigation' },
-  { id: 'notes-view',  label: 'Go to Notes',                            icon: BookOpen,      group: 'Navigation' },
-  { id: 'pin-note',    label: 'Pin / Unpin Note',                       icon: Pin,           group: 'Navigation' },
-  { id: 'trash',       label: 'Toggle Trash',         hotkey: 'Ctrl+T', icon: Trash2,        group: 'Navigation' },
-  { id: 'collapse',    label: 'Toggle Notes Panel',   hotkey: 'Ctrl+\\',icon: PanelLeftClose,group: 'Navigation' },
+  { id: 'new-note',    label: 'New Note',      binding: 'app.newNote',          icon: FilePlus,      group: 'Navigation' },
+  { id: 'new-notepad', label: 'New Notepad',   binding: 'app.newNotepad',       icon: LayoutList,    group: 'Navigation' },
+  { id: 'notes-view',  label: 'Go to Notes',                                     icon: BookOpen,      group: 'Navigation' },
+  { id: 'pin-note',    label: 'Pin / Unpin Note',                                icon: Pin,           group: 'Navigation' },
+  { id: 'trash',       label: 'Toggle Trash',  binding: 'app.toggleTrash',      icon: Trash2,        group: 'Navigation' },
+  { id: 'collapse',    label: 'Toggle Notes Panel', binding: 'app.toggleNotesPanel', icon: PanelLeftClose, group: 'Navigation' },
   // Settings
-  { id: 'settings',    label: 'App Settings',         hotkey: 'Ctrl+,', icon: Settings,      group: 'Settings'   },
+  { id: 'settings',    label: 'App Settings',  binding: 'app.settings',         icon: Settings,      group: 'Settings'   },
   { id: 'appearance',  label: 'Appearance',                              icon: Monitor,       group: 'Settings'   },
   { id: 'vault-cfg',   label: 'Vault Settings',                          icon: Settings,      group: 'Settings'   },
   // Appearance
@@ -43,32 +47,28 @@ const COMMANDS: Cmd[] = [
   { id: 'light-mode',  label: 'Light Mode',                              icon: Sun,           group: 'Appearance' },
   { id: 'system-mode', label: 'System Mode',                             icon: Laptop,        group: 'Appearance' },
   // Editor
-  { id: 'fmt-bold',    label: 'Bold',                 hotkey: 'Ctrl+B', icon: Bold,          group: 'Editor'     },
-  { id: 'fmt-italic',  label: 'Italic',               hotkey: 'Ctrl+I', icon: Italic,        group: 'Editor'     },
-  { id: 'fmt-h1',      label: 'Heading 1',                               icon: Heading1,      group: 'Editor'     },
-  { id: 'fmt-h2',      label: 'Heading 2',                               icon: Heading2,      group: 'Editor'     },
-  { id: 'fmt-h3',      label: 'Heading 3',                               icon: Heading3,      group: 'Editor'     },
-  { id: 'fmt-code',    label: 'Code Block',                              icon: Code2,         group: 'Editor'     },
-  { id: 'fmt-task',    label: 'Task List',                               icon: CheckSquare,   group: 'Editor'     },
-  { id: 'fmt-hr',      label: 'Insert Divider',                          icon: Minus,         group: 'Editor'     },
-  { id: 'convert',     label: 'Convert Note ↔ Notepad',                  icon: Repeat,        group: 'Editor'     },
+  { id: 'fmt-bold',    label: 'Bold',          binding: 'editor.bold',          icon: Bold,          group: 'Editor'     },
+  { id: 'fmt-italic',  label: 'Italic',        binding: 'editor.italic',        icon: Italic,        group: 'Editor'     },
+  { id: 'fmt-h1',      label: 'Heading 1',     binding: 'editor.heading1',      icon: Heading1,      group: 'Editor'     },
+  { id: 'fmt-h2',      label: 'Heading 2',     binding: 'editor.heading2',      icon: Heading2,      group: 'Editor'     },
+  { id: 'fmt-h3',      label: 'Heading 3',     binding: 'editor.heading3',      icon: Heading3,      group: 'Editor'     },
+  { id: 'fmt-code',    label: 'Code Block',    binding: 'editor.codeBlock',     icon: Code2,         group: 'Editor'     },
+  { id: 'fmt-task',    label: 'Task List',     binding: 'editor.taskList',      icon: CheckSquare,   group: 'Editor'     },
+  { id: 'fmt-hr',      label: 'Insert Divider',binding: 'editor.divider',       icon: Minus,         group: 'Editor'     },
+  { id: 'convert',     label: 'Convert Note ↔ Notepad',                          icon: Repeat,        group: 'Editor'     },
   // Blocks — notepad only
-  { id: 'blk-up',       label: 'Move Block Up',      hotkey: 'Alt+↑',   icon: ArrowUp,       group: 'Blocks', notepadOnly: true },
-  { id: 'blk-down',     label: 'Move Block Down',    hotkey: 'Alt+↓',   icon: ArrowDown,     group: 'Blocks', notepadOnly: true },
-  { id: 'blk-dup',      label: 'Duplicate Block',    hotkey: 'Ctrl+Shift+D', icon: Copy,     group: 'Blocks', notepadOnly: true },
-  { id: 'blk-del',      label: 'Delete Block',                            icon: Trash2,      group: 'Blocks', notepadOnly: true },
-  { id: 'blk-ref',      label: 'Insert Block Reference',                  icon: Blocks,      group: 'Blocks', notepadOnly: true },
+  { id: 'blk-up',       label: 'Move Block Up',   binding: 'block.moveUp',       icon: ArrowUp,   group: 'Blocks', notepadOnly: true },
+  { id: 'blk-down',     label: 'Move Block Down', binding: 'block.moveDown',     icon: ArrowDown, group: 'Blocks', notepadOnly: true },
+  { id: 'blk-dup',      label: 'Duplicate Block', binding: 'block.duplicate',    icon: Copy,      group: 'Blocks', notepadOnly: true },
+  { id: 'blk-del',      label: 'Delete Block',    binding: 'block.delete',       icon: Trash2,    group: 'Blocks', notepadOnly: true },
+  { id: 'blk-ref',      label: 'Insert Block Reference', binding: 'block.insertRef', icon: Blocks, group: 'Blocks', notepadOnly: true },
   // Account
   { id: 'logout',      label: 'Log Out',                                 icon: LogOut,        group: 'Account'    },
 ];
 
 // ── Main TitleBar ─────────────────────────────────────────────────────────────
 
-const isMac =
-  typeof navigator !== 'undefined' && navigator.platform.toLowerCase().includes('mac');
-
-/** Shortcut that opens the command bar, as displayed to the user. */
-const COMMAND_BAR_HOTKEY = isMac ? '⌘K' : 'Ctrl+Tab';
+const isMac = IS_MAC;
 
 export default function TitleBar() {
   const [maximized, setMaximized] = useState(false);
@@ -139,6 +139,7 @@ function CommandPill() {
           convertNote, conversionImpact } = useNoteStore();
   const { vaults, activeVaultId, setActiveVault } = useVaultStore();
   const { setColorScheme } = useThemeStore();
+  const bindings = useKeybindingStore((s) => s.bindings);
 
   const [query, setQuery]   = useState('');
   const [cursor, setCursor] = useState(0);
@@ -184,31 +185,18 @@ function CommandPill() {
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      // Ctrl+Tab opens the command bar. Bare Tab is deliberately left alone so
-      // it still indents inside the editor — the chord requires a modifier, so
-      // there is nothing to special-case for contenteditable.
-      //
-      // macOS keeps Cmd+K: Cmd+Tab is the OS application switcher and never
-      // reaches the webview.
-      const opensCommandBar = isMac
-        ? e.metaKey && e.key.toLowerCase() === 'k'
-        : e.ctrlKey && !e.altKey && e.key === 'Tab';
-
-      if (opensCommandBar) {
-        e.preventDefault();
-        openCommands();
-        inputRef.current?.focus();
-        return;
-      }
-      if (e.key === 'F1') {
-        e.preventDefault();
-        openCommands();
-        inputRef.current?.focus();
-      }
+      // Both chords are user-rebindable; the defaults are Ctrl+Tab (Cmd+K on
+      // macOS, where Cmd+Tab is the OS app switcher and never reaches the
+      // webview) and F1. Bare Tab is deliberately left alone so it still
+      // indents inside the editor.
+      if (!matchesBinding(e, 'app.commandBar') && !matchesBinding(e, 'app.commandBarAlt')) return;
+      e.preventDefault();
+      openCommands();
+      inputRef.current?.focus();
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [openCommands, isMac]);
+  }, [openCommands]);
 
   // ── Actions ───────────────────────────────────────────────────────────────
 
@@ -342,7 +330,7 @@ function CommandPill() {
         <input
           ref={inputRef}
           className={styles.pillInput}
-          placeholder={`Search or command… (${COMMAND_BAR_HOTKEY})`}
+          placeholder={`Search or command… (${formatAccel(bindings['app.commandBar'])})`}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={handleFocus}
@@ -378,6 +366,7 @@ function CommandPill() {
                       ? (activeNote ? (activeNote.isPinned ? 'Unpin Note' : 'Pin Note') : 'Pin Note (no note open)')
                       : cmd.label;
                     const dimmed = isPinCmd && !activeNote;
+                    const hotkey = cmd.binding ? formatAccel(bindings[cmd.binding]) : '';
                     return (
                       <button
                         key={cmd.id}
@@ -390,7 +379,7 @@ function CommandPill() {
                           <Icon size={14} strokeWidth={1.75} />
                         </span>
                         <span className={styles.dropRowLabel}>{label}</span>
-                        {cmd.hotkey && <span className={styles.dropRowKbd}>{cmd.hotkey}</span>}
+                        {hotkey && <span className={styles.dropRowKbd}>{hotkey}</span>}
                       </button>
                     );
                   })}

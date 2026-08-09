@@ -16,6 +16,7 @@ import { FragmentLinkNode } from './FragmentLinkNode';
 import { SlashCommand } from './SlashCommand';
 import { WikiLink } from './WikiLink';
 import { MathInline, MathBlock } from './Math';
+import { Keybindings } from './Keybindings';
 import { UnlinkedMentionDecorations } from './UnlinkedMentionDecorations';
 import type { NoteKind } from '@shared/types';
 
@@ -40,32 +41,6 @@ const AltGrSupport = Extension.create({
   },
 });
 
-const ToggleTaskItem = Extension.create({
-  name: 'toggleTaskItem',
-  addKeyboardShortcuts() {
-    return {
-      'Mod-Enter': ({ editor }) => {
-        if (!editor.isActive('taskItem')) return false;
-        const { checked } = editor.getAttributes('taskItem');
-        return editor.commands.updateAttributes('taskItem', { checked: !checked });
-      },
-    };
-  },
-});
-
-/** Reorder shortcuts. Only registered for notepads — a plain note has no blocks. */
-const BlockShortcuts = Extension.create({
-  name: 'blockShortcuts',
-  addKeyboardShortcuts() {
-    return {
-      'Alt-ArrowUp':   ({ editor }) => editor.commands.moveBlock(editor.state.selection.from, -1),
-      'Alt-ArrowDown': ({ editor }) => editor.commands.moveBlock(editor.state.selection.from, 1),
-      'Mod-Shift-d':   ({ editor }) => editor.commands.duplicateBlock(editor.state.selection.from),
-      'Mod-Shift-Backspace': ({ editor }) => editor.commands.deleteBlock(editor.state.selection.from),
-    };
-  },
-});
-
 const PLACEHOLDER = 'Start writing… or type / for commands';
 
 /**
@@ -78,10 +53,12 @@ const PLACEHOLDER = 'Start writing… or type / for commands';
 export function buildExtensions(kind: NoteKind): Extensions {
   const shared: Extensions = [
     AltGrSupport,
+    // Owns every editor shortcut, including the ones Tiptap ships with, so all
+    // of them are rebindable from Settings → Keyboard.
+    Keybindings.configure({ isNotepad: kind === 'notepad' }),
     Placeholder.configure({ placeholder: PLACEHOLDER }),
     TaskList,
     CustomTaskItem,
-    ToggleTaskItem,
     CodeBlockLowlight.configure({ lowlight }),
     WikiLink,
     MathInline,
@@ -100,7 +77,6 @@ export function buildExtensions(kind: NoteKind): Extensions {
       Block,
       BlockNormalizer,
       BlockRef,
-      BlockShortcuts,
       SlashCommand.configure({ mode: 'notepad' }),
       ...shared,
     ];

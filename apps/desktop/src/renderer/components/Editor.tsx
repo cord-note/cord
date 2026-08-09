@@ -39,6 +39,7 @@ export default function Editor({ note }: Props) {
   const noteIdRef = useRef(note.id);
   const titleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const tagPickerRef = useRef<HTMLDivElement>(null);
 
   const { loadForNote: loadFragments, pendingScroll, setPendingScroll } = useFragmentStore();
 
@@ -56,6 +57,21 @@ export default function Editor({ note }: Props) {
     if (mentionsEnabled) loadUnlinkedMentions(note.id, note.vaultId);
     setShowTagPicker(false);
   }, [note.id, note.title]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Clicking away is a dismissal, same as Escape. Without this the picker
+  // stayed open — and kept its half-typed draft — until Enter or Escape.
+  useEffect(() => {
+    if (!showTagPicker) return;
+    function onPointerDown(e: PointerEvent) {
+      if (tagPickerRef.current?.contains(e.target as Node)) return;
+      setShowTagPicker(false);
+      setNewTagName('');
+    }
+    // Capture, so the picker closes even when the click lands on something
+    // that stops propagation (the editor surface does).
+    document.addEventListener('pointerdown', onPointerDown, true);
+    return () => document.removeEventListener('pointerdown', onPointerDown, true);
+  }, [showTagPicker]);
 
   // The slash menu cannot open a React modal itself, so it asks for one.
   useEffect(() => {
@@ -209,7 +225,7 @@ export default function Editor({ note }: Props) {
         ))}
 
         {showTagPicker ? (
-          <div className={styles.tagPickerInline}>
+          <div className={styles.tagPickerInline} ref={tagPickerRef}>
             {tags
               .filter((t) => !activeNoteTags.some((at) => at.id === t.id))
               .map((t) => (

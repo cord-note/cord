@@ -234,14 +234,15 @@
   padding: 7px 10px;
   background: var(--bg-input);
   border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
+  border: none;
   flex-shrink: 0;
-  transition: border-color 0.15s, background 0.15s;
+  transition: background 0.15s, box-shadow 0.15s;
 }
 
+/* Filled, not outlined — matching every other text field in the app. */
 .searchBar:focus-within {
-  border-color: var(--border-strong);
-  background: var(--bg-elevated);
+  background: var(--bg-active);
+  box-shadow: inset 0 0 0 1.5px var(--accent);
 }
 
 .searchIcon { color: var(--text-muted); flex-shrink: 0; }

@@ -6,6 +6,12 @@ export const DEBOUNCE_SAVE_MS = 500;
 // (notes go to trash), so they hold briefly; archive is heavier and holds longer.
 export const HOLD_DELETE_MS = 300;
 export const HOLD_ARCHIVE_MS = 400;
+/**
+ * Moving a note to the trash from the note list. Barely a hold at all — the
+ * action is fully reversible from Trash, and this row is clicked constantly,
+ * so the gesture only has to be deliberate enough to not fire on a stray tap.
+ */
+export const HOLD_NOTE_DELETE_MS = 50;
 
 // Node types that can carry a blockId in a plain note, and therefore be
 // annotated with fragment tags and links. In a notepad the `block` wrapper
