@@ -390,3 +390,7 @@ call are covered.
 Work happens in-tree in `cord/apps/desktop`, where it can be tested against the real sidecar
 and database. Re-seeding the `shuttle/` repo from the result is a separate follow-up, as is
 the decoupling work its README describes.
+
+**Status:** the re-seed is done — `shuttle` now carries the v1.6 notepad editor. The
+decoupling is not, and the repo stays private until it is. Shuttle becomes public once it
+builds without Cord; see `PACKAGING.md` in that repo for the plan.

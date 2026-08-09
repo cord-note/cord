@@ -13,7 +13,7 @@ Local-first desktop note-taking app. Vaults → Notes → Links → Tags — a k
 |---|---|
 | Desktop shell | Tauri (Rust) |
 | Frontend | React + Vite + TypeScript |
-| Editor | [Shuttle](https://github.com/alexander-288/shuttle) — Tiptap OSS + ghost-markdown layer (its own repo) |
+| Editor | Shuttle — Tiptap OSS + ghost-markdown layer ([see below](#shuttle)) |
 | Backend | Bun sidecar (local socket) |
 | Database | SQLite via `bun:sqlite` |
 | ORM | Drizzle |
@@ -61,7 +61,22 @@ cord/
   packages/               core / sync / notebook / export (phased)
 ```
 
-The editor (**Shuttle**) is being extracted into its own repository for a significant rework; the copy under `renderer/components/editor/` is the current in-tree version.
+## Shuttle
+
+Cord's editor is called **Shuttle** — Tiptap OSS plus a ghost-markdown layer,
+where syntax disappears as you type and storage is Tiptap JSON.
+
+It is being extracted into its own repository so that Cord depends on it as a
+package rather than carrying its source. That repository is **not public yet**,
+and deliberately so: the editor still imports Cord's Zustand stores and IPC
+client in about a dozen places, so it does not build on its own. Publishing it
+in that state would mean publishing something nobody could actually use.
+
+**Shuttle will be made public once it is properly separated** — a narrow host
+interface in place of those imports, its own types, and a build that stands up
+without Cord. Until then the working copy lives here, under
+`apps/desktop/src/renderer/components/editor/`, and that is the version Cord
+actually runs.
 
 ## Develop
 
