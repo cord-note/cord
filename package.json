@@ -1,9 +1,13 @@
 {
   "name": "cord",
   "private": true,
+  "description": "Local-first desktop note-taking app — vaults, notes, links and tags as a knowledge graph. Tauri + Bun + React.",
+  "license": "AGPL-3.0-or-later",
   "scripts": {
     "dev": "pnpm --filter @cord/desktop dev",
-    "build": "pnpm --filter @cord/desktop build"
+    "build": "pnpm --filter @cord/desktop build",
+    "test": "pnpm --filter @cord/desktop test",
+    "typecheck": "pnpm --filter @cord/desktop typecheck"
   },
   "engines": {
     "node": ">=20",

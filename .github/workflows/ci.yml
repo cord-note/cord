@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A newer push to the same branch makes the in-flight run pointless.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: typecheck · test · build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      # The sidecar and the test runner are both Bun; the renderer toolchain is
+      # Node. CI needs both.
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm --filter @cord/desktop typecheck
+
+      - name: Test
+        run: pnpm --filter @cord/desktop test
+
+      # Catches what typecheck cannot: a bad import path, a missing asset, a
+      # CSS module that no longer resolves. It also produces dist/renderer,
+      # which tauri.conf.json points frontendDist at.
+      - name: Build renderer
+        run: pnpm --filter @cord/desktop build:renderer
+
+      - name: Install Tauri system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev \
+            patchelf libgtk-3-dev
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri
+
+      # tauri-build resolves `externalBin` at build-script time and fails if the
+      # sidecar for the host triple is missing. The binaries are gitignored, so
+      # CI has to produce one before it can touch the Rust crate. Only the host
+      # target is needed here — the three-target build is for releases.
+      - name: Build sidecar for this runner
+        working-directory: apps/desktop
+        run: |
+          bun build --compile --target=bun-linux-x64 src/sidecar/index.ts \
+            --outfile src-tauri/binaries/cord-sidecar-x86_64-unknown-linux-gnu
+
+      - name: Check Rust shell
+        working-directory: apps/desktop/src-tauri
+        run: cargo check --all-targets
