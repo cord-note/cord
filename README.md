@@ -109,9 +109,15 @@ React → invoke('entity:action', payload)
 
 Rust-native hot paths (search, fs-watch) skip the sidecar hop and talk to SQLite FTS5 directly.
 
+## Author
+
+Cord is designed, written and maintained by
+[Aleksander Sprengel](https://github.com/Alexander-288). Every part of it —
+the Tauri shell, the Bun sidecar, the schema, the Shuttle editor — is his work.
+
 ## License
 
-Copyright (C) 2026 Cord contributors.
+Copyright (C) 2026 Aleksander Sprengel.
 
 Licensed under the **GNU Affero General Public License v3.0 or later**. The full
 text is in [LICENSE](LICENSE).

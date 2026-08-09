@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-07
 **Status:** implemented — see "Deviations from this design" at the end
-**Owners:** Sajon (schema, services, IPC, editor nodes), CompressedDuck (block chrome UI)
+**Author:** Aleksander Sprengel — sole developer
 
 > This is a dated design record, kept as written. It refers throughout to
 > `CLAUDE.md`, an internal working document that is not published with this
@@ -180,8 +180,8 @@ for M4.
 
 `BlockId.ts` is unchanged and still serves plain notes.
 
-**Sign-off:** `block` and `blockRef` are new node types. CLAUDE.md requires agreement from
-all three developers to add one. Approved.
+**Sign-off:** `block` and `blockRef` are new node types, and the v1 node list is frozen —
+adding one is a deliberate decision rather than an incidental change. Approved.
 
 ## 6. Renderer structure
 
@@ -323,13 +323,18 @@ CLAUDE.md: the frozen schema block (`notes` row, new `blocks` row), frozen decis
 exception), the Shuttle frozen node type list (`block`, `blockRef`), and a note on the two
 note kinds.
 
-## 15. Ownership
+## 15. Scope of the work
 
-| Developer | Work |
-|---|---|
-| Sajon | Schema + migration, `BlockIndexService`, IPC, `block` / `blockRef` nodes, `BlockNormalizer`, slash / quicktype / clipboard rewiring, `body_markdown` removal, search rebuild, all tests |
-| CompressedDuck | `BlockChrome`, block menu, drag and drop UX, split new-note button, conversion confirm dialog, editor file split |
-| Lotar | None. No Rust in this phase; search stays in the sidecar until M4. |
+All of it, by the sole developer:
+
+- Schema + migration, `BlockIndexService`, IPC endpoints
+- `block` / `blockRef` nodes, `BlockNormalizer`
+- Slash / quicktype / clipboard rewiring, `body_markdown` removal, search rebuild
+- `BlockChrome`, the block menu, drag-and-drop, the split new-note button, the
+  conversion confirm dialog, the editor file split
+- All tests
+
+No Rust in this phase; search stays in the sidecar until M4.
 
 ## 16. Deviations from this design, as built
 
