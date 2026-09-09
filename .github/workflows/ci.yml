@@ -69,6 +69,12 @@ jobs:
           bun build --compile --target=bun-linux-x64 src/sidecar/index.ts \
             --outfile src-tauri/binaries/cord-sidecar-x86_64-unknown-linux-gnu
 
+      # `cargo test` covers search.rs; `--all-targets` on the check keeps the
+      # command modules compiling even though they have no tests of their own.
       - name: Check Rust shell
         working-directory: apps/desktop/src-tauri
         run: cargo check --all-targets
+
+      - name: Test Rust shell
+        working-directory: apps/desktop/src-tauri
+        run: cargo test
