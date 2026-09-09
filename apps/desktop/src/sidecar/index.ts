@@ -1,4 +1,5 @@
 import { runMigrations } from './db/migrations';
+import { resolveDbPath } from './db/client';
 import { Router } from './router';
 import { VaultService }    from './services/VaultService';
 import { NoteService }     from './services/NoteService';
@@ -62,7 +63,10 @@ const server = Bun.serve({
   },
 });
 
-// Tauri reads this line from stdout to know which port to forward to.
+// Tauri reads these two lines from stdout. SIDECAR_DB comes first because the
+// reader stops at SIDECAR_PORT; migrations have already run by this point, so
+// the file Rust opens is guaranteed to have its schema.
+process.stdout.write(`SIDECAR_DB=${resolveDbPath()}\n`);
 process.stdout.write(`SIDECAR_PORT=${server.port}\n`);
 
 process.on('SIGTERM', () => {
