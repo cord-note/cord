@@ -218,7 +218,7 @@ export function runMigrations(): void {
   // `body_markdown` was never actually derived on save, so it held '' for every
   // note this app has ever created. `blocks.text` replaces it as the searchable
   // text surface. Dropping it breaks the additive-only migration rule knowingly
-  // — see docs/superpowers/specs/2026-08-07-notepad-blocks-design.md §4.4.
+  // — see docs/specs/2026-08-07-notepad-blocks-design.md §4.4.
   addColumnIfMissing(db, 'notes', 'kind', `\`kind\` text DEFAULT 'note' NOT NULL`);
   dropColumnIfPresent(db, 'notes', 'body_markdown');
 

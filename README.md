@@ -44,7 +44,7 @@ never one editor per block. Blocks are flat, and a whole list is one block.
 4. `body_json` is the source of truth, and the only stored representation of a
    document. `body_markdown` was removed in v1.6; markdown is input UX only, via
    the clipboard. Searchable text comes from `blocks.text`.
-5. The Tauri Rust layer stays thin by default. Business logic lives in the Bun sidecar; logic moves to Rust only for approved, measurable hot paths (FTS5 search, fs-watch).
+5. The Tauri Rust layer stays thin by default. Business logic lives in the Bun sidecar; logic moves to Rust only for approved, measurable hot paths (currently just FTS5 search).
 6. Plugin-driven UI registry — no hardcoded UI for module surfaces.
 
 ## Layout
@@ -53,7 +53,7 @@ never one editor per block. Blocks are flat, and a whole list is one block.
 cord/
   apps/
     desktop/
-      src-tauri/          Rust shell + approved Rust hot paths (search, fs-watch)
+      src-tauri/          Rust shell + FTS5 search
       src/
         renderer/         React + Vite frontend (components, pages, hooks, store)
         sidecar/          Bun backend — domain services, Drizzle schema, adapters
@@ -107,7 +107,7 @@ React → invoke('entity:action', payload)
   → response → React re-render
 ```
 
-Rust-native hot paths (search, fs-watch) skip the sidecar hop and talk to SQLite FTS5 directly.
+Rust-native search skips the sidecar hop and queries SQLite FTS5 directly.
 
 ## Author
 
