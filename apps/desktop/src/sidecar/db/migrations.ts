@@ -12,6 +12,14 @@ function columnsOf(db: Db, table: string): string[] {
   }
 }
 
+/** True if a table — including a virtual table — already exists. */
+function tableExists(db: Db, table: string): boolean {
+  const row = db
+    .query(`SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?`)
+    .get(table);
+  return row !== null;
+}
+
 /** ALTER TABLE ADD COLUMN is not idempotent in SQLite — guard on table_info. */
 function addColumnIfMissing(db: Db, table: string, column: string, ddl: string): void {
   const cols = columnsOf(db, table);
@@ -25,6 +33,51 @@ function dropColumnIfPresent(db: Db, table: string, column: string): void {
   if (!columnsOf(db, table).includes(column)) return;
   db.run(`ALTER TABLE \`${table}\` DROP COLUMN \`${column}\``);
   console.info(`[db] dropped ${table}.${column}`);
+}
+
+/**
+ * Full-text index over `blocks.text`, read directly by the Tauri search command.
+ *
+ * External-content, so the text is not duplicated — `blocks` stays the only
+ * copy. The trigram tokenizer is deliberate: it gives substring matching
+ * identical to the `LIKE '%q%'` this replaces, so moving search into Rust is a
+ * latency change and not a behaviour change.
+ *
+ * Maintained by triggers rather than by BlockIndexService, because the sidecar
+ * owns every write to `blocks` and a future sync receiver reprojecting locally
+ * is exactly the caller most likely to forget an explicit index call.
+ */
+function createBlocksFts(db: Db): void {
+  const alreadyBuilt = tableExists(db, 'blocks_fts');
+
+  db.run(`CREATE VIRTUAL TABLE IF NOT EXISTS \`blocks_fts\` USING fts5(
+    text,
+    content='blocks',
+    content_rowid='rowid',
+    tokenize='trigram'
+  )`);
+
+  db.run(`CREATE TRIGGER IF NOT EXISTS \`blocks_fts_ai\` AFTER INSERT ON \`blocks\` BEGIN
+    INSERT INTO \`blocks_fts\`(rowid, text) VALUES (new.rowid, new.text);
+  END`);
+
+  // An external-content table cannot recover the old text itself, so a removal
+  // has to be announced with the value being removed. Get this wrong and the
+  // index keeps matching text that no longer exists.
+  db.run(`CREATE TRIGGER IF NOT EXISTS \`blocks_fts_ad\` AFTER DELETE ON \`blocks\` BEGIN
+    INSERT INTO \`blocks_fts\`(\`blocks_fts\`, rowid, text) VALUES('delete', old.rowid, old.text);
+  END`);
+
+  db.run(`CREATE TRIGGER IF NOT EXISTS \`blocks_fts_au\` AFTER UPDATE ON \`blocks\` BEGIN
+    INSERT INTO \`blocks_fts\`(\`blocks_fts\`, rowid, text) VALUES('delete', old.rowid, old.text);
+    INSERT INTO \`blocks_fts\`(rowid, text) VALUES (new.rowid, new.text);
+  END`);
+
+  // Only on first creation. Re-running migrations must not re-scan every vault.
+  if (!alreadyBuilt) {
+    db.run(`INSERT INTO \`blocks_fts\`(\`blocks_fts\`) VALUES('rebuild')`);
+    console.info('[db] blocks_fts index built');
+  }
 }
 
 export function runMigrations(): void {
@@ -157,6 +210,8 @@ export function runMigrations(): void {
   db.run(`CREATE INDEX IF NOT EXISTS \`idx_blocks_note\` ON \`blocks\` (\`note_id\`, \`sort\`)`);
   db.run(`CREATE INDEX IF NOT EXISTS \`idx_blocks_type\` ON \`blocks\` (\`vault_id\`, \`type\`)`);
   db.run(`CREATE INDEX IF NOT EXISTS \`idx_blocks_ref\`  ON \`blocks\` (\`ref_block_id\`)`);
+
+  createBlocksFts(db);
 
   // ── Upgrades for databases created before the notepad work ──────────────────
   //
