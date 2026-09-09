@@ -7,14 +7,26 @@ import { schema } from './schema';
 let _db: ReturnType<typeof drizzle<typeof schema>> | null = null;
 let _sqlite: Database | null = null;
 
-export function getDb(): ReturnType<typeof drizzle<typeof schema>> {
-  if (_db) return _db;
-
-  const dbPath = process.env['CORD_DB_PATH'] ?? join(
+/**
+ * Where the database lives. The single source of truth for the path.
+ *
+ * The Tauri layer opens this same file directly for search, and learns the
+ * path from the `SIDECAR_DB=` line this process prints rather than
+ * recomputing it — so this function must stay the only place the default is
+ * expressed.
+ */
+export function resolveDbPath(): string {
+  return process.env['CORD_DB_PATH'] ?? join(
     process.env['HOME'] ?? process.env['USERPROFILE'] ?? '.',
     '.cord',
     'cord.db',
   );
+}
+
+export function getDb(): ReturnType<typeof drizzle<typeof schema>> {
+  if (_db) return _db;
+
+  const dbPath = resolveDbPath();
 
   if (dbPath !== ':memory:') {
     mkdirSync(join(dbPath, '..'), { recursive: true });
