@@ -22,8 +22,8 @@ pub fn run() {
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
-            let (port, child) = start_sidecar(app)?;
-            app.manage(AppState::new(port));
+            let (port, db_path, child) = start_sidecar(app)?;
+            app.manage(AppState::new(port, db_path.as_deref()));
             app.manage(SidecarProcess(Mutex::new(Some(child))));
             Ok(())
         })
@@ -98,20 +98,32 @@ fn shutdown_sidecar(app: &AppHandle) {
     }
 }
 
-/// Spawn the Bun sidecar and read the port it binds to from stdout.
+/// Spawn the Bun sidecar and read the port — and the database path — it prints.
 ///
-/// Returns the child handle alongside the port; the caller must keep it alive
-/// for the lifetime of the app and kill it on exit (see `SidecarProcess`).
-fn start_sidecar(app: &tauri::App) -> Result<(u16, CommandChild), Box<dyn std::error::Error>> {
+/// Returns the child handle alongside both; the caller must keep it alive for
+/// the lifetime of the app and kill it on exit (see `SidecarProcess`).
+fn start_sidecar(
+    app: &tauri::App,
+) -> Result<(u16, Option<String>, CommandChild), Box<dyn std::error::Error>> {
     let sidecar_cmd = app.shell().sidecar("cord-sidecar")?;
     let (mut rx, child) = sidecar_cmd.spawn()?;
+
+    // SIDECAR_DB is printed first, so it has always arrived by the time the
+    // port ends this loop.
+    let mut db_path: Option<String> = None;
 
     while let Some(event) = rx.blocking_recv() {
         if let tauri_plugin_shell::process::CommandEvent::Stdout(bytes) = event {
             let line = String::from_utf8_lossy(&bytes);
-            if let Some(port_str) = line.trim().strip_prefix("SIDECAR_PORT=") {
+            let line = line.trim();
+
+            if let Some(path) = line.strip_prefix("SIDECAR_DB=") {
+                db_path = Some(path.trim().to_owned());
+            }
+
+            if let Some(port_str) = line.strip_prefix("SIDECAR_PORT=") {
                 if let Ok(port) = port_str.trim().parse::<u16>() {
-                    return Ok((port, child));
+                    return Ok((port, db_path, child));
                 }
             }
         }
