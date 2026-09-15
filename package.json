@@ -11,6 +11,7 @@
     "url": "https://github.com/cord-note/cord/issues"
   },
   "homepage": "https://github.com/cord-note/cord#readme",
+  "packageManager": "pnpm@11.8.0",
   "scripts": {
     "dev": "pnpm --filter @cord/desktop dev",
     "build": "pnpm --filter @cord/desktop build",
@@ -19,6 +20,6 @@
   },
   "engines": {
     "node": ">=20",
-    "pnpm": ">=9"
+    "pnpm": ">=10"
   }
 }

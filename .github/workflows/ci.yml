@@ -17,9 +17,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # No version pin here on purpose: action-setup reads `packageManager`
+      # from package.json, so CI and local cannot drift. They did once —
+      # overrides moved to pnpm-workspace.yaml in pnpm 10, and a CI pinned to 9
+      # silently ignored them, failing --frozen-lockfile on a config mismatch.
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
 
       - uses: actions/setup-node@v4
         with:
