@@ -28,7 +28,13 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": ["nsis", "app", "dmg", "deb", "appimage"],
+    "publisher": "Aleksander Sprengel",
+    "copyright": "Copyright (c) 2026 Aleksander Sprengel",
+    "category": "Productivity",
+    "shortDescription": "Local-first note-taking as a knowledge graph.",
+    "longDescription": "Cord is a local-first desktop note-taking app. Vaults, notes, links and tags form a knowledge graph rather than a filing cabinet. Your notes live in a SQLite database on your own machine.",
+    "licenseFile": "../../../LICENSE",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
