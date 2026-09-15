@@ -19,7 +19,7 @@
     "typecheck": "pnpm --filter @cord/desktop typecheck"
   },
   "engines": {
-    "node": ">=20",
+    "node": ">=22",
     "pnpm": ">=10"
   }
 }
