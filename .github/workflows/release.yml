@@ -1,0 +1,154 @@
+name: Release
+
+# Tagging is the trigger. Push an annotated tag whose name matches the version
+# in tauri.conf.json (see the guard job) and this builds installers for every
+# platform and attaches them to a draft GitHub release.
+#
+#   git tag -a v1.6.0 -m "Cord 1.6.0" && git push origin v1.6.0
+#
+# The release is left as a DRAFT. Nothing reaches users until you review the
+# artifacts and publish it by hand.
+on:
+  push:
+    tags: ['v*']
+  # Lets you rehearse the whole matrix on a branch without creating a tag.
+  # Artifacts are uploaded, but no release is touched.
+  workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  # A mislabelled installer is worse than a failed build: it ships, and the
+  # version people report bugs against is not the version they are running.
+  # Cheap to check, so check it before spending forty minutes of matrix time.
+  guard:
+    name: tag matches manifest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compare tag to tauri.conf.json, package.json and Cargo.toml
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          conf=$(node -p "require('./apps/desktop/src-tauri/tauri.conf.json').version")
+          pkg=$(node -p "require('./apps/desktop/package.json').version")
+          cargo=$(grep -m1 '^version' apps/desktop/src-tauri/Cargo.toml | sed -E 's/.*"(.*)".*/\1/')
+
+          echo "tag=$tag  tauri.conf=$conf  package.json=$pkg  Cargo.toml=$cargo"
+          fail=0
+          [ "$tag" = "$conf" ]  || { echo "::error::tag $tag != tauri.conf.json $conf"; fail=1; }
+          [ "$tag" = "$pkg" ]   || { echo "::error::tag $tag != package.json $pkg"; fail=1; }
+          [ "$tag" = "$cargo" ] || { echo "::error::tag $tag != Cargo.toml $cargo"; fail=1; }
+          exit $fail
+
+  build:
+    name: ${{ matrix.label }}
+    needs: guard
+    strategy:
+      # One platform failing should not bin the artifacts that did build —
+      # a partial draft release is still useful, and the draft is not public.
+      fail-fast: false
+      matrix:
+        include:
+          - label: Windows (x64)
+            os: windows-latest
+            rust-target: x86_64-pc-windows-msvc
+            bun-target: bun-windows-x64
+          # macos-latest is Apple Silicon. Intel Macs are deliberately not
+          # built: it would need a macos-13 runner and a bun-darwin-x64 entry
+          # in build:sidecar, and an unsigned .app cannot be opened normally
+          # on either architecture until Developer ID signing exists.
+          - label: macOS (Apple Silicon)
+            os: macos-latest
+            rust-target: aarch64-apple-darwin
+            bun-target: bun-darwin-arm64
+          # Pinned to 22.04, not ubuntu-latest. An AppImage links against the
+          # glibc of the machine that built it, so building on 24.04 would
+          # refuse to start on any older distro.
+          - label: Linux (x64)
+            os: ubuntu-22.04
+            rust-target: x86_64-unknown-linux-gnu
+            bun-target: bun-linux-x64
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - run: pnpm install --frozen-lockfile
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust-target }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri
+          key: ${{ matrix.rust-target }}
+
+      - name: Install Tauri system dependencies
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev \
+            patchelf libgtk-3-dev
+
+      # Only this runner's target. The three-target build in `build:sidecar`
+      # exists for building every installer from one machine; here each runner
+      # already is the platform it ships, so the other two are wasted minutes.
+      # tauri-build resolves externalBin at build-script time and fails if the
+      # binary for the host triple is missing, so this must precede the build.
+      - name: Build the sidecar for this platform
+        working-directory: apps/desktop
+        run: |
+          bun build --compile --target=${{ matrix.bun-target }} src/sidecar/index.ts \
+            --outfile src-tauri/binaries/cord-sidecar-${{ matrix.rust-target }}
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: apps/desktop
+          args: --target ${{ matrix.rust-target }}
+          # Only publish to a release when a tag drove the run. On a manual
+          # dispatch these stay empty, so the action just builds.
+          tagName: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || '' }}
+          releaseName: ${{ startsWith(github.ref, 'refs/tags/v') && format('Cord {0}', github.ref_name) || '' }}
+          releaseBody: |
+            Unsigned builds. Installing them will show a warning:
+
+            - **Windows** — SmartScreen reports an unrecognised app. Choose *More info* then *Run anyway*.
+            - **macOS** — Gatekeeper refuses to open it. Right-click the app and choose *Open*, then confirm.
+            - **Linux** — no warning; `chmod +x` the AppImage if your file manager has not already.
+
+            Cord keeps your notes in a local SQLite database under `~/.cord/`. Nothing is sent anywhere.
+          releaseDraft: true
+          prerelease: false
+
+      # A second copy, independent of the release, so a manual dispatch still
+      # produces something inspectable and a failed publish is not a lost build.
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cord-${{ matrix.rust-target }}
+          path: |
+            apps/desktop/src-tauri/target/${{ matrix.rust-target }}/release/bundle/**/*
+          if-no-files-found: warn
+          retention-days: 14
