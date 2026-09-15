@@ -15,7 +15,7 @@ jobs:
     name: typecheck · test · build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # No version pin here on purpose: action-setup reads `packageManager`
       # from package.json, so CI and local cannot drift. They did once —
