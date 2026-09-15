@@ -21,6 +21,7 @@ struct SidecarProcess(Mutex<Option<CommandChild>>);
 pub fn run() {
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             let (port, db_path, child) = start_sidecar(app)?;
             app.manage(AppState::new(port, db_path.as_deref()));
