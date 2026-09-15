@@ -124,6 +124,11 @@ jobs:
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Signs the update artifacts. Without these the build still produces
+          # installers, but latest.json carries no valid signature and every
+          # client refuses the update — which is the safe direction to fail.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           projectPath: apps/desktop
           args: --target ${{ matrix.rust-target }}
@@ -141,6 +146,11 @@ jobs:
             Cord keeps your notes in a local SQLite database under `~/.cord/`. Nothing is sent anywhere.
           releaseDraft: true
           prerelease: false
+          # Emits the .sig files and the latest.json the app polls. Every
+          # release must carry these, or clients on that version go stale
+          # permanently — there is no way to update someone to the release
+          # that would have fixed their updater.
+          includeUpdaterJson: true
 
       # A second copy, independent of the release, so a manual dispatch still
       # produces something inspectable and a failed publish is not a lost build.

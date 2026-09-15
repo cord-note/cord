@@ -5,6 +5,7 @@ import NotesPage from './pages/NotesPage';
 import { useAuthStore } from './store/auth';
 import { useSettingsStore } from './store/settings';
 import { useThemeStore } from './store/theme';
+import { checkForUpdate } from './updater';
 
 // Temporary port of the CordDB shell: TitleBar sits above everything,
 // LoginScreen shows until authenticated, then the notes workspace.
@@ -23,6 +24,8 @@ export function App() {
     useSettingsStore.getState().load();
     useThemeStore.getState().init();
     check();
+    // Fire-and-forget: never gates rendering, and swallows its own failures.
+    void checkForUpdate();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
