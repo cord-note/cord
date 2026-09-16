@@ -204,12 +204,6 @@ React → invoke('entity:action', payload)
 
 Rust-native search skips the sidecar hop and queries SQLite FTS5 directly.
 
-## Author
-
-Cord is designed, written and maintained by
-[Aleksander Sprengel](https://github.com/Alexander-288). Every part of it —
-the Tauri shell, the Bun sidecar, the schema, the Shuttle editor — is his work.
-
 ## License
 
 Copyright (C) 2026 Aleksander Sprengel.
