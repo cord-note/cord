@@ -16,7 +16,8 @@ import { useThemeStore } from '../store/theme';
 import {
   IS_MAC, formatAccel, matchesBinding, useKeybindingStore, type KeybindingId,
 } from '../store/keybindings';
-import type { Note } from '@shared/types';
+import type { NoteListItem } from '@shared/types';
+import { api } from '../ipc';
 import styles from './TitleBar.module.css';
 
 interface Cmd {
@@ -130,7 +131,10 @@ export default function TitleBar() {
 
 // ── Command pill ──────────────────────────────────────────────────────────────
 
-type Row = { kind: 'cmd'; data: Cmd } | { kind: 'note'; data: Note };
+// Notes here are NoteListItem, not Note: rows only need id, title and isPinned,
+// and it is the shape the backend search returns. Note is assignable to it, so
+// the loaded-notes path still fits.
+type Row = { kind: 'cmd'; data: Cmd } | { kind: 'note'; data: NoteListItem };
 
 function CommandPill() {
   const { commandsOpen, openCommands, closeCommands, openSettings, setView, view } = useUIStore();
@@ -143,6 +147,7 @@ function CommandPill() {
 
   const [query, setQuery]   = useState('');
   const [cursor, setCursor] = useState(0);
+  const [bodyHits, setBodyHits] = useState<NoteListItem[]>([]);
   const inputRef  = useRef<HTMLInputElement>(null);
   const wrapRef   = useRef<HTMLDivElement>(null);
   const itemRefs  = useRef<(HTMLButtonElement | null)[]>([]);
@@ -165,14 +170,40 @@ function CommandPill() {
   const filteredCmds = allCmds
     .filter((c) => !c.notepadOnly || isNotepad)
     .filter((c) => !q || c.label.toLowerCase().includes(q));
-  const filteredNotes: Note[] = q
-    ? notes.filter((n) => (n.title || '').toLowerCase().includes(q)).slice(0, 8)
+  // Title matches come from the already-loaded notes, so the list reacts on the
+  // first keystroke instead of waiting on a round trip. Body matches arrive
+  // from the same backend search the Notes tab uses and are merged in when they
+  // land — the palette used to filter titles only, so a note whose body held
+  // the term was findable in the Notes tab and invisible here.
+  const titleHits = q
+    ? notes.filter((n) => (n.title || '').toLowerCase().includes(q))
+    : [];
+
+  const seen = new Set(titleHits.map((n) => n.id));
+  const filteredNotes: NoteListItem[] = q
+    ? [...titleHits, ...bodyHits.filter((n) => !seen.has(n.id))].slice(0, 8)
     : notes.slice(0, 6);
 
   const rows: Row[] = [
     ...filteredCmds.map((c): Row => ({ kind: 'cmd',  data: c })),
     ...filteredNotes.map((n): Row => ({ kind: 'note', data: n })),
   ];
+
+  // Body-text search. Debounced because this fires per keystroke, and guarded
+  // by `cancelled` so a slow response for an earlier query cannot overwrite the
+  // results of a later one. Failures clear the extra hits rather than surfacing
+  // an error: the title matches above are still a useful answer.
+  useEffect(() => {
+    if (!q || !activeVaultId) { setBodyHits([]); return; }
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      api.notes
+        .search(activeVaultId, q)
+        .then((items) => { if (!cancelled) setBodyHits(items); })
+        .catch(() => { if (!cancelled) setBodyHits([]); });
+    }, 120);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [q, activeVaultId]);
 
   useEffect(() => { setCursor(0); }, [query]);
   useEffect(() => { itemRefs.current[cursor]?.scrollIntoView({ block: 'nearest' }); }, [cursor]);
