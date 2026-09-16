@@ -527,9 +527,25 @@ html, body, #root {
 ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
+/* Keyboard focus ring for controls that have no focus treatment of their own.
+   `input, textarea` below sets `outline: none`, but that is an element selector
+   and loses to this pseudo-class on specificity, so text fields were getting a
+   detached grey rectangle on top of whatever focus style they already had. */
 :focus-visible {
   outline: 2px solid var(--border-strong);
   outline-offset: 2px;
+}
+
+/* Text fields opt out: the caret already says where focus is, and a second
+   offset outline reads as an artifact rather than as feedback. Checked before
+   removing it — every field either styles its own focused state (LoginScreen,
+   Settings, VaultSidebar, the NoteList search bar via :focus-within) or is
+   autofocused inside a transient popup, where a ring says nothing the open
+   popup has not already said. Buttons and links keep it; removing it there
+   would leave keyboard users with no focus indicator at all. */
+input:focus-visible,
+textarea:focus-visible {
+  outline: none;
 }
 
 button {

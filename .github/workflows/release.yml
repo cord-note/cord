@@ -117,6 +117,10 @@ jobs:
       # binary for the host triple is missing, so this must precede the build.
       - name: Build the sidecar for this platform
         working-directory: apps/desktop
+        # Explicitly bash: windows-latest defaults to PowerShell, which reads a
+        # trailing backslash continuation as a dangling unary operator and dies
+        # with "Missing expression after unary operator '--'".
+        shell: bash
         run: |
           bun build --compile --target=${{ matrix.bun-target }} src/sidecar/index.ts \
             --outfile src-tauri/binaries/cord-sidecar-${{ matrix.rust-target }}
