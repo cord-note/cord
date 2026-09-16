@@ -32,7 +32,7 @@ Bug fixes and small, obvious improvements need no ceremony. Send them.
 
 ## Getting set up
 
-You need Node 20+, pnpm 9+, [Bun](https://bun.sh), and the
+You need Node 22+, pnpm 10+, [Bun](https://bun.sh), and the
 [Tauri prerequisites](https://tauri.app/start/prerequisites/) for your platform.
 
 ```bash
