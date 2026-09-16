@@ -36,15 +36,20 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
           tag="${GITHUB_REF_NAME#v}"
+          # Compare only the release core. A prerelease tag like v1.7.0-beta.1
+          # ships the 1.7.0 manifests on purpose: the suffix says which build of
+          # 1.7.0 this is, not that the app is a different version. Everything
+          # left of the first hyphen still has to match exactly.
+          core="${tag%%-*}"
           conf=$(node -p "require('./apps/desktop/src-tauri/tauri.conf.json').version")
           pkg=$(node -p "require('./apps/desktop/package.json').version")
           cargo=$(grep -m1 '^version' apps/desktop/src-tauri/Cargo.toml | sed -E 's/.*"(.*)".*/\1/')
 
-          echo "tag=$tag  tauri.conf=$conf  package.json=$pkg  Cargo.toml=$cargo"
+          echo "tag=$tag  core=$core  tauri.conf=$conf  package.json=$pkg  Cargo.toml=$cargo"
           fail=0
-          [ "$tag" = "$conf" ]  || { echo "::error::tag $tag != tauri.conf.json $conf"; fail=1; }
-          [ "$tag" = "$pkg" ]   || { echo "::error::tag $tag != package.json $pkg"; fail=1; }
-          [ "$tag" = "$cargo" ] || { echo "::error::tag $tag != Cargo.toml $cargo"; fail=1; }
+          [ "$core" = "$conf" ]  || { echo "::error::tag core $core != tauri.conf.json $conf"; fail=1; }
+          [ "$core" = "$pkg" ]   || { echo "::error::tag core $core != package.json $pkg"; fail=1; }
+          [ "$core" = "$cargo" ] || { echo "::error::tag core $core != Cargo.toml $cargo"; fail=1; }
           exit $fail
 
   build:
@@ -149,7 +154,9 @@ jobs:
 
             Cord keeps your notes in a local SQLite database under `~/.cord/`. Nothing is sent anywhere.
           releaseDraft: true
-          prerelease: false
+          # A hyphen in the tag (v1.7.0-beta.1) marks it a prerelease, so GitHub
+          # labels it and does not present it as the latest stable download.
+          prerelease: ${{ contains(github.ref_name, '-') }}
           # Emits the .sig files and the latest.json the app polls. Every
           # release must carry these, or clients on that version go stale
           # permanently — there is no way to update someone to the release

@@ -5,7 +5,7 @@
 
 Local-first desktop note-taking app. Vaults → Notes → Links → Tags — a knowledge graph, not a filing cabinet.
 
-**Status:** v1.6 — migrating from Electron + Next.js (see the older `CordDB` repo) to Tauri + a Bun sidecar, carrying the existing React frontend across.
+**Status:** v1.7 — migrating from Electron + Next.js (see the older `CordDB` repo) to Tauri + a Bun sidecar, carrying the existing React frontend across.
 
 ## Stack
 
