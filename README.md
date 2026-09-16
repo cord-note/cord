@@ -1,11 +1,72 @@
 # Cord
 
 [![CI](https://github.com/cord-note/cord/actions/workflows/ci.yml/badge.svg)](https://github.com/cord-note/cord/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/cord-note/cord?include_prereleases&sort=semver)](https://github.com/cord-note/cord/releases/latest)
 [![License: AGPL v3](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
 
 Local-first desktop note-taking app. Vaults → Notes → Links → Tags — a knowledge graph, not a filing cabinet.
 
-**Status:** v1.7 — migrating from Electron + Next.js (see the older `CordDB` repo) to Tauri + a Bun sidecar, carrying the existing React frontend across.
+**Status:** v1.7.0-beta.1 — the move off Electron + Next.js (see the older
+`CordDB` repo) has landed. Cord now runs on a Tauri shell with a Bun sidecar and
+the React frontend carried across, and full-text search runs natively in Rust
+against SQLite FTS5.
+
+Beta because the installers are young, not because the app is half-built. Every
+platform is built and signed by CI, but only Windows has had much real use.
+
+## Install
+
+Download from the [latest release](https://github.com/cord-note/cord/releases/latest).
+
+| Platform | File |
+|---|---|
+| Windows | `Cord_<version>_x64-setup.exe` |
+| macOS (Apple Silicon) | `Cord_<version>_aarch64.dmg` |
+| Linux (Debian/Ubuntu) | `Cord_<version>_amd64.deb` |
+| Linux (anything else) | `Cord_<version>_amd64.AppImage` |
+
+Cord is **not code-signed yet**, so Windows and macOS will both object the first
+time. Nothing is wrong; there is simply no certificate behind the binary.
+
+- **Windows** — SmartScreen calls it an unrecognised app. *More info* →
+  *Run anyway*.
+- **macOS** — Gatekeeper refuses to open it. Right-click the app, choose *Open*,
+  then confirm. Double-clicking will not offer that option.
+- **Linux** — no warning.
+
+### AppImage
+
+```bash
+chmod +x Cord_<version>_amd64.AppImage
+./Cord_<version>_amd64.AppImage
+```
+
+AppImages need FUSE 2, which some distributions no longer install by default —
+Arch among them. Either install it (`sudo pacman -S fuse2`) or skip it entirely
+with `--appimage-extract-and-run`.
+
+### Intel Macs
+
+Not built. It needs a second runner and a fourth sidecar target, and an unsigned
+`.app` is awkward to open on any Mac until code signing exists, so the cost buys
+little today. Build from source meanwhile — see [Develop](#develop).
+
+### Your notes
+
+Cord keeps everything in a local SQLite database at `~/.cord/cord.db`. Nothing
+is uploaded anywhere: there is no account, no telemetry and no sync yet.
+
+## Updating
+
+Cord checks for a newer release on startup and offers to install it. Update
+artifacts are signed with a key the app carries, so a build that was not signed
+by that key is refused rather than installed.
+
+The update check reads
+[`latest.json`](https://github.com/cord-note/cord/releases/latest/download/latest.json)
+from the newest release. Note that GitHub's `releases/latest` deliberately skips
+anything flagged as a pre-release, so a release marked that way is invisible to
+installed copies — worth knowing before flagging one.
 
 ## Stack
 
@@ -80,7 +141,7 @@ actually runs.
 
 ## Develop
 
-Requires Node 20+, pnpm 9+, [Bun](https://bun.sh), and the
+Requires Node 22+, pnpm 10+, [Bun](https://bun.sh), and the
 [Tauri prerequisites](https://tauri.app/start/prerequisites/) for your platform.
 
 ```bash
@@ -96,6 +157,40 @@ pnpm build        # renderer + sidecar binaries for all three targets
 The Rust shell embeds the Bun sidecar as an `externalBin`, so `pnpm build` must
 run before `tauri build` — the build script fails if no sidecar exists for the
 host triple.
+
+## Releasing
+
+Tauri cannot cross-compile: every platform links against its own native webview
+and system linker. So releases are built by one CI runner per operating system —
+`windows-latest`, `macos-latest`, and `ubuntu-22.04` — each compiling its own Bun
+sidecar, building the Rust shell for its target, and bundling its own installer.
+
+Linux is pinned to 22.04 rather than `ubuntu-latest` on purpose: an AppImage
+links against the glibc of the machine that built it, so building on a newer
+release produces one that refuses to start on older distributions.
+
+Cutting a release is a tag. Bump the version in all three manifests first —
+`apps/desktop/package.json`, `apps/desktop/src-tauri/tauri.conf.json` and
+`apps/desktop/src-tauri/Cargo.toml` — then:
+
+```bash
+git tag -a v1.7.1 -m "Cord 1.7.1"
+git push origin v1.7.1
+```
+
+A guard job refuses to build when the tag disagrees with those manifests, so a
+mislabelled installer cannot ship. Prerelease tags compare only the part before
+the hyphen, so `v1.7.1-beta.1` is a build of `1.7.1` and the manifests stay at
+plain `1.7.1`.
+
+The workflow attaches installers to a **draft** release, which stays private
+until published by hand. `workflow_dispatch` rehearses the whole matrix without
+creating a tag or touching a release.
+
+Signing the update artifacts needs `TAURI_SIGNING_PRIVATE_KEY` as a repository
+secret. Without it the installers still build, but `latest.json` carries no valid
+signature and every client refuses the update — which is the safe direction to
+fail.
 
 ## IPC flow
 
