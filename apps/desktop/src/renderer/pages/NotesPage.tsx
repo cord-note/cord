@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { useVaultStore } from '../store/vaults';
-import { useNoteStore } from '../store/notes';
+import { useNoteStore, isNoteBodyLoaded } from '../store/notes';
 import { useTagStore } from '../store/tags';
 import { useUIStore } from '../store/ui';
 import { matchesBinding } from '../store/keybindings';
@@ -100,9 +100,9 @@ export default function NotesPage() {
     if (view === 'trash')    return <TrashView />;
     if (activeNote) {
       // Body is fetched asynchronously after selection — wait for it before
-      // mounting the editor so Tiptap initialises with real content. Keyed off
-      // an explicit flag, not bodyJson: a new note's body legitimately is '{}'.
-      if (activeNoteLoading) {
+      // mounting the editor. An unfetched body is a placeholder, and an editor
+      // opened on it would save an empty document over the note.
+      if (activeNoteLoading || !isNoteBodyLoaded(activeNote.id)) {
         return <div className={styles.empty}><p>Loading…</p></div>;
       }
       return <Editor key={activeNote.id} note={activeNote} />;
