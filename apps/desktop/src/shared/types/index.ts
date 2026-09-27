@@ -26,6 +26,63 @@ export interface LoginInput {
   password: string;
 }
 
+/** A signed-in user as the sidecar reports them. */
+export interface AuthUser extends User {
+  hasPin: boolean;
+  hasRecoveryKey: boolean;
+}
+
+export interface LockScreenUser {
+  id: string;
+  username: string;
+  hasPin: boolean;
+  /** Too many wrong PINs: only the password works until the next password sign-in. */
+  pinLocked: boolean;
+}
+
+export interface LockScreenState {
+  /** Alphabetical. */
+  users: LockScreenUser[];
+  /** The last user who unlocked, if they still exist. */
+  lastUserId: string | null;
+}
+
+export interface UnlockPinInput {
+  userId: string;
+  pin: string;
+}
+
+export type PinUnlockResult =
+  | { ok: true; user: AuthUser }
+  | { ok: false; triesLeft: number };
+
+export interface SetPinInput {
+  pin: string;
+  /** Required when replacing an existing PIN. */
+  password?: string;
+}
+
+export interface ChangePasswordInput {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface IssueRecoveryKeyInput {
+  /** Required when replacing an existing key. */
+  password?: string;
+}
+
+export interface RecoveryKeyResult {
+  /** Shown once; only its hash is stored. */
+  recoveryKey: string;
+}
+
+export interface RecoverInput {
+  username: string;
+  recoveryKey: string;
+  newPassword: string;
+}
+
 // ─── Vault ────────────────────────────────────────────────────────────────────
 
 export interface Vault {
