@@ -1,8 +1,10 @@
 import { describe, it, expect, beforeEach } from 'bun:test';
+import { and, eq } from 'drizzle-orm';
 import { freshDb, seedUser, seedVault } from './helpers';
 import { NoteService } from '../NoteService';
 import { BlockIndexService } from '../BlockIndexService';
-import { flattenText, parseDoc } from '@shared/blockDoc';
+import { getDb } from '../../db/client';
+import { operationLog } from '../../db/schema';
 
 // CORD_DB_PATH=:memory: — run with `bun test`, not Vitest.
 
@@ -15,7 +17,14 @@ const para = (text: string, blockId?: string) => ({
   content: [{ type: 'text', text }],
 });
 
-describe('note ↔ notepad conversion', () => {
+const docJson = (...content: Record<string, unknown>[]): string => JSON.stringify({ type: 'doc', content });
+
+const updateOps = (noteId: string): number =>
+  getDb().select().from(operationLog)
+    .where(and(eq(operationLog.entityId, noteId), eq(operationLog.operation, 'update')))
+    .all().length;
+
+describe('switching note kind', () => {
   let notes: NoteService;
   let index: BlockIndexService;
 
@@ -27,88 +36,44 @@ describe('note ↔ notepad conversion', () => {
     notes = new NoteService(index);
   });
 
-  it('creates a notepad with a document that satisfies doc → block+', () => {
-    const note = notes.create({ vaultId: VAULT_ID, kind: 'notepad' });
-    const doc = parseDoc(note.bodyJson, 'notepad');
-    // The '{}' default cannot satisfy `block+`, so create must seed a real doc.
-    expect(note.bodyJson).not.toBe('{}');
-    expect(doc.content!.every((n) => n.type === 'notepadBlock')).toBe(true);
-  });
+  it('changes only the kind, keeping the body byte-identical', () => {
+    // Both kinds share one document format, so switching is lossless.
+    const body = docJson(
+      { type: 'heading', attrs: { level: 1, blockId: 'h1' }, content: [{ type: 'text', text: 'Title' }] },
+      para('body', 'p1'),
+    );
+    const note = notes.create({ vaultId: VAULT_ID, bodyJson: body });
 
-  it('wraps every top-level node when converting a note to a notepad', () => {
-    const note = notes.create({
-      vaultId: VAULT_ID,
-      bodyJson: JSON.stringify({
-        type: 'doc',
-        content: [
-          { type: 'heading', attrs: { level: 1 }, content: [{ type: 'text', text: 'Title' }] },
-          para('body'),
-        ],
-      }),
-    });
+    const asNotepad = notes.convert(note.id, 'notepad');
+    expect(asNotepad.kind).toBe('notepad');
+    expect(asNotepad.bodyJson).toBe(body);
 
-    const converted = notes.convert(note.id, 'notepad');
-    expect(converted.kind).toBe('notepad');
-
-    const doc = parseDoc(converted.bodyJson, 'notepad');
-    expect(doc.content).toHaveLength(2);
-    expect(doc.content!.every((n) => n.type === 'notepadBlock')).toBe(true);
-    expect(flattenText(doc)).toBe('Title body');
-  });
-
-  it('reindexes on convert so block types describe the new shape', () => {
-    const note = notes.create({
-      vaultId: VAULT_ID,
-      bodyJson: JSON.stringify({ type: 'doc', content: [para('one', 'p1'), para('two', 'p2')] }),
-    });
-    notes.convert(note.id, 'notepad');
-
-    const rows = index.listForNote(note.id);
-    expect(rows).toHaveLength(2);
-    // The promoted ids keep any fragment annotations attached.
-    expect(rows.map((r) => r.id)).toEqual(['p1', 'p2']);
-  });
-
-  it('unwraps blocks when converting back', () => {
-    const note = notes.create({ vaultId: VAULT_ID, kind: 'notepad' });
-    notes.update(note.id, {
-      bodyJson: JSON.stringify({
-        type: 'doc',
-        content: [
-          { type: 'notepadBlock', attrs: { blockId: 'b1' }, content: [para('kept')] },
-        ],
-      }),
-    });
-
-    const converted = notes.convert(note.id, 'note');
-    expect(converted.kind).toBe('note');
-
-    const doc = parseDoc(converted.bodyJson);
-    expect(doc.content![0]!.type).toBe('paragraph');
-    expect(flattenText(doc)).toBe('kept');
-  });
-
-  it('round-trips content unchanged', () => {
-    const original = JSON.stringify({
-      type: 'doc',
-      content: [
-        { type: 'heading', attrs: { level: 2, blockId: 'h1' }, content: [{ type: 'text', text: 'Heading' }] },
-        para('paragraph', 'p1'),
-      ],
-    });
-    const note = notes.create({ vaultId: VAULT_ID, bodyJson: original });
-
-    notes.convert(note.id, 'notepad');
     const back = notes.convert(note.id, 'note');
+    expect(back.kind).toBe('note');
+    expect(back.bodyJson).toBe(body);
+  });
 
-    expect(flattenText(parseDoc(back.bodyJson))).toBe('Heading paragraph');
-    expect(parseDoc(back.bodyJson).content!.map((n) => n.attrs?.['blockId'])).toEqual(['h1', 'p1']);
+  it('keeps block ids in the index, so fragment tags stay attached', () => {
+    const note = notes.create({ vaultId: VAULT_ID, bodyJson: docJson(para('one', 'p1'), para('two', 'p2')) });
+    notes.convert(note.id, 'notepad');
+    expect(index.listForNote(note.id).map((r) => r.id)).toEqual(['p1', 'p2']);
+    notes.convert(note.id, 'note');
+    expect(index.listForNote(note.id).map((r) => r.id)).toEqual(['p1', 'p2']);
+  });
+
+  it('logs one update per switch', () => {
+    const note = notes.create({ vaultId: VAULT_ID, bodyJson: docJson(para('x', 'p1')) });
+    notes.convert(note.id, 'notepad');
+    expect(updateOps(note.id)).toBe(1);
+    notes.convert(note.id, 'note');
+    expect(updateOps(note.id)).toBe(2);
   });
 
   it('is a no-op when the kind already matches', () => {
-    const note = notes.create({ vaultId: VAULT_ID, bodyJson: JSON.stringify({ type: 'doc', content: [para('x')] }) });
+    const note = notes.create({ vaultId: VAULT_ID, bodyJson: docJson(para('x')) });
     const result = notes.convert(note.id, 'note');
     expect(result.bodyJson).toBe(note.bodyJson);
+    expect(updateOps(note.id)).toBe(0);
   });
 
   it('throws for an unknown note', () => {
@@ -129,10 +94,21 @@ describe('search and mentions over the block index', () => {
   it('finds a note by its body text', () => {
     const note = notes.create({
       vaultId: VAULT_ID, title: 'Untitled-ish',
-      bodyJson: JSON.stringify({ type: 'doc', content: [para('the quick brown fox', 'p1')] }),
+      bodyJson: docJson(para('the quick brown fox', 'p1')),
     });
     const results = notes.search(VAULT_ID, 'quick brown');
     expect(results.map((r) => r.id)).toEqual([note.id]);
+  });
+
+  it('finds a note by the label of a wiki link in it', () => {
+    const note = notes.create({
+      vaultId: VAULT_ID,
+      bodyJson: docJson({
+        type: 'paragraph', attrs: { blockId: 'p1' },
+        content: [{ type: 'text', text: 'see ' }, { type: 'mention', attrs: { id: 'x', label: 'Zanzibar', displayText: null } }],
+      }),
+    });
+    expect(notes.search(VAULT_ID, 'Zanzibar').map((r) => r.id)).toEqual([note.id]);
   });
 
   it('finds a note by title when the body does not match', () => {
@@ -143,32 +119,20 @@ describe('search and mentions over the block index', () => {
   it('returns each matching note once, however many blocks matched', () => {
     const note = notes.create({
       vaultId: VAULT_ID, kind: 'notepad',
-      bodyJson: JSON.stringify({
-        type: 'doc',
-        content: [
-          { type: 'notepadBlock', attrs: { blockId: 'b1' }, content: [para('repeat')] },
-          { type: 'notepadBlock', attrs: { blockId: 'b2' }, content: [para('repeat again')] },
-        ],
-      }),
+      bodyJson: docJson(para('repeat', 'b1'), para('repeat again', 'b2')),
     });
     expect(notes.search(VAULT_ID, 'repeat').filter((r) => r.id === note.id)).toHaveLength(1);
   });
 
   it('excludes trashed notes', () => {
-    const note = notes.create({
-      vaultId: VAULT_ID,
-      bodyJson: JSON.stringify({ type: 'doc', content: [para('findable', 'p1')] }),
-    });
+    const note = notes.create({ vaultId: VAULT_ID, bodyJson: docJson(para('findable', 'p1')) });
     notes.delete(note.id);
     expect(notes.search(VAULT_ID, 'findable')).toHaveLength(0);
   });
 
   it('does not leak across vaults', () => {
     seedVault('vault-other', USER_ID);
-    notes.create({
-      vaultId: 'vault-other',
-      bodyJson: JSON.stringify({ type: 'doc', content: [para('secret', 'p1')] }),
-    });
+    notes.create({ vaultId: 'vault-other', bodyJson: docJson(para('secret', 'p1')) });
     expect(notes.search(VAULT_ID, 'secret')).toHaveLength(0);
   });
 
@@ -176,13 +140,7 @@ describe('search and mentions over the block index', () => {
     const target = notes.create({ vaultId: VAULT_ID, title: 'Photosynthesis' });
     const mentioning = notes.create({
       vaultId: VAULT_ID, title: 'Biology', kind: 'notepad',
-      bodyJson: JSON.stringify({
-        type: 'doc',
-        content: [
-          { type: 'notepadBlock', attrs: { blockId: 'b1' }, content: [para('unrelated opening')] },
-          { type: 'notepadBlock', attrs: { blockId: 'b2' }, content: [para('Photosynthesis converts light.')] },
-        ],
-      }),
+      bodyJson: docJson(para('unrelated opening', 'b1'), para('Photosynthesis converts light.', 'b2')),
     });
 
     const mentions = notes.findUnlinkedMentions(target.id, VAULT_ID);
@@ -197,7 +155,7 @@ describe('search and mentions over the block index', () => {
   it('never reports the note as mentioning itself', () => {
     const note = notes.create({
       vaultId: VAULT_ID, title: 'Recursion',
-      bodyJson: JSON.stringify({ type: 'doc', content: [para('Recursion is fun', 'p1')] }),
+      bodyJson: docJson(para('Recursion is fun', 'p1')),
     });
     expect(notes.findUnlinkedMentions(note.id, VAULT_ID)).toHaveLength(0);
   });

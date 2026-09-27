@@ -101,7 +101,7 @@ export function useNoteDoc(note: Note): NoteDoc {
   const editor = useEditor(
     {
       extensions: buildExtensions(note.kind),
-      content: parseDoc(note.bodyJson, note.kind),
+      content: parseDoc(note.bodyJson),
       // Pasted markdown renders as real nodes; copied selections leave as
       // markdown text rather than flattened plain text.
       editorProps: markdownClipboardProps,
@@ -165,7 +165,7 @@ export function useNoteDoc(note: Note): NoteDoc {
         updateNote(pending.noteId, { bodyJson: pending.bodyJson });
       }
     }
-    editor.commands.setContent(parseDoc(note.bodyJson, note.kind), false);
+    editor.commands.setContent(parseDoc(note.bodyJson), false);
     activeLinkIds.current = collectLinkIds(editor.state.doc);
     activeWikiTargets.current = collectWikiLinkTargets(editor.state.doc);
 

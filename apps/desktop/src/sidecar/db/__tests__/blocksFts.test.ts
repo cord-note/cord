@@ -17,9 +17,9 @@ const notepad = (...texts: string[]) =>
   JSON.stringify({
     type: 'doc',
     content: texts.map((text, i) => ({
-      type: 'notepadBlock',
+      type: 'paragraph',
       attrs: { blockId: `fts-b${i + 1}` },
-      content: [{ type: 'paragraph', content: [{ type: 'text', text }] }],
+      content: [{ type: 'text', text }],
     })),
   });
 
