@@ -9,6 +9,8 @@ pub struct AppState {
     /// database could not be opened, in which case search falls back to the
     /// sidecar route rather than failing.
     pub db: Option<Arc<Mutex<Connection>>>,
+    /// The database path the sidecar reported; attachments live beside it.
+    pub db_path: Option<String>,
 }
 
 impl AppState {
@@ -17,6 +19,7 @@ impl AppState {
             sidecar_url: format!("http://127.0.0.1:{port}"),
             http: Arc::new(reqwest::Client::new()),
             db: db_path.and_then(open_db),
+            db_path: db_path.filter(|p| *p != ":memory:").map(str::to_owned),
         }
     }
 
