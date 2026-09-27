@@ -53,6 +53,17 @@ describe('setKeyInText', () => {
     expect(setKeyInText(text, 'x.y', undefined)).toBe(text);
   });
 
+  it('keeps a comment above the first key when that key is removed', () => {
+    const text = '{\n  // my settings\n  "a.b": 1,\n  "c.d": 2\n}';
+    expect(setKeyInText(text, 'a.b', undefined)).toBe('{\n  // my settings\n  "c.d": 2\n}');
+    expect(setKeyInText('{\n  // mine\n  "a.b": 1\n}', 'a.b', undefined)).toBe('{\n  // mine\n}');
+  });
+
+  it('removes the last key together with the comma before it', () => {
+    expect(setKeyInText('{\n  "a.b": 1,\n  "c.d": 2\n}', 'c.d', undefined)).toBe('{\n  "a.b": 1\n}');
+    expect(setKeyInText('{"a.b":1}', 'a.b', undefined)).toBe('{}');
+  });
+
   it('treats a dotted key as one property, not a path', () => {
     expect(parseJsoncObject(setKeyInText('{}', 'editor.fontSize', 3)).data).toEqual({ 'editor.fontSize': 3 });
   });
