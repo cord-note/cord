@@ -53,8 +53,8 @@ little today. Build from source meanwhile — see [Develop](#develop).
 
 ### Your notes
 
-Cord keeps everything in a local SQLite database at `~/.cord/cord.db`. Nothing
-is uploaded anywhere: there is no account, no telemetry and no sync yet.
+Cord keeps everything in a local SQLite database at `~/.cord/cord.db`, and images
+you paste into notes in `~/.cord/attachments/`. Nothing is uploaded anywhere: there is no account, no telemetry and no sync yet.
 
 ## Updating
 
@@ -74,7 +74,7 @@ installed copies — worth knowing before flagging one.
 |---|---|
 | Desktop shell | Tauri (Rust) |
 | Frontend | React + Vite + TypeScript |
-| Editor | Shuttle — Tiptap OSS + ghost-markdown layer ([see below](#shuttle)) |
+| Editor | [Shuttle](https://github.com/cord-note/shuttle) (`shuttle-editor` on npm, official Tiptap 3) — [see below](#shuttle) |
 | Backend | Bun sidecar (local socket) |
 | Database | SQLite via `bun:sqlite` |
 | ORM | Drizzle |
@@ -84,13 +84,19 @@ installed copies — worth knowing before flagging one.
 
 ## Note kinds
 
-| Kind | Document schema | What it is for |
-|---|---|---|
-| `note` | `doc → (paragraph \| heading \| list \| …)+` | Quick, simple capture. |
-| `notepad` | `doc → notepadBlock+` | A page of addressable, transcludable blocks. |
+| Kind | What it is for |
+|---|---|
+| `note` | Quick, simple capture. |
+| `notepad` | A page of addressable, transcludable blocks. |
 
-A notepad is one ProseMirror instance — blocks are fields inside a single view,
-never one editor per block. Blocks are flat, and a whole list is one block.
+Both kinds share one document format: every top-level block carries a stable
+`blockId`. A notepad is the same document with the block gutter and block menu
+turned on, so switching kind changes nothing but the `kind` column. A notepad is
+one ProseMirror instance, never one editor per block. Blocks are flat, and a
+whole list is one block.
+
+Notepads written before Shuttle wrapped each block in a `notepadBlock` node. They
+open read-only, stay searchable, and are never rewritten.
 
 ## Architecture principles
 
@@ -104,7 +110,9 @@ never one editor per block. Blocks are flat, and a whole list is one block.
    data. Authored per-block data lives in `fragments` and is never reprojected.
 4. `body_json` is the source of truth, and the only stored representation of a
    document. `body_markdown` was removed in v1.6; markdown is input UX only, via
-   the clipboard. Searchable text comes from `blocks.text`.
+   the clipboard. Searchable text comes from `blocks.text`. `note_links` is
+   derived from `body_json` on every save, like `blocks`: the wiki links in the
+   document decide which links exist.
 5. The Tauri Rust layer stays thin by default. Business logic lives in the Bun sidecar; logic moves to Rust only for approved, measurable hot paths (currently just FTS5 search).
 6. Plugin-driven UI registry — no hardcoded UI for module surfaces.
 
@@ -124,20 +132,21 @@ cord/
 
 ## Shuttle
 
-Cord's editor is called **Shuttle** — Tiptap OSS plus a ghost-markdown layer,
-where syntax disappears as you type and storage is Tiptap JSON.
+Cord's editor is **Shuttle**, a separate, public package:
+[cord-note/shuttle](https://github.com/cord-note/shuttle), published to npm as
+`shuttle-editor`. It is built on official Tiptap 3 extensions, and markdown is
+input UX only — syntax disappears as you type and storage is Tiptap JSON.
 
-It is being extracted into its own repository so that Cord depends on it as a
-package rather than carrying its source. That repository is **not public yet**,
-and deliberately so: the editor still imports Cord's Zustand stores and IPC
-client in about a dozen places, so it does not build on its own. Publishing it
-in that state would mean publishing something nobody could actually use.
+Cord depends on it from npm like any other package. Shuttle never imports Cord:
+Cord supplies a `ShuttleHost` (`apps/desktop/src/renderer/shuttle/cordHost.ts`)
+that answers note lookups, stores pasted images, resolves transclusions and
+handles navigation over Cord's stores and IPC. The sidecar reads saved documents
+through `shuttle-editor/doc`, a React-free entry, so the block index and the
+derived links see exactly what the editor wrote.
 
-**Shuttle will be made public once it is properly separated** — a narrow host
-interface in place of those imports, its own types, and a build that stands up
-without Cord. Until then the working copy lives here, under
-`apps/desktop/src/renderer/components/editor/`, and that is the version Cord
-actually runs.
+Pasted and dropped images are stored as files in `~/.cord/attachments/` and
+referenced from the document as `attachment:<id>`; the Tauri shell serves them
+to the editor through a `cord-attachment` URI scheme.
 
 ## Develop
 
