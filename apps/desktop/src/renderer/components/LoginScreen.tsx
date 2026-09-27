@@ -66,8 +66,8 @@ export default function LoginScreen() {
   const isLogin = mode === 'login';
 
   return (
-    <div className={styles.screen}>
-      <div className={styles.card}>
+    <div className={`${styles.screen} cord-login`}>
+      <div className={`${styles.card} cord-login__card`}>
         {/* Logo / wordmark */}
         <div className={styles.logoRow}>
           <AppIcon size={22} className={styles.logoIcon} />

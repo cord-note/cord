@@ -89,7 +89,7 @@ export default function TitleBar() {
   }
 
   return (
-    <div className={styles.bar}>
+    <div className={`${styles.bar} cord-titlebar`}>
       {/* Left — logo + name */}
       <div className={styles.left}>
         <AppIcon size={14} className={styles.dragIcon} />
@@ -100,7 +100,7 @@ export default function TitleBar() {
       <div>{user && <CommandPill />}</div>
 
       {/* Right — window controls */}
-      <div className={styles.controls}>
+      <div className={`${styles.controls} cord-titlebar__controls`}>
         <button className={styles.btn} title="Minimize" onClick={() => getCurrentWindow().minimize()}>
           <svg width="10" height="1" viewBox="0 0 10 1">
             <line x1="0" y1="0.5" x2="10" y2="0.5" stroke="currentColor" strokeWidth="1.2" />
@@ -327,7 +327,7 @@ function CommandPill() {
 
   return (
     <div ref={wrapRef} className={styles.pillWrap}>
-      <div className={`${styles.pill} ${commandsOpen ? styles.pillOpen : ''}`}>
+      <div className={`${styles.pill} cord-titlebar__search ${commandsOpen ? `${styles.pillOpen} cord-titlebar__search--open` : ''}`}>
         <Search size={12} strokeWidth={2} className={styles.pillIcon} />
         <input
           ref={inputRef}
@@ -343,7 +343,7 @@ function CommandPill() {
       </div>
 
       {commandsOpen && (
-        <div className={styles.dropdown}>
+        <div className={`${styles.dropdown} cord-menu`}>
           <div className={styles.dropList}>
 
             {filteredCmds.length > 0 && (() => {
@@ -358,7 +358,7 @@ function CommandPill() {
               return Object.entries(groups).map(([groupName, cmds]) => (
                 <div key={groupName}>
                   {(!q || Object.keys(groups).length > 1) && (
-                    <div className={styles.dropSection}>{groupName}</div>
+                    <div className={`${styles.dropSection} cord-menu__section`}>{groupName}</div>
                   )}
                   {cmds.map((cmd) => {
                     const i = gi++;
@@ -373,7 +373,7 @@ function CommandPill() {
                       <button
                         key={cmd.id}
                         ref={(el) => { itemRefs.current[i] = el; }}
-                        className={`${styles.dropRow} ${i === cursor ? styles.dropRowActive : ''} ${dimmed ? styles.dropRowDimmed : ''}`}
+                        className={`${styles.dropRow} cord-menu__item ${i === cursor ? `${styles.dropRowActive} cord-menu__item--active` : ''} ${dimmed ? styles.dropRowDimmed : ''}`}
                         onMouseDown={(e) => { e.preventDefault(); if (!dimmed) activate({ kind: 'cmd', data: cmd }); }}
                         onMouseEnter={() => setCursor(i)}
                       >
@@ -391,14 +391,14 @@ function CommandPill() {
 
             {filteredNotes.length > 0 && (
               <>
-                <div className={styles.dropSection}>Notes</div>
+                <div className={`${styles.dropSection} cord-menu__section`}>Notes</div>
                 {filteredNotes.map((note, i) => {
                   const idx = filteredCmds.length + i;
                   return (
                     <button
                       key={note.id}
                       ref={(el) => { itemRefs.current[idx] = el; }}
-                      className={`${styles.dropRow} ${idx === cursor ? styles.dropRowActive : ''}`}
+                      className={`${styles.dropRow} cord-menu__item ${idx === cursor ? `${styles.dropRowActive} cord-menu__item--active` : ''}`}
                       onMouseDown={(e) => { e.preventDefault(); activate({ kind: 'note', data: note }); }}
                       onMouseEnter={() => setCursor(idx)}
                     >

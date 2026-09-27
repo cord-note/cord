@@ -111,7 +111,7 @@ export default function NotesPage() {
   }
 
   return (
-    <div className={styles.layout}>
+    <div className={`${styles.layout} cord-layout`}>
       <VaultSidebar
         activeView={view === 'trash' ? 'trash' : 'notes'}
         onOpenTrash={() => setView(view === 'trash' ? 'notes' : 'trash')}
@@ -130,7 +130,7 @@ export default function NotesPage() {
         <ChevronRight size={13} strokeWidth={2.5} />
       </button>
 
-      <main className={styles.main}>
+      <main className={`${styles.main} cord-main`}>
         {renderMain()}
       </main>
     </div>

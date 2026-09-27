@@ -170,21 +170,21 @@ export function EditorContextMenu({ editor, noteId, controls }: Props) {
   const top  = Math.min(menu.y, window.innerHeight - MENU_H - 8);
 
   return (
-    <div ref={menuRef} className={styles.menu} style={{ left, top }} onContextMenu={(e) => e.preventDefault()}>
+    <div ref={menuRef} className={`${styles.menu} cord-menu`} style={{ left, top }} onContextMenu={(e) => e.preventDefault()}>
 
       {!sub && (
         <>
-          <button className={styles.item} onClick={execCopy}>
+          <button className={`${styles.item} cord-menu__item`} onClick={execCopy}>
             <Copy size={13} strokeWidth={1.75} className={styles.itemIcon} />
             <span className={styles.itemLabel}>Copy</span>
             <span className={styles.itemKbd}>Ctrl+C</span>
           </button>
-          <button className={styles.item} onClick={execCut}>
+          <button className={`${styles.item} cord-menu__item`} onClick={execCut}>
             <Scissors size={13} strokeWidth={1.75} className={styles.itemIcon} />
             <span className={styles.itemLabel}>Cut</span>
             <span className={styles.itemKbd}>Ctrl+X</span>
           </button>
-          <button className={styles.item} onClick={execPaste}>
+          <button className={`${styles.item} cord-menu__item`} onClick={execPaste}>
             <Clipboard size={13} strokeWidth={1.75} className={styles.itemIcon} />
             <span className={styles.itemLabel}>Paste</span>
             <span className={styles.itemKbd}>Ctrl+V</span>
@@ -192,16 +192,16 @@ export function EditorContextMenu({ editor, noteId, controls }: Props) {
 
           {blockId && (
             <>
-              <div className={styles.divider} />
-              <button className={styles.item} onClick={() => { setSub({ kind: 'tag' }); setQuery(''); }}>
+              <div className={`${styles.divider} cord-menu__divider`} />
+              <button className={`${styles.item} cord-menu__item`} onClick={() => { setSub({ kind: 'tag' }); setQuery(''); }}>
                 <TagIcon size={13} strokeWidth={1.75} className={styles.itemIcon} />
                 <span className={styles.itemLabel}>Add tag to block</span>
               </button>
-              <button className={styles.item} onClick={() => { close(); void linkToNote(blockId); }}>
+              <button className={`${styles.item} cord-menu__item`} onClick={() => { close(); void linkToNote(blockId); }}>
                 <FileText size={13} strokeWidth={1.75} className={styles.itemIcon} />
                 <span className={styles.itemLabel}>Link block → note</span>
               </button>
-              <button className={styles.item} onClick={() => { close(); void linkToFragment(blockId); }}>
+              <button className={`${styles.item} cord-menu__item`} onClick={() => { close(); void linkToFragment(blockId); }}>
                 <Link2 size={13} strokeWidth={1.75} className={styles.itemIcon} />
                 <span className={styles.itemLabel}>Link block → fragment</span>
               </button>
@@ -228,7 +228,7 @@ export function EditorContextMenu({ editor, noteId, controls }: Props) {
           />
           <div className={styles.list}>
             {filteredTags.map((tag, i) => (
-              <button key={tag.id} className={`${styles.item} ${i === listIndex ? styles.itemActive : ''}`} onClick={() => doAttachTag(tag.id)} onMouseEnter={() => setListIndex(i)}>
+              <button key={tag.id} className={`${styles.item} cord-menu__item ${i === listIndex ? `${styles.itemActive} cord-menu__item--active` : ''}`} onClick={() => doAttachTag(tag.id)} onMouseEnter={() => setListIndex(i)}>
                 <span className={styles.dot} style={{ background: tag.color ?? 'var(--text-muted)' }} />
                 {tag.name}
               </button>

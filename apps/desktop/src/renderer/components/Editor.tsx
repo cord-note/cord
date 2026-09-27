@@ -235,10 +235,10 @@ export default function Editor({ note }: Props) {
     .filter(Boolean);
 
   return (
-    <div className={styles.editor}>
+    <div className={`${styles.editor} cord-editor`}>
       <div className={styles.titleRow}>
         <input
-          className={styles.title}
+          className={`${styles.title} cord-editor__title`}
           value={localTitle}
           onChange={handleTitleChange}
           onKeyDown={handleTitleKeyDown}
@@ -254,11 +254,11 @@ export default function Editor({ note }: Props) {
         </button>
       </div>
 
-      <div className={styles.tagPanel}>
+      <div className={`${styles.tagPanel} cord-editor__tags`}>
         {activeNoteTags.map((tag) => (
           <span
             key={tag.id}
-            className={styles.tagChip}
+            className={`${styles.tagChip} cord-chip cord-chip--tag`}
             style={{ borderColor: tag.color ?? 'var(--text-muted)' }}
           >
             <span
@@ -312,7 +312,7 @@ export default function Editor({ note }: Props) {
         ) : null}
       </div>
 
-      <div className={styles.content} ref={contentRef}>
+      <div className={`${styles.content} cord-editor__body`} ref={contentRef}>
         <ShuttleEditor
           docKey={note.id}
           doc={doc}
@@ -336,7 +336,7 @@ export default function Editor({ note }: Props) {
 
       {editor && <EditorContextMenu editor={editor} noteId={note.id} controls={controls} />}
 
-      <div className={styles.statusBar}>
+      <div className={`${styles.statusBar} cord-editor__status-bar`}>
         <div className={styles.statusBacklinks}>
           {backlinkNotes.length > 0 ? (
             <>
@@ -344,7 +344,7 @@ export default function Editor({ note }: Props) {
               {backlinkNotes.map((n) => (
                 <button
                   key={n!.id}
-                  className={styles.backlinkChip}
+                  className={`${styles.backlinkChip} cord-chip cord-chip--backlink`}
                   onClick={() => { setActiveNote(n!.id); loadLinks(n!.id); }}
                   title={`Open "${n!.title || 'Untitled'}"`}
                 >
@@ -365,7 +365,7 @@ export default function Editor({ note }: Props) {
               {unlinkedMentions.map((m) => (
                 <button
                   key={m.noteId}
-                  className={`${styles.backlinkChip} ${styles.unlinkedChip}`}
+                  className={`${styles.backlinkChip} ${styles.unlinkedChip} cord-chip cord-chip--unlinked`}
                   onClick={() => { setView('notes'); setActiveNote(m.noteId); loadLinks(m.noteId); }}
                   title={m.excerpt || `Mentions "${note.title}" without a link`}
                 >
@@ -384,7 +384,7 @@ export default function Editor({ note }: Props) {
               {outboundMentions.map((n) => (
                 <button
                   key={n.id}
-                  className={`${styles.backlinkChip} ${styles.unlinkedChip}`}
+                  className={`${styles.backlinkChip} ${styles.unlinkedChip} cord-chip cord-chip--unlinked`}
                   onClick={() => { setView('notes'); setActiveNote(n.id); loadLinks(n.id); }}
                   title={`This note mentions "${n.title}" without a link`}
                 >

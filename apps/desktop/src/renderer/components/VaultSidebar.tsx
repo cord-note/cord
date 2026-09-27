@@ -183,7 +183,7 @@ export default function VaultSidebar({ activeView, onOpenTrash }: Props) {
   }
 
   return (
-    <aside ref={sidebarRef} className={`${styles.rail} ${expanded ? styles.railExpanded : ''}`}>
+    <aside ref={sidebarRef} className={`${styles.rail} cord-sidebar ${expanded ? `${styles.railExpanded} cord-sidebar--expanded` : ''}`}>
 
       <div className={styles.toggleRow}>
         <button
@@ -224,7 +224,7 @@ export default function VaultSidebar({ activeView, onOpenTrash }: Props) {
                 onDragEnd={resetDrag}
               >
                 <button
-                  className={`${styles.navBtn} ${v.id === activeVaultId ? styles.navActive : ''}`}
+                  className={`${styles.navBtn} cord-sidebar__item ${v.id === activeVaultId ? `${styles.navActive} cord-sidebar__item--active` : ''}`}
                   onClick={() => handleSelectVault(v.id)}
                   title={v.name}
                 >
@@ -263,7 +263,7 @@ export default function VaultSidebar({ activeView, onOpenTrash }: Props) {
             )}
 
             <button
-              className={`${styles.navBtn} ${styles.comingSoon}`}
+              className={`${styles.navBtn} cord-sidebar__item ${styles.comingSoon}`}
               title="Connections (coming soon)"
               disabled
             >
@@ -296,7 +296,7 @@ export default function VaultSidebar({ activeView, onOpenTrash }: Props) {
 
       <div className={styles.bottomNav}>
         <button
-          className={`${styles.navBtn} ${activeView === 'trash' ? styles.navActive : ''}`}
+          className={`${styles.navBtn} cord-sidebar__item ${activeView === 'trash' ? `${styles.navActive} cord-sidebar__item--active` : ''}`}
           onClick={handleTrashClick}
           title="Trash"
         >
@@ -305,7 +305,7 @@ export default function VaultSidebar({ activeView, onOpenTrash }: Props) {
         </button>
 
         <button
-          className={`${styles.navBtn} ${view === 'settings' ? styles.navActive : ''}`}
+          className={`${styles.navBtn} cord-sidebar__item ${view === 'settings' ? `${styles.navActive} cord-sidebar__item--active` : ''}`}
           onClick={handleSettingsClick}
           title="Settings"
         >

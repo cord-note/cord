@@ -21,7 +21,7 @@ export default function TrashView() {
   if (!activeVaultId) return null;
 
   return (
-    <div className={styles.panel}>
+    <div className={`${styles.panel} cord-trash`}>
       <div className={styles.header}>
         <span className={styles.title}>Trash</span>
         <span className={styles.subtitle}>
@@ -44,7 +44,7 @@ export default function TrashView() {
           </div>
           <ul className={styles.list}>
             {trashedNotes.map((note) => (
-              <li key={note.id} className={styles.item}>
+              <li key={note.id} className={`${styles.item} cord-trash__item`}>
                 <div className={styles.itemInfo}>
                   <span className={styles.itemTitle}>
                     {note.title || <em>Untitled</em>}

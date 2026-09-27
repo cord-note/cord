@@ -130,8 +130,8 @@ export default function NoteList() {
   const tagById = Object.fromEntries(tags.map((t) => [t.id, t]));
 
   return (
-    <div className={styles.panel}>
-      <div className={styles.header}>
+    <div className={`${styles.panel} cord-note-list`}>
+      <div className={`${styles.header} cord-note-list__header`}>
         <span className={styles.title}>
           Notes
           {displayedNotes.length > 0 && (
@@ -171,15 +171,15 @@ export default function NoteList() {
             {showKindMenu && (
               <>
                 <div className={styles.kindBackdrop} onClick={() => setShowKindMenu(false)} />
-                <div className={styles.kindMenu}>
-                  <button className={styles.kindItem} onClick={() => handleNewNote('note')}>
+                <div className={`${styles.kindMenu} cord-menu`}>
+                  <button className={`${styles.kindItem} cord-menu__item`} onClick={() => handleNewNote('note')}>
                     <FileText size={13} strokeWidth={1.75} />
                     <span className={styles.kindText}>
                       <span className={styles.kindTitle}>Note</span>
                       <span className={styles.kindHint}>One page. Quick capture.</span>
                     </span>
                   </button>
-                  <button className={styles.kindItem} onClick={() => handleNewNote('notepad')}>
+                  <button className={`${styles.kindItem} cord-menu__item`} onClick={() => handleNewNote('notepad')}>
                     <LayoutList size={13} strokeWidth={1.75} />
                     <span className={styles.kindText}>
                       <span className={styles.kindTitle}>Notepad</span>
@@ -224,7 +224,7 @@ export default function NoteList() {
         </div>
       )}
 
-      <div className={styles.searchBar}>
+      <div className={`${styles.searchBar} cord-note-list__search`}>
         <Search size={13} strokeWidth={1.75} className={styles.searchIcon} />
         <input
           className={styles.searchInput}
@@ -275,12 +275,12 @@ export default function NoteList() {
             return (
               <li
                 key={note.id}
-                className={`${styles.item} ${note.id === activeNoteId ? styles.active : ''}`}
+                className={`${styles.item} cord-note-list__item ${note.id === activeNoteId ? `${styles.active} cord-note-list__item--active` : ''} ${note.isPinned ? 'cord-note-list__item--pinned' : ''} ${note.kind === 'notepad' ? 'cord-note-list__item--notepad' : ''}`}
                 onClick={() => handleSelectNote(note.id)}
               >
                 <div className={styles.itemContent}>
                   <div className={styles.itemTitleRow}>
-                    <span className={styles.itemTitle}>
+                    <span className={`${styles.itemTitle} cord-note-list__item-title`}>
                       {/* Marks notepads only. Labelling the common case too
                           would just add noise to every row. */}
                       {note.kind === 'notepad' && (
@@ -314,9 +314,9 @@ export default function NoteList() {
                     </div>
                   </div>
 
-                  <div className={styles.itemMeta}>
+                  <div className={`${styles.itemMeta} cord-note-list__item-meta`}>
                     <span className={styles.itemDate}>{formatDate(note.updatedAt)}</span>
-                    {ex && <span className={styles.itemExcerpt}>{ex}</span>}
+                    {ex && <span className={`${styles.itemExcerpt} cord-note-list__item-excerpt`}>{ex}</span>}
                   </div>
 
                   {noteTags.length > 0 && (
@@ -324,7 +324,7 @@ export default function NoteList() {
                       {noteTags.map((tag) => (
                         <span
                           key={tag!.id}
-                          className={styles.itemTagChip}
+                          className={`${styles.itemTagChip} cord-chip cord-chip--tag`}
                           style={{ borderColor: tag!.color ?? 'var(--text-muted)' }}
                         >
                           {tag!.name}

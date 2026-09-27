@@ -100,7 +100,7 @@ export function FragmentOverlay({ editor, noteId: _noteId, contentEl }: Props) {
               return (
                 <span
                   key={`bl-${link.id}`}
-                  className={styles.backlinkChip}
+                  className={`${styles.backlinkChip} cord-chip cord-chip--backlink`}
                   onMouseEnter={() => setHighlightedBlockId(link.fromFragmentId)}
                   onMouseLeave={() => setHighlightedBlockId(null)}
                   title={`← linked from fragment${srcNote ? ` in ${srcNote.title}` : ''}`}
@@ -113,7 +113,7 @@ export function FragmentOverlay({ editor, noteId: _noteId, contentEl }: Props) {
             {annotation.tags.map((tag) => (
               <span
                 key={tag.id}
-                className={styles.tagChip}
+                className={`${styles.tagChip} cord-chip cord-chip--tag`}
                 style={{ borderColor: tag.color ?? 'var(--text-muted)' }}
                 onMouseEnter={() => setHighlightedBlockId(blockId)}
                 onMouseLeave={() => setHighlightedBlockId(null)}
@@ -133,7 +133,7 @@ export function FragmentOverlay({ editor, noteId: _noteId, contentEl }: Props) {
             {annotation.links.map((link) => (
               <span
                 key={link.id}
-                className={styles.linkChip}
+                className={`${styles.linkChip} cord-chip cord-chip--link`}
                 onMouseEnter={() => setHighlightedBlockId(link.toFragmentId ?? null)}
                 onMouseLeave={() => setHighlightedBlockId(null)}
                 title={link.toFragmentId ? `→ fragment` : `→ note`}

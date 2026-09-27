@@ -101,14 +101,14 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} cord-settings`}>
       <div className={styles.sidebar}>
         <div className={styles.sidebarLabel}>Settings</div>
-        <nav className={styles.sidebarNav}>
+        <nav className={`${styles.sidebarNav} cord-settings__nav`}>
           {CHAPTERS.map((c) => (
             <button
               key={c.id}
-              className={`${styles.navItem} ${activeChapter === c.id ? styles.navActive : ''}`}
+              className={`${styles.navItem} cord-settings__nav-item ${activeChapter === c.id ? `${styles.navActive} cord-settings__nav-item--active` : ''}`}
               onClick={() => scrollTo(c.id)}
             >
               {c.label}
@@ -173,10 +173,10 @@ function AppearanceChapter({ sectionRef }: ChapterProps) {
   }, [filter]);
 
   return (
-    <section className={styles.chapter} data-chapter="appearance" ref={sectionRef}>
-      <h2 className={styles.chapterTitle}>Appearance</h2>
+    <section className={`${styles.chapter} cord-settings__section`} data-chapter="appearance" ref={sectionRef}>
+      <h2 className={`${styles.chapterTitle} cord-settings__section-title`}>Appearance</h2>
 
-      <div className={styles.field}>
+      <div className={`${styles.field} cord-settings__field`}>
         <div className={styles.fieldLabel}>Color Mode</div>
         <div className={styles.schemeRow}>
           {SCHEMES.map((s) => (
@@ -191,7 +191,7 @@ function AppearanceChapter({ sectionRef }: ChapterProps) {
         </div>
       </div>
 
-      <div className={styles.field}>
+      <div className={`${styles.field} cord-settings__field`}>
         <div className={styles.fieldLabel}>Theme</div>
         <div className={styles.filterRow}>
           <Search size={13} strokeWidth={1.75} className={styles.filterIcon} />
@@ -269,10 +269,10 @@ function EditorChapter({ sectionRef }: ChapterProps) {
   }
 
   return (
-    <section className={styles.chapter} data-chapter="editor" ref={sectionRef}>
-      <h2 className={styles.chapterTitle}>Editor</h2>
+    <section className={`${styles.chapter} cord-settings__section`} data-chapter="editor" ref={sectionRef}>
+      <h2 className={`${styles.chapterTitle} cord-settings__section-title`}>Editor</h2>
 
-      <div className={styles.field}>
+      <div className={`${styles.field} cord-settings__field`}>
         <div className={styles.fieldLabel}>Font size</div>
         <div className={styles.sliderRow}>
           <StepSlider
@@ -293,7 +293,7 @@ function EditorChapter({ sectionRef }: ChapterProps) {
         </div>
       </div>
 
-      <div className={styles.field}>
+      <div className={`${styles.field} cord-settings__field`}>
         <div className={styles.fieldLabel}>Line width</div>
         <div className={styles.sliderRow}>
           <StepSlider
@@ -335,7 +335,7 @@ interface ToggleFieldProps {
 
 function ToggleField({ label, hint, checked, onChange }: ToggleFieldProps) {
   return (
-    <div className={styles.field}>
+    <div className={`${styles.field} cord-settings__field`}>
       <div className={styles.toggleRow}>
         <div>
           <div className={styles.fieldLabel}>{label}</div>
@@ -388,10 +388,10 @@ function KeyboardChapter({ sectionRef }: ChapterProps) {
   }, [recording, setBinding, clearBinding]);
 
   return (
-    <section className={styles.chapter} data-chapter="keyboard" ref={sectionRef}>
-      <h2 className={styles.chapterTitle}>Keyboard</h2>
+    <section className={`${styles.chapter} cord-settings__section`} data-chapter="keyboard" ref={sectionRef}>
+      <h2 className={`${styles.chapterTitle} cord-settings__section-title`}>Keyboard</h2>
 
-      <div className={styles.field}>
+      <div className={`${styles.field} cord-settings__field`}>
         <div className={styles.fieldHint}>
           Click a shortcut to record a new one. Esc cancels, Backspace unbinds.
           Editor shortcuts take precedence over the ones the editor ships with.
@@ -399,7 +399,7 @@ function KeyboardChapter({ sectionRef }: ChapterProps) {
       </div>
 
       {KEYBINDING_GROUPS.map((group) => (
-        <div key={group} className={styles.field}>
+        <div key={group} className={`${styles.field} cord-settings__field`}>
           <div className={styles.fieldLabel}>{group}</div>
           <ul className={styles.keyList}>
             {KEYBINDINGS.filter((d) => d.group === group).map((def) => {
@@ -451,7 +451,7 @@ function KeyboardChapter({ sectionRef }: ChapterProps) {
         </div>
       ))}
 
-      <div className={styles.field}>
+      <div className={`${styles.field} cord-settings__field`}>
         <button
           className={styles.secondaryBtn}
           onClick={() => { setRecording(null); resetAll(); }}
@@ -500,8 +500,8 @@ function VaultChapter({ sectionRef }: ChapterProps) {
 
   if (!vault) {
     return (
-      <section className={styles.chapter} data-chapter="vault" ref={sectionRef}>
-        <h2 className={styles.chapterTitle}>Vault</h2>
+      <section className={`${styles.chapter} cord-settings__section`} data-chapter="vault" ref={sectionRef}>
+        <h2 className={`${styles.chapterTitle} cord-settings__section-title`}>Vault</h2>
         <div className={styles.empty}>No vault selected.</div>
       </section>
     );
@@ -529,10 +529,10 @@ function VaultChapter({ sectionRef }: ChapterProps) {
   }
 
   return (
-    <section className={styles.chapter} data-chapter="vault" ref={sectionRef}>
-      <h2 className={styles.chapterTitle}>Vault</h2>
+    <section className={`${styles.chapter} cord-settings__section`} data-chapter="vault" ref={sectionRef}>
+      <h2 className={`${styles.chapterTitle} cord-settings__section-title`}>Vault</h2>
 
-      <div className={styles.field}>
+      <div className={`${styles.field} cord-settings__field`}>
         <div className={styles.fieldLabel}>Vault name</div>
         <input
           className={styles.textInput}
@@ -541,7 +541,7 @@ function VaultChapter({ sectionRef }: ChapterProps) {
         />
       </div>
 
-      <div className={styles.field}>
+      <div className={`${styles.field} cord-settings__field`}>
         <div className={styles.fieldLabel}>Color</div>
         <div className={styles.fieldHint}>
           {distinctVaultColors
@@ -573,7 +573,7 @@ function VaultChapter({ sectionRef }: ChapterProps) {
         )}
       </div>
 
-      <div className={styles.field}>
+      <div className={`${styles.field} cord-settings__field`}>
         <div className={styles.dangerLabel}>Danger zone</div>
         <div className={styles.fieldHint}>
           Press and hold to archive “{vault.name}”. You can restore it later.
@@ -619,8 +619,8 @@ function TagsChapter({ sectionRef }: ChapterProps) {
   const { tags, deleteTag } = useTagStore();
 
   return (
-    <section className={styles.chapter} data-chapter="tags" ref={sectionRef}>
-      <h2 className={styles.chapterTitle}>Tags</h2>
+    <section className={`${styles.chapter} cord-settings__section`} data-chapter="tags" ref={sectionRef}>
+      <h2 className={`${styles.chapterTitle} cord-settings__section-title`}>Tags</h2>
 
       {tags.length === 0 ? (
         <div className={styles.empty}>No tags yet. Create tags from the editor.</div>
