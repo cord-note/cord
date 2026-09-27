@@ -280,3 +280,7 @@ The command palette dropdown, the new-note menu and the editor context menu.
 | `cord-trash__item` | A trashed note |
 | `cord-login` | Sign-in screen |
 | `cord-login__card` | Sign-in card |
+| `cord-login__pin` | PIN field |
+| `cord-login__user-picker` | User dropdown on the lock screen |
+| `cord-login__links` | Row of secondary actions under a lock-screen form |
+| `cord-login__recovery-key` | The recovery key shown once during setup |

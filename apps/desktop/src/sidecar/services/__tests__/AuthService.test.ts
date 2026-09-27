@@ -5,7 +5,7 @@ import { freshDb } from './helpers';
 
 // Fast hashes and no back-off: these tests are about the rules, not bcrypt.
 const makeAuth = (onRegister?: (userId: string) => void): AuthService =>
-  new AuthService({ hashCost: 4, recoveryFailureDelayMs: 0, onRegister });
+  new AuthService({ hashCost: 4, recoveryFailureDelayMs: 0, ...(onRegister ? { onRegister } : {}) });
 
 let auth: AuthService;
 
