@@ -65,7 +65,6 @@ export const CMD = {
     PERMANENT_DELETE:  'notes_permanent_delete',
     UNLINKED_MENTIONS: 'notes_unlinked_mentions',
     CONVERT:           'notes_convert',
-    CONVERSION_IMPACT: 'notes_conversion_impact',
   },
   BLOCKS: {
     LIST_FOR_NOTE: 'blocks_list_for_note',
@@ -80,10 +79,6 @@ export const CMD = {
     DETACH:        'tags_detach',
     GET_FOR_NOTE:  'tags_get_for_note',
     GET_NOTE_MAP:  'tags_get_note_map',
-  },
-  LINKS: {
-    CREATE: 'links_create',
-    DELETE: 'links_delete',
   },
   FRAGMENTS: {
     GET_FOR_NOTE: 'fragments_get_for_note',

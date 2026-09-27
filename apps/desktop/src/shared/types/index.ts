@@ -103,14 +103,6 @@ export interface UnlinkedMention {
   blockId: string;
 }
 
-/** Cost of a notepad → note conversion, shown before it is confirmed. */
-export interface ConversionImpact {
-  blockTagCount: number;
-  blockLinkCount: number;
-  /** blockRefs in other notes that would be left unresolved. */
-  inboundRefCount: number;
-}
-
 // ─── Block ────────────────────────────────────────────────────────────────────
 
 /**

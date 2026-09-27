@@ -107,14 +107,6 @@ pub async fn notes_convert(
 }
 
 #[tauri::command]
-pub async fn notes_conversion_impact(
-    state: State<'_, AppState>,
-    id: String,
-) -> Result<Value, String> {
-    fwd_get(&state, &format!("/notes/{id}/conversion-impact")).await
-}
-
-#[tauri::command]
 pub async fn notes_unlinked_mentions(
     state: State<'_, AppState>,
     note_id: String,

@@ -72,11 +72,6 @@ export function registerNoteHandlers(router: Router, notes: NoteService, auth: A
     return json(notes.convert(id!, kind));
   });
 
-  router.get('/notes/:id/conversion-impact', async (_req, { id }) => {
-    auth.requireSession();
-    return json(notes.conversionImpact(id!));
-  });
-
   router.get('/notes/:id/unlinked-mentions', async (req, { id }) => {
     auth.requireSession();
     const vaultId = new URL(req.url).searchParams.get('vaultId') ?? '';

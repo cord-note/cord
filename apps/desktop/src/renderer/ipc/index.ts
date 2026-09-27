@@ -6,10 +6,8 @@ import { invoke } from '@tauri-apps/api/core';
 import type {
   Vault, CreateVaultInput, UpdateVaultInput,
   Note, NoteListItem, NoteKind, CreateNoteInput, UpdateNoteInput, NoteLinks, UnlinkedMention,
-  ConversionImpact,
   Block, BlockRefTarget,
   Tag, CreateTagInput, NoteTagRow,
-  NoteLink,
   FragmentAnnotationMap, CreateFragmentLinkInput, FragmentLink,
   User, RegisterInput, LoginInput, AuthSession,
 } from '@shared/types';
@@ -35,7 +33,6 @@ export const api = {
     permanentDelete:  (id: string)                               => invoke<void>('notes_permanent_delete', { id }),
     unlinkedMentions: (noteId: string, vaultId: string)          => invoke<UnlinkedMention[]>('notes_unlinked_mentions', { noteId, vaultId }),
     convert:          (id: string, kind: NoteKind)               => invoke<Note>('notes_convert', { id, kind }),
-    conversionImpact: (id: string)                               => invoke<ConversionImpact>('notes_conversion_impact', { id }),
   },
 
   blocks: {
@@ -52,11 +49,6 @@ export const api = {
     detach:      (noteId: string, tagId: string)  => invoke<void>('tags_detach', { noteId, tagId }),
     getForNote:  (noteId: string)                 => invoke<Tag[]>('tags_get_for_note', { noteId }),
     getNoteMap:  (vaultId: string)                => invoke<NoteTagRow[]>('tags_get_note_map', { vaultId }),
-  },
-
-  links: {
-    create: (fromId: string, toId: string)  => invoke<NoteLink>('links_create', { fromId, toId }),
-    delete: (fromId: string, toId: string)  => invoke<void>('links_delete', { fromId, toId }),
   },
 
   fragments: {

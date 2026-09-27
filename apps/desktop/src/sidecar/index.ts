@@ -11,7 +11,6 @@ import { BlockIndexService } from './services/BlockIndexService';
 import { registerVaultHandlers }    from './handlers/vaults';
 import { registerNoteHandlers }     from './handlers/notes';
 import { registerTagHandlers }      from './handlers/tags';
-import { registerLinkHandlers }     from './handlers/links';
 import { registerFragmentHandlers } from './handlers/fragments';
 import { registerAuthHandlers }     from './handlers/auth';
 import { registerBlockHandlers }    from './handlers/blocks';
@@ -43,7 +42,6 @@ registerAuthHandlers(router, auth);
 registerVaultHandlers(router, vaults, auth);
 registerNoteHandlers(router, notes, auth);
 registerTagHandlers(router, tags, auth);
-registerLinkHandlers(router, links, auth);
 registerFragmentHandlers(router, fragments, auth);
 registerBlockHandlers(router, blocks, auth);
 
