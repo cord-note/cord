@@ -126,3 +126,65 @@ describe('AuthService — sign-in and PIN unlock', () => {
     expect(() => auth.requireSession()).toThrow('Not authenticated');
   });
 });
+
+describe('AuthService — password and recovery key', () => {
+  const KEY_FORMAT = /^([0-9A-Z]{4}-){7}[0-9A-Z]{4}$/;
+
+  it('changes the password only with the current one', async () => {
+    await auth.register({ username: 'alice', password: 'old password' });
+    await expect(auth.changePassword({ currentPassword: 'nope', newPassword: 'new password' })).rejects.toThrow('Wrong password');
+    await auth.changePassword({ currentPassword: 'old password', newPassword: 'new password' });
+    auth.lock();
+    await expect(auth.login({ username: 'alice', password: 'old password' })).rejects.toThrow();
+    await expect(auth.login({ username: 'alice', password: 'new password' })).resolves.toMatchObject({ username: 'alice' });
+  });
+
+  it('issues the first key without a password and later ones only with it', async () => {
+    await auth.register({ username: 'alice', password: 'correct horse' });
+    const first = await auth.issueRecoveryKey({});
+    expect(first.recoveryKey).toMatch(KEY_FORMAT);
+    expect(auth.currentUser()?.hasRecoveryKey).toBe(true);
+    await expect(auth.issueRecoveryKey({})).rejects.toThrow('Wrong password');
+    const second = await auth.issueRecoveryKey({ password: 'correct horse' });
+    expect(second.recoveryKey).not.toBe(first.recoveryKey);
+  });
+
+  it('resets the password with the key, clears the PIN and spends the key', async () => {
+    await auth.register({ username: 'alice', password: 'forgotten' });
+    await auth.setPin({ pin: '1234' });
+    const { recoveryKey } = await auth.issueRecoveryKey({});
+    auth.lock();
+
+    const typedSloppily = recoveryKey.toLowerCase().replace(/-/g, ' ');
+    const user = await auth.recover({ username: 'Alice', recoveryKey: typedSloppily, newPassword: 'remembered' });
+    expect(user).toMatchObject({ hasPin: false, hasRecoveryKey: false });
+    expect(auth.getSession()?.userId).toBe(user.id);
+
+    auth.lock();
+    await expect(auth.login({ username: 'alice', password: 'remembered' })).resolves.toBeDefined();
+    auth.lock();
+    await expect(auth.recover({ username: 'alice', recoveryKey, newPassword: 'again' }))
+      .rejects.toThrow("That recovery key doesn't match.");
+  });
+
+  it('stops accepting an old key once a new one is issued', async () => {
+    await auth.register({ username: 'alice', password: 'correct horse' });
+    const { recoveryKey: old } = await auth.issueRecoveryKey({});
+    await auth.issueRecoveryKey({ password: 'correct horse' });
+    auth.lock();
+    await expect(auth.recover({ username: 'alice', recoveryKey: old, newPassword: 'x' }))
+      .rejects.toThrow("That recovery key doesn't match.");
+  });
+
+  it('answers a wrong key and an unknown user the same way', async () => {
+    await auth.register({ username: 'alice', password: 'correct horse' });
+    await auth.issueRecoveryKey({});
+    auth.lock();
+    const wrong = 'AAAA-AAAA-AAAA-AAAA-AAAA-AAAA-AAAA-AAAA';
+    await expect(auth.recover({ username: 'alice', recoveryKey: wrong, newPassword: 'x' }))
+      .rejects.toThrow("That recovery key doesn't match.");
+    await expect(auth.recover({ username: 'nobody', recoveryKey: wrong, newPassword: 'x' }))
+      .rejects.toThrow("That recovery key doesn't match.");
+    expect(auth.getSession()).toBeNull();
+  });
+});
