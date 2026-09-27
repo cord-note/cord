@@ -2,7 +2,7 @@ import { eq, inArray, isNull } from 'drizzle-orm';
 import { getDb } from '../db/client';
 import { blocks, notes, fragments, fragmentLinks, fragmentTags } from '../db/schema';
 import { parseDoc, extractBlocks, findBlockContent } from '@shared/blockDoc';
-import type { Block, BlockRefTarget, ConversionImpact, NoteKind } from '@shared/types';
+import type { Block, BlockRefTarget, ConversionImpact } from '@shared/types';
 
 type Tx = Parameters<Parameters<ReturnType<typeof getDb>['transaction']>[0]>[0];
 
@@ -29,14 +29,14 @@ export class BlockIndexService {
     const db = tx ?? getDb();
 
     const note = db
-      .select({ vaultId: notes.vaultId, bodyJson: notes.bodyJson, kind: notes.kind })
+      .select({ vaultId: notes.vaultId, bodyJson: notes.bodyJson })
       .from(notes)
       .where(eq(notes.id, noteId))
       .get();
     if (!note) return;
 
     const now = Date.now();
-    const doc = parseDoc(note.bodyJson, note.kind as NoteKind);
+    const doc = parseDoc(note.bodyJson);
     const extracted = extractBlocks(doc, noteId);
 
     // Preserve created_at for rows that survive this rebuild, so a block's age
@@ -104,7 +104,7 @@ export class BlockIndexService {
     if (!row) return null;
 
     const note = db
-      .select({ title: notes.title, bodyJson: notes.bodyJson, kind: notes.kind, deletedAt: notes.deletedAt })
+      .select({ title: notes.title, bodyJson: notes.bodyJson, deletedAt: notes.deletedAt })
       .from(notes)
       .where(eq(notes.id, row.noteId))
       .get();
@@ -112,7 +112,7 @@ export class BlockIndexService {
     // while deleted, and restoring the note makes the ref live again.
     if (!note || note.deletedAt !== null) return null;
 
-    const content = findBlockContent(parseDoc(note.bodyJson, note.kind as NoteKind), refBlockId);
+    const content = findBlockContent(parseDoc(note.bodyJson), refBlockId);
     if (!content) return null;
 
     return {

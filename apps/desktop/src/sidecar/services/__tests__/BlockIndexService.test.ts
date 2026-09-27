@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'bun:test';
 import { eq } from 'drizzle-orm';
 import { freshDb, seedUser, seedVault } from './helpers';
 import { getDb } from '../../db/client';
-import { blocks, fragments, fragmentTags, fragmentLinks, tags, notes as notesTable } from '../../db/schema';
+import { blocks, fragments, fragmentTags, tags, notes as notesTable } from '../../db/schema';
 import { BlockIndexService } from '../BlockIndexService';
 import { NoteService } from '../NoteService';
 
@@ -21,13 +21,13 @@ const para = (text: string, blockId?: string) => ({
   content: [{ type: 'text', text }],
 });
 
-const notepad = (...inner: Record<string, unknown>[]) =>
+/** A Shuttle document: every top-level node carries its own blockId. */
+const notepad = (...nodes: Record<string, unknown>[]) =>
   JSON.stringify({
     type: 'doc',
-    content: inner.map((node, i) => ({
-      type: 'notepadBlock',
-      attrs: { blockId: `b${i + 1}` },
-      content: [node],
+    content: nodes.map((node, i) => ({
+      ...node,
+      attrs: { ...(node['attrs'] as Record<string, unknown> | undefined), blockId: `b${i + 1}` },
     })),
   });
 
@@ -222,6 +222,21 @@ describe('BlockIndexService', () => {
   });
 
   describe('backfillMissing', () => {
+    it('indexes notes written before Shuttle, through their notepadBlock wrappers', () => {
+      const note = notes.create({ vaultId: VAULT_ID, kind: 'notepad', bodyJson: notepad(para('x')) });
+      const db = getDb();
+      db.update(notesTable).set({
+        bodyJson: JSON.stringify({
+          type: 'doc',
+          content: [{ type: 'notepadBlock', attrs: { blockId: 'old-1' }, content: [para('legacy text')] }],
+        }),
+      }).where(eq(notesTable.id, note.id)).run();
+      db.delete(blocks).run();
+
+      expect(index.backfillMissing()).toBe(1);
+      expect(index.listForNote(note.id)).toMatchObject([{ id: 'old-1', type: 'paragraph', text: 'legacy text' }]);
+    });
+
     it('indexes only notes that have no rows', () => {
       const note = notes.create({ vaultId: VAULT_ID, bodyJson: JSON.stringify({ type: 'doc', content: [para('x', 'p1')] }) });
       expect(index.backfillMissing()).toBe(0);
@@ -229,45 +244,6 @@ describe('BlockIndexService', () => {
       getDb().delete(blocks).where(eq(blocks.noteId, note.id)).run();
       expect(index.backfillMissing()).toBe(1);
       expect(index.listForNote(note.id)).toHaveLength(1);
-    });
-  });
-
-  describe('conversionImpact', () => {
-    it('reports zero for a notepad with no annotations', () => {
-      const note = notes.create({ vaultId: VAULT_ID, kind: 'notepad', bodyJson: notepad(para('x')) });
-      expect(index.conversionImpact(note.id)).toEqual({
-        blockTagCount: 0, blockLinkCount: 0, inboundRefCount: 0,
-      });
-    });
-
-    it('counts block tags, block links and inbound references', () => {
-      const source = notes.create({ vaultId: VAULT_ID, kind: 'notepad', bodyJson: notepad(para('target')) });
-      const db = getDb();
-      const now = Date.now();
-
-      db.insert(tags).values({ id: 'tag-1', vaultId: VAULT_ID, name: 'idea', createdAt: now }).run();
-      db.insert(fragments).values({ id: 'b1', noteId: source.id, vaultId: VAULT_ID, createdAt: now }).run();
-      db.insert(fragmentTags).values({ fragmentId: 'b1', tagId: 'tag-1', createdAt: now }).run();
-      db.insert(fragmentLinks).values({
-        id: 'fl-1', fromFragmentId: 'b1', toNoteId: source.id, toFragmentId: null,
-        vaultId: VAULT_ID, createdAt: now,
-      }).run();
-
-      // Another notepad transcluding b1.
-      notes.create({
-        vaultId: VAULT_ID, kind: 'notepad',
-        bodyJson: JSON.stringify({
-          type: 'doc',
-          content: [{
-            type: 'notepadBlock', attrs: { blockId: 'ref-holder' },
-            content: [{ type: 'blockRef', attrs: { refBlockId: 'b1', refNoteId: source.id } }],
-          }],
-        }),
-      });
-
-      expect(index.conversionImpact(source.id)).toEqual({
-        blockTagCount: 1, blockLinkCount: 1, inboundRefCount: 1,
-      });
     });
   });
 });

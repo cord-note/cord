@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'bun:test';
 import { freshDb, seedUser, seedVault } from './helpers';
 import { NoteService } from '../NoteService';
+import { EMPTY_DOC_JSON } from '@shared/blockDoc';
 
 // CORD_DB_PATH=:memory: — run with `bun test`, not Vitest.
 
@@ -23,10 +24,16 @@ describe('NoteService', () => {
     expect(note.id).toBeTruthy();
     expect(note.vaultId).toBe(VAULT_ID);
     expect(note.title).toBe('');
-    expect(note.bodyJson).toBe('{}');
+    expect(note.bodyJson).toBe(EMPTY_DOC_JSON);
     expect(note.kind).toBe('note');
     expect(note.deletedAt).toBeNull();
     expect(note.isPinned).toBe(false);
+  });
+
+  it('gives a notepad the same empty document as a note', () => {
+    // Both kinds share one schema; a notepad is the same document with the
+    // block gutter turned on.
+    expect(service.create({ vaultId: VAULT_ID, kind: 'notepad' }).bodyJson).toBe(EMPTY_DOC_JSON);
   });
 
   it('creates a note with provided fields', () => {

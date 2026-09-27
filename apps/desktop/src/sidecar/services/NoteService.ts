@@ -4,8 +4,7 @@ import { getDb } from '../db/client';
 import { notes, noteLinks, blocks } from '../db/schema';
 import { logOp } from './oplog';
 import { BlockIndexService } from './BlockIndexService';
-import { ANNOTATABLE_TYPES } from '@shared/constants';
-import { parseDoc, wrapInBlocks, unwrapBlocks, emptyNotepadDoc } from '@shared/blockDoc';
+import { EMPTY_DOC_JSON } from '@shared/blockDoc';
 import type {
   Note,
   NoteKind,
@@ -67,10 +66,7 @@ export class NoteService {
     const now = Date.now();
     const kind: NoteKind = input.kind ?? 'note';
 
-    // A notepad must never start with an empty document: `doc → block+` cannot
-    // be satisfied by the '{}' column default, and there would be nowhere to type.
-    const bodyJson = input.bodyJson
-      ?? (kind === 'notepad' ? JSON.stringify(emptyNotepadDoc()) : '{}');
+    const bodyJson = input.bodyJson ?? EMPTY_DOC_JSON;
 
     return db.transaction((tx) => {
       tx.insert(notes).values({
@@ -121,13 +117,8 @@ export class NoteService {
   }
 
   /**
-   * Switch a note between kinds, rewriting its document shape.
-   *
-   * note → notepad wraps each top-level node in a `block`.
-   * notepad → note unwraps them. Fragment tags and links are deliberately left
-   * in place: they stop being surfaced, but converting back restores them.
-   * `blockRef` nodes cannot exist outside a notepad and are dropped, which is
-   * what `conversionImpact` warns about before this is called.
+   * Switch a note between kinds. Both kinds share one document format, so the
+   * body and its block ids are untouched; only `kind` changes.
    */
   convert(id: string, kind: NoteKind): Note {
     const db = getDb();
@@ -138,13 +129,8 @@ export class NoteService {
       if (!row) throw new Error(`Note not found: ${id}`);
       if (row.kind === kind) return toNote(row);
 
-      const doc = parseDoc(row.bodyJson, row.kind as NoteKind);
-      const converted = kind === 'notepad'
-        ? wrapInBlocks(doc)
-        : unwrapBlocks(doc, ANNOTATABLE_TYPES);
-
       tx.update(notes)
-        .set({ kind, bodyJson: JSON.stringify(converted), updatedAt: now })
+        .set({ kind, updatedAt: now })
         .where(eq(notes.id, id))
         .run();
 
