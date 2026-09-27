@@ -161,6 +161,27 @@ export const fragmentLinks = sqliteTable('fragment_links', {
   createdAt:      integer('created_at').notNull(),
 });
 
+// ─── Attachments ──────────────────────────────────────────────────────────────
+//
+// Images pasted into notes. The bytes live in `<db dir>/attachments/<id>.<ext>`;
+// a document refers to one as `attachment:<id>`. Deduplicated per vault by hash.
+
+export const attachments = sqliteTable(
+  'attachments',
+  {
+    id:        text('id').primaryKey(),
+    vaultId:   text('vault_id').notNull().references(() => vaults.id),
+    mime:      text('mime').notNull(),
+    size:      integer('size').notNull(),
+    sha256:    text('sha256').notNull(),
+    createdAt: integer('created_at').notNull(),
+    deletedAt: integer('deleted_at'),
+  },
+  (t) => ({
+    vaultHashIdx: index('idx_attachments_vault_hash').on(t.vaultId, t.sha256),
+  }),
+);
+
 // ─── Operation log ────────────────────────────────────────────────────────────
 
 export const operationLog = sqliteTable(
@@ -193,5 +214,6 @@ export const schema = {
   fragments,
   fragmentTags,
   fragmentLinks,
+  attachments,
   operationLog,
 };

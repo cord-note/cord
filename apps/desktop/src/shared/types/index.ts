@@ -133,6 +133,25 @@ export interface BlockRefTarget {
   contentJson: string;
 }
 
+// ─── Attachment ───────────────────────────────────────────────────────────────
+
+/** An image stored beside the database; documents refer to it as `attachment:<id>`. */
+export interface Attachment {
+  id: string;
+  vaultId: string;
+  mime: string;
+  size: number;
+  sha256: string;
+  createdAt: number;
+  deletedAt: number | null;
+}
+
+export interface CreateAttachmentInput {
+  vaultId: string;
+  mime: string;
+  dataBase64: string;
+}
+
 // ─── Link ─────────────────────────────────────────────────────────────────────
 
 export interface NoteLink {
@@ -216,7 +235,7 @@ export interface AppSettings {
 
 // ─── Operation log ────────────────────────────────────────────────────────────
 
-export type EntityType = 'note' | 'vault' | 'tag' | 'link' | 'fragment';
+export type EntityType = 'note' | 'vault' | 'tag' | 'link' | 'fragment' | 'attachment';
 export type OperationType = 'create' | 'update' | 'delete';
 
 export interface OperationLogEntry {
