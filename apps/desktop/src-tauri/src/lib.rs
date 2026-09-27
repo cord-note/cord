@@ -85,6 +85,9 @@ pub fn run() {
             commands::auth::auth_session,
             // attachments
             commands::attachments::attachments_create,
+            // settings
+            commands::settings::settings_read,
+            commands::settings::settings_write,
         ])
         .build(tauri::generate_context!())
         .expect("error building Cord");

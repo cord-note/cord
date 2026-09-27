@@ -4,5 +4,6 @@ pub mod auth;
 pub mod blocks;
 pub mod fragments;
 pub mod notes;
+pub mod settings;
 pub mod tags;
 pub mod vaults;

@@ -9,6 +9,7 @@ import { AuthService }     from './services/AuthService';
 import { FragmentService } from './services/FragmentService';
 import { BlockIndexService } from './services/BlockIndexService';
 import { AttachmentService } from './services/AttachmentService';
+import { SettingsFileService } from './services/SettingsFileService';
 import { registerVaultHandlers }    from './handlers/vaults';
 import { registerNoteHandlers }     from './handlers/notes';
 import { registerTagHandlers }      from './handlers/tags';
@@ -16,6 +17,7 @@ import { registerFragmentHandlers } from './handlers/fragments';
 import { registerAuthHandlers }     from './handlers/auth';
 import { registerBlockHandlers }    from './handlers/blocks';
 import { registerAttachmentHandlers } from './handlers/attachments';
+import { registerSettingsHandlers }   from './handlers/settings';
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 
@@ -31,6 +33,7 @@ const notes     = new NoteService(blocks, links);
 const tags      = new TagService();
 const fragments = new FragmentService();
 const attachments = new AttachmentService();
+const settingsFiles = new SettingsFileService();
 
 // Existing notes predate the block index; back-fill so search works on first
 // launch after upgrade. Idempotent, and a no-op once every note has rows.
@@ -48,6 +51,7 @@ registerTagHandlers(router, tags, auth);
 registerFragmentHandlers(router, fragments, auth);
 registerBlockHandlers(router, blocks, auth);
 registerAttachmentHandlers(router, attachments, auth);
+registerSettingsHandlers(router, settingsFiles);
 
 // ── Server ────────────────────────────────────────────────────────────────────
 

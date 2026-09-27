@@ -11,6 +11,7 @@ import type {
   FragmentAnnotationMap, CreateFragmentLinkInput, FragmentLink,
   Attachment, CreateAttachmentInput,
   User, RegisterInput, LoginInput, AuthSession,
+  ConfigFileName,
 } from '@shared/types';
 
 export const api = {
@@ -70,5 +71,10 @@ export const api = {
     login:    (data: LoginInput)          => invoke<User>('auth_login', { data }),
     logout:   ()                          => invoke<void>('auth_logout'),
     session:  ()                          => invoke<AuthSession | null>('auth_session'),
+  },
+
+  settings: {
+    read:  (file: ConfigFileName)               => invoke<{ text: string | null }>('settings_read', { file }),
+    write: (file: ConfigFileName, text: string) => invoke<{ ok: true }>('settings_write', { file, text }),
   },
 } as const;
