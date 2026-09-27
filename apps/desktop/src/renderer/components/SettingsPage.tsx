@@ -136,7 +136,7 @@ interface ChapterProps {
 // ── Appearance ────────────────────────────────────────────────────────────────
 
 const THEMES: { id: Theme; label: string; desc: string; accentDark: string; accentLight: string; bgDark?: string; bgLight?: string; sidebarDark?: string; sidebarLight?: string }[] = [
-  { id: 'mono',      label: 'Monochrome', desc: 'Classic black & white',  accentDark: '#e2e2e2', accentLight: '#1a1a1a' },
+  { id: 'mono',      label: 'Monochrome', desc: 'Classic black & white',  accentDark: '#e2e2e2', accentLight: '#1a1a1a', bgDark: '#1a1a1a',  bgLight: '#e8e8e8',  sidebarDark: '#212121',  sidebarLight: '#dedede' },
   { id: 'blue',      label: 'Blue',       desc: 'Deep navy + sky blue',   accentDark: '#4a8ff5', accentLight: '#2563eb', bgDark: '#11151c',  bgLight: '#dde5f4',  sidebarDark: '#151b25',  sidebarLight: '#d0dcf0' },
   { id: 'olive',     label: 'Olive',      desc: 'Forest green + amber',   accentDark: '#c9a84c', accentLight: '#7a5c1e', bgDark: '#1b1e14',  bgLight: '#e9e2cd',  sidebarDark: '#1f2318',  sidebarLight: '#e0d8c0' },
   { id: 'teal',      label: 'Teal',       desc: 'Deep sea + coral',       accentDark: '#e07a54', accentLight: '#c05a38', bgDark: '#0e2323',  bgLight: '#d6e9e9',  sidebarDark: '#122929',  sidebarLight: '#c7e0e0' },
