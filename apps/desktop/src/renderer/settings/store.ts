@@ -37,6 +37,8 @@ export interface SettingsState {
   saveText: (text: string) => Promise<SettingsProblem[]>;
   refreshDefinitions: () => void;
   flush: () => Promise<void>;
+  /** Write anything pending, then return to defaults and not-loaded (a user switch). */
+  unload: () => Promise<void>;
 }
 
 const message = (err: unknown): string => (err instanceof Error ? err.message : String(err));
@@ -181,6 +183,19 @@ export function createSettingsStore(deps: SettingsDeps): UseBoundStore<StoreApi<
       },
 
       flush: () => writer.flush(),
+
+      unload: async () => {
+        await writer.flush();
+        set({
+          values: resolveValues(deps.definitions(), {}).values,
+          data: {},
+          text: '',
+          problems: [],
+          syntaxError: false,
+          saveError: null,
+          loaded: false,
+        });
+      },
     };
   });
 }

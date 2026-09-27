@@ -199,6 +199,13 @@ export function flushKeybindings(): Promise<void> {
   return writer.flush();
 }
 
+/** Write any pending change, then forget this user's file (before another user's is loaded). */
+export async function unloadKeybindings(): Promise<void> {
+  await writer.flush();
+  fileText = '';
+  useKeybindingStore.setState({ bindings: defaultMap(), fileError: null });
+}
+
 function legacyOverrides(): Partial<KeybindingMap> {
   try {
     return parseOverrides(localStorage.getItem(LEGACY_KEYBINDINGS_KEY));

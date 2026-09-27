@@ -170,4 +170,24 @@ describe('settings store', () => {
     await h.store.getState().reload();
     expect(h.store.getState().values['editor.fontSize']).toBe(13);
   });
+
+  it('unload writes pending edits, then forgets the file', async () => {
+    const h = harness('{"editor.fontSize": 18}');
+    await h.store.getState().load();
+    h.store.getState().set('editor.spellCheck', true);
+    await h.store.getState().unload();
+
+    expect(h.disk.text).toContain('editor.spellCheck');
+    expect(h.store.getState()).toMatchObject({
+      loaded: false,
+      text: '',
+      data: {},
+      values: { 'editor.fontSize': 15, 'editor.spellCheck': false },
+    });
+
+    // Until the next load, an edit must not overwrite whichever file comes next.
+    h.store.getState().set('editor.fontSize', 19);
+    await Bun.sleep(20);
+    expect(h.disk.writes).toHaveLength(1);
+  });
 });
