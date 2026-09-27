@@ -18,6 +18,7 @@ import {
 } from '../store/keybindings';
 import type { NoteListItem } from '@shared/types';
 import { api } from '../ipc';
+import { KeyChord } from './KeyChord';
 import styles from './TitleBar.module.css';
 
 interface Cmd {
@@ -368,7 +369,7 @@ function CommandPill() {
                       ? (activeNote ? (activeNote.isPinned ? 'Unpin Note' : 'Pin Note') : 'Pin Note (no note open)')
                       : cmd.label;
                     const dimmed = isPinCmd && !activeNote;
-                    const hotkey = cmd.binding ? formatAccel(bindings[cmd.binding]) : '';
+                    const hotkey = cmd.binding ? bindings[cmd.binding] : '';
                     return (
                       <button
                         key={cmd.id}
@@ -381,7 +382,7 @@ function CommandPill() {
                           <Icon size={14} strokeWidth={1.75} />
                         </span>
                         <span className={styles.dropRowLabel}>{label}</span>
-                        {hotkey && <span className={styles.dropRowKbd}>{hotkey}</span>}
+                        {hotkey && <span className={styles.dropRowKbd}><KeyChord accel={hotkey} size="sm" /></span>}
                       </button>
                     );
                   })}
