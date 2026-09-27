@@ -11,19 +11,12 @@ import { useUIStore } from '../store/ui';
 import { matchesBinding } from '../store/keybindings';
 import { HoldButton } from './HoldButton';
 import { HOLD_NOTE_DELETE_MS } from '@shared/constants';
+import { useSetting } from '../settings';
+import { formatListDate, holdDuration } from '../settings/derived';
 import styles from './NoteList.module.css';
 
 const EXCERPT_LENGTH = 80;
 const SEARCH_DEBOUNCE_MS = 300;
-
-function formatDate(ms: number): string {
-  const d = new Date(ms);
-  const now = new Date();
-  const diffDays = Math.floor((now.getTime() - d.getTime()) / 86400000);
-  if (diffDays === 0) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  if (diffDays < 7)  return d.toLocaleDateString([], { weekday: 'short' });
-  return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
-}
 
 type DocNode = { type?: string; text?: string; content?: DocNode[] };
 function collectText(node: DocNode, out: string[]): void {
@@ -40,6 +33,9 @@ function excerpt(bodyJson: string): string {
 }
 
 export default function NoteList() {
+  const defaultKind = useSetting('notes.defaultKind');
+  const dateFormat = useSetting('notes.listDateFormat');
+  const holdSpeed = useSetting('general.holdToConfirm');
   const { activeVaultId, vaults } = useVaultStore();
   const activeVault = vaults.find((v) => v.id === activeVaultId);
   const {
@@ -61,7 +57,7 @@ export default function NoteList() {
     function onKey(e: KeyboardEvent) {
       if (matchesBinding(e, 'app.newNote')) {
         e.preventDefault();
-        handleNewNote('note');
+        handleNewNote(defaultKind);
       }
       if (matchesBinding(e, 'app.newNotepad')) {
         e.preventDefault();
@@ -71,7 +67,7 @@ export default function NoteList() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeVaultId]);
+  }, [activeVaultId, defaultKind]);
 
   async function handleSelectNote(id: string) {
     setView('notes');
@@ -153,8 +149,8 @@ export default function NoteList() {
           <div className={styles.newGroup}>
             <button
               className={styles.newBtn}
-              onClick={() => handleNewNote('note')}
-              title="New note (Ctrl+N)"
+              onClick={() => handleNewNote(defaultKind)}
+              title={defaultKind === 'notepad' ? 'New notepad' : 'New note'}
             >
               <Plus size={15} strokeWidth={2} />
             </button>
@@ -258,7 +254,7 @@ export default function NoteList() {
           ) : (
             <>
               <p>No notes yet</p>
-              <button className={styles.createFirst} onClick={() => handleNewNote('note')}>
+              <button className={styles.createFirst} onClick={() => handleNewNote(defaultKind)}>
                 Create your first note
               </button>
             </>
@@ -304,7 +300,7 @@ export default function NoteList() {
                           : <PinOff size={12} strokeWidth={1.75} />}
                       </button>
                       <HoldButton
-                        durationMs={HOLD_NOTE_DELETE_MS}
+                        durationMs={holdDuration(HOLD_NOTE_DELETE_MS, holdSpeed)}
                         onComplete={() => handleDeleteNote(note.id)}
                         size={20}
                         title="Hold to move to trash"
@@ -315,7 +311,9 @@ export default function NoteList() {
                   </div>
 
                   <div className={`${styles.itemMeta} cord-note-list__item-meta`}>
-                    <span className={styles.itemDate}>{formatDate(note.updatedAt)}</span>
+                    {dateFormat !== 'hidden' && (
+                      <span className={styles.itemDate}>{formatListDate(note.updatedAt, dateFormat)}</span>
+                    )}
                     {ex && <span className={`${styles.itemExcerpt} cord-note-list__item-excerpt`}>{ex}</span>}
                   </div>
 

@@ -12,7 +12,7 @@ import './settings/pages';
 import styles from './SettingsPage.module.css';
 
 /** Sections with a fixed place; any other section follows alphabetically. */
-const SECTION_ORDER = ['Editor', 'Appearance', 'Vaults'];
+const SECTION_ORDER = ['Editor', 'Appearance', 'Notes', 'Vaults', 'General'];
 
 /**
  * The command palette opens Settings at a named place. Old tab names survive

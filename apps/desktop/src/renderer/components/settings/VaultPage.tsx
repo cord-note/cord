@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../../ipc';
 import { log } from '../../lib/log';
 import { useSetting } from '../../settings';
+import { holdDuration } from '../../settings/derived';
 import { useUIStore } from '../../store/ui';
 import { useVaultStore } from '../../store/vaults';
 import { HoldButton } from '../HoldButton';
@@ -21,6 +22,7 @@ export default function VaultPage() {
   const { vaults, activeVaultId, archiveVault, loadVaults } = useVaultStore();
   const { setView } = useUIStore();
   const distinctVaultColors = useSetting('vaults.distinctColors');
+  const holdSpeed = useSetting('general.holdToConfirm');
   const vault = vaults.find((v) => v.id === activeVaultId);
 
   const [name, setName] = useState(vault?.name ?? '');
@@ -130,7 +132,7 @@ export default function VaultPage() {
         </div>
         <HoldButton
           variant="text"
-          durationMs={HOLD_ARCHIVE_MS}
+          durationMs={holdDuration(HOLD_ARCHIVE_MS, holdSpeed)}
           onComplete={handleArchive}
           holdingLabel="Keep holding…"
           className={styles.inlineHoldBtn}

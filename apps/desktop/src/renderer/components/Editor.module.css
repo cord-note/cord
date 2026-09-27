@@ -157,6 +157,8 @@
 .content {
   flex: 1;
   overflow-y: auto;
+  /* Shuttle inherits its font; code blocks keep their own monospace. */
+  font-family: var(--editor-font);
   padding: 0 var(--space-12) var(--space-12);
   position: relative;
 }

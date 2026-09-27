@@ -4,6 +4,8 @@ import { useVaultStore } from '../store/vaults';
 import { useNoteStore } from '../store/notes';
 import { HoldButton } from './HoldButton';
 import { HOLD_DELETE_MS } from '@shared/constants';
+import { useSetting } from '../settings';
+import { holdDuration } from '../settings/derived';
 import styles from './TrashView.module.css';
 
 function formatDate(ms: number): string {
@@ -13,6 +15,7 @@ function formatDate(ms: number): string {
 export default function TrashView() {
   const { activeVaultId } = useVaultStore();
   const { trashedNotes, loadTrashed, restoreNote, permanentDeleteNote } = useNoteStore();
+  const holdSpeed = useSetting('general.holdToConfirm');
 
   useEffect(() => {
     if (activeVaultId) loadTrashed(activeVaultId);
@@ -63,7 +66,7 @@ export default function TrashView() {
                   </button>
                   <HoldButton
                     variant="text"
-                    durationMs={HOLD_DELETE_MS}
+                    durationMs={holdDuration(HOLD_DELETE_MS, holdSpeed)}
                     onComplete={() => permanentDeleteNote(note.id)}
                     holdingLabel="Keep holding…"
                     title={`Hold to permanently delete "${note.title || 'Untitled'}". This cannot be undone.`}
