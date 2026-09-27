@@ -4,7 +4,7 @@
 
 **Goal:** Replace Cord's built-in Tiptap 2 editor with the published `shuttle-editor` package, with Cord supplying a `ShuttleHost` over its IPC, links derived from saved content, and image attachments stored beside the database.
 
-**Architecture:** Part 1 ships Shuttle 0.2.0 with three things Cord needs (a Twitch switch plus external controls, a React-free `shuttle-editor/doc` entry for the sidecar, code-highlighting styles). Part 2 swaps the editor in Cord: the sidecar reads documents through `shuttle-editor/doc`, derives `note_links` on save, stores attachments; Rust serves attachments through a `cord-attachment` URI scheme; the renderer implements `ShuttleHost`, keeps its title/tags/status bar and its fragment overlays, and deletes `components/editor/`.
+**Architecture:** Part 1 ships Shuttle 0.2.0 with three things Cord needs (a Twitch switch plus external controls, a React-free `shuttle-editor/doc` entry for the sidecar, and a built-in light/dark highlight theme for lowlight code blocks — Shuttle owns highlighting; Cord's is removed). Part 2 swaps the editor in Cord: the sidecar reads documents through `shuttle-editor/doc`, derives `note_links` on save, stores attachments; Rust serves attachments through a `cord-attachment` URI scheme; the renderer implements `ShuttleHost`, keeps its title/tags/status bar and its fragment overlays, and deletes `components/editor/`.
 
 **Tech Stack:** shuttle-editor (Tiptap 3), React 18, Zustand, Bun sidecar + Drizzle/bun:sqlite, Tauri 2 (Rust), tsup (Shuttle build).
 
@@ -160,36 +160,48 @@ export function findTopLevelBlock(doc: unknown, blockId: string): DocNode | null
   - README: add a short "Reading documents on a server" section showing `import { nodeText, wikiLinkTargets } from 'shuttle-editor/doc'`.
 - [ ] **Step 4:** `bun test`, `pnpm typecheck`, `pnpm build`. Commit: `Add a React-free shuttle-editor/doc entry for servers`.
 
-### Task S3: Code highlighting and monospace styles
+### Task S3: Shuttle owns code highlighting (lowlight + its own light/dark theme)
 
-**Files:** Modify `src/styles/shuttle.css`; Test `test/styles.test.ts`
+Decision (user): highlighting is done entirely in Shuttle — the official CodeBlockLowlight extension tokenises (it already does, emitting highlight.js `hljs-*` classes) and Shuttle ships the colour theme for those tokens. Hosts no longer supply syntax colours; Cord's own highlight rules are removed in C10.
 
-- [ ] **Step 1: Failing test** in `test/styles.test.ts`: the CSS contains rules for `.hljs-keyword`, `.hljs-string`, `.hljs-comment`, `.hljs-number`, `.hljs-title`, `.hljs-built_in`, `.hljs-type`, `.hljs-attr`, `.hljs-variable`, `.hljs-meta`, `.hljs-tag`, `.hljs-operator` inside `.sh-prose pre`, each using a `var(--syntax-…, <fallback>)`; and code uses `var(--font-mono, …)`.
-- [ ] **Step 2: Implement.** Add to `.sh-root, .sh-popup-anchor` variables: `--sh-mono: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);` and `--sh-code: var(--code-color, inherit);`. Use `font-family: var(--sh-mono)` for `.sh-prose code, .sh-prose pre`, `color: var(--sh-code)` for inline code. Token colours (fallbacks = GitHub light palette, readable on white):
+**Files:** Modify `src/styles/shuttle.css`, `src/ShuttleEditor.tsx`, `README.md`; Test `test/styles.test.ts`, `test/ShuttleEditor.test.tsx`
 
-```css
-.sh-prose pre .hljs-keyword, .sh-prose pre .hljs-literal, .sh-prose pre .hljs-selector-tag { color: var(--syntax-keyword, #cf222e); }
-.sh-prose pre .hljs-string, .sh-prose pre .hljs-regexp { color: var(--syntax-string, #0a3069); }
-.sh-prose pre .hljs-comment, .sh-prose pre .hljs-quote { color: var(--syntax-comment, #6e7781); font-style: italic; }
-.sh-prose pre .hljs-number { color: var(--syntax-number, #0550ae); }
-.sh-prose pre .hljs-title, .sh-prose pre .hljs-title.function_ { color: var(--syntax-function, #8250df); }
-.sh-prose pre .hljs-built_in { color: var(--syntax-builtin, #953800); }
-.sh-prose pre .hljs-type, .sh-prose pre .hljs-title.class_ { color: var(--syntax-type, #953800); }
-.sh-prose pre .hljs-attr, .sh-prose pre .hljs-attribute, .sh-prose pre .hljs-property { color: var(--syntax-attr, #0550ae); }
-.sh-prose pre .hljs-variable, .sh-prose pre .hljs-params { color: var(--syntax-variable, #24292f); }
-.sh-prose pre .hljs-meta { color: var(--syntax-meta, #6e7781); }
-.sh-prose pre .hljs-tag, .sh-prose pre .hljs-name { color: var(--syntax-tag, #116329); }
-.sh-prose pre .hljs-operator, .sh-prose pre .hljs-punctuation { color: var(--syntax-operator, #24292f); }
-```
-  README theming table: add `--font-mono`, `--code-color`, `--syntax-*`.
-- [ ] **Step 3:** `bun test`, `pnpm typecheck`. Commit: `Colour highlighted code from the host's syntax palette`.
+- [ ] **Step 1: Failing tests.**
+  - `test/styles.test.ts`: the CSS defines `--sh-code-keyword`, `--sh-code-string`, `--sh-code-comment`, `--sh-code-number`, `--sh-code-function`, `--sh-code-builtin`, `--sh-code-type`, `--sh-code-attr`, `--sh-code-variable`, `--sh-code-meta`, `--sh-code-tag`, `--sh-code-operator`, `--sh-code-addition`, `--sh-code-deletion` on `.sh-root` (light values), redefines them for dark under both `.sh-root[data-sh-scheme='dark']` and `@media (prefers-color-scheme: dark)` for `.sh-root:not([data-sh-scheme='light'])`, and has `.sh-prose pre .hljs-…` rules using those variables; code uses `var(--sh-mono)`.
+  - `test/ShuttleEditor.test.tsx`: `colorScheme="dark"` renders `.sh-root[data-sh-scheme="dark"]`; `"light"` → `"light"`; default / `"auto"` → no attribute.
+- [ ] **Step 2: Implement.**
+  - `ShuttleEditorProps.colorScheme?: 'light' | 'dark' | 'auto'` (default `'auto'`); render `data-sh-scheme={colorScheme === 'auto' ? undefined : colorScheme}` on the `.sh-root` div. Document it in the README props table.
+  - CSS variables on `.sh-root, .sh-popup-anchor`: `--sh-mono: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);`. Use `font-family: var(--sh-mono)` for `.sh-prose code, .sh-prose pre`.
+  - Token palette on `.sh-root` (GitHub light), dark overrides (GitHub dark) — values:
+
+    | Variable | Light | Dark |
+    |---|---|---|
+    | `--sh-code-keyword` | `#cf222e` | `#ff7b72` |
+    | `--sh-code-string` | `#0a3069` | `#a5d6ff` |
+    | `--sh-code-comment` | `#6e7781` | `#8b949e` |
+    | `--sh-code-number` | `#0550ae` | `#79c0ff` |
+    | `--sh-code-function` | `#8250df` | `#d2a8ff` |
+    | `--sh-code-builtin` | `#953800` | `#ffa657` |
+    | `--sh-code-type` | `#953800` | `#ffa657` |
+    | `--sh-code-attr` | `#0550ae` | `#79c0ff` |
+    | `--sh-code-variable` | `#953800` | `#ffa657` |
+    | `--sh-code-meta` | `#0550ae` | `#79c0ff` |
+    | `--sh-code-tag` | `#116329` | `#7ee787` |
+    | `--sh-code-operator` | `#24292f` | `#c9d1d9` |
+    | `--sh-code-addition` | `#116329` | `#aff5b4` |
+    | `--sh-code-deletion` | `#82071e` | `#ffdcd7` |
+
+    Dark block: `.sh-root[data-sh-scheme='dark'] { … }` and `@media (prefers-color-scheme: dark) { .sh-root:not([data-sh-scheme='light']) { … } }` (same declarations).
+  - Token rules (all inside `.sh-prose pre`): keyword ← `.hljs-keyword, .hljs-literal, .hljs-selector-tag, .hljs-section, .hljs-doctag`; string ← `.hljs-string, .hljs-regexp, .hljs-template-string`; comment ← `.hljs-comment, .hljs-quote` (italic); number ← `.hljs-number, .hljs-bullet, .hljs-symbol`; function ← `.hljs-title, .hljs-title.function_, .hljs-function .hljs-title`; builtin ← `.hljs-built_in, .hljs-selector-id`; type ← `.hljs-type, .hljs-title.class_, .hljs-class .hljs-title`; attr ← `.hljs-attr, .hljs-attribute, .hljs-property, .hljs-selector-attr, .hljs-selector-class`; variable ← `.hljs-variable, .hljs-template-variable, .hljs-params`; meta ← `.hljs-meta`; tag ← `.hljs-tag, .hljs-name`; operator ← `.hljs-operator, .hljs-punctuation`; addition ← `.hljs-addition` (+ faint green background via `color-mix`, rgb fallback first); deletion ← `.hljs-deletion` (+ faint red background); `.hljs-emphasis { font-style: italic }`, `.hljs-strong { font-weight: 600 }`. The code block background stays `var(--sh-bg-raised)`.
+  - README theming section: document `colorScheme` and the `--sh-code-*` variables (hosts may override them), and `--font-mono`.
+- [ ] **Step 3:** `bun test`, `pnpm typecheck`; check the playground build. Commit: `Ship a light and dark highlight theme for lowlight code blocks`.
 
 ### Task S4: Release 0.2.0
 
 **Files:** Modify `.github/workflows/ci.yml`, `.github/workflows/release.yml`, `package.json`, `CHANGELOG.md`
 
 - [ ] **Step 1:** Upgrade `actions/checkout@v4` → `@v5` and `actions/setup-node@v4` → `@v5` in both workflows (Node 20 deprecation). Leave `pnpm/action-setup@v4` and `oven-sh/setup-bun@v2`.
-- [ ] **Step 2:** `package.json` version `0.2.0`. `CHANGELOG.md` `## 0.2.0`: Twitch switch (`twitch` prop), `ShuttleControls` via `onReady`, `shuttle-editor/doc` entry, syntax-highlighting colours and monospace font variables.
+- [ ] **Step 2:** `package.json` version `0.2.0`. `CHANGELOG.md` `## 0.2.0`: Twitch switch (`twitch` prop), `ShuttleControls` via `onReady`, `shuttle-editor/doc` entry, built-in light/dark code highlighting theme with the `colorScheme` prop and `--sh-code-*` variables.
 - [ ] **Step 3:** `bun test`, `pnpm typecheck`, `pnpm build`, playground build. Commit: `Release 0.2.0`. Push `main` (`git push origin main`) and wait for CI (one `gh run watch` on the new run, `--exit-status`).
 - [ ] **Step 4: Publishing is outward-facing — the coordinator asks the user before this step.** On approval: `git tag v0.2.0 && git push origin v0.2.0`, watch the release run once, then verify `npm view shuttle-editor version` → `0.2.0` and that the Release exists.
 
@@ -452,8 +464,10 @@ pub fn find_file(dir: &Path, id: &str) -> Option<PathBuf> {
       --on-accent: var(--accent-fg);
     }
     ```
-    (Shuttle already reads `--accent`, `--border`, `--text-primary`, `--text-muted`, `--link-color`, `--editor-font-size`, `--font-mono`, `--code-color`, `--syntax-*` under those names.)
-  - `Editor.module.css`: delete the `.ProseMirror` global rules, notepad `[data-block]` rules, `.wiki-link*`, `.math-*`, `.unlinked-mention`, hljs colours and toolbar classes; keep title/tag/status-bar/content-layout classes (content max width via `--editor-line-width`).
+    (Shuttle already reads `--accent`, `--border`, `--text-primary`, `--text-muted`, `--link-color`, `--editor-font-size`, `--font-mono` under those names.)
+  - Code highlighting is Shuttle's (decision): pass `colorScheme={resolvedScheme}` to `<ShuttleEditor>`, where `resolvedScheme` is `'light' | 'dark'` resolved from `useThemeStore().colorScheme` exactly like `store/theme.ts`'s `resolveScheme` (export that function from the store and reuse it; subscribe to `prefers-color-scheme` changes when the scheme is `'system'`).
+  - Archive Cord's own highlighting: delete the `.hljs-*` rules in `Editor.module.css` (≈531–568) and every `--syntax-*` variable definition in `renderer/styles/*.css` (they have no other users — verify with `grep -rn "syntax-" apps/desktop/src`). They remain in git history.
+  - `Editor.module.css`: delete the `.ProseMirror` global rules, notepad `[data-block]` rules, `.wiki-link*`, `.math-*`, `.unlinked-mention` and toolbar classes; keep title/tag/status-bar/content-layout classes (content max width via `--editor-line-width`).
   - `global.css`: delete the `.ProseMirror` taskList/taskItem rules (≈436–510).
 - [ ] **Step 3: Delete** `components/editor/` (whole folder, `git rm -r`), the now-unused constants, the dead dependencies; `pnpm install`; make sure nothing imports `@tiptap/*` except via `shuttle-editor` (`grep -rn "@tiptap" apps/desktop/src` → nothing).
 - [ ] **Step 4:** Cord tests, typecheck, `build:renderer`, `cargo test`, and a sidecar binary build for the host platform to prove `shuttle-editor/doc` bundles: `bun build --compile src/sidecar/index.ts --outfile .tmp/cord-sidecar` in `apps/desktop` (delete `.tmp` after). Commit: `Render notes with shuttle-editor and delete the old editor`.
@@ -483,4 +497,4 @@ pub fn find_file(dir: &Path, id: &str) -> Option<PathBuf> {
   9. Switch note ↔ notepad → content and block tags unchanged.
   10. An old notepad from before the cutover opens read-only showing its text.
   11. Search finds text inside notes, including a wiki-link label and a formula.
-  12. Theme: toolbar, menus, popups and code highlighting are readable in light and dark.
+  12. Theme: toolbar, menus and popups are readable in light and dark; a code block with a language shows highlighted tokens and switches palette when you change Cord's light/dark scheme.
