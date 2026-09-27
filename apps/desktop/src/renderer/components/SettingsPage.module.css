@@ -79,8 +79,8 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
-  /* Leave room under the sticky-ish heading when scrollIntoView lands here. */
-  scroll-margin-top: 24px;
+  /* Leave room under the sticky search header when scrollIntoView lands here. */
+  scroll-margin-top: 72px;
 }
 
 .chapter + .chapter {
@@ -568,4 +568,83 @@
   font-size: var(--text-xs);
   color: var(--accent);
   font-weight: 700;
+}
+
+/* ── Generated settings ─────────────────────────────────────────────────── */
+
+/* Header, banner and JSON view share the chapters' centred column. */
+.settingsHeader,
+.problemsColumn {
+  max-width: 720px;
+  margin: 0 auto;
+  padding-left: var(--space-12);
+  padding-right: var(--space-12);
+}
+
+.settingsHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  position: sticky;
+  /* .content has top padding; a negative offset parks the header flush with
+     the top of the scroll area instead of leaving a gap above it. */
+  top: calc(-1 * var(--space-10));
+  z-index: 2;
+  padding-top: var(--space-3);
+  padding-bottom: var(--space-3);
+  background: var(--bg);
+}
+
+.searchRow { flex: 1; margin: 0; }
+
+.jsonToggleOn {
+  background: var(--bg-active);
+  color: var(--text-primary);
+}
+
+.settingRow { position: relative; }
+
+.settingHead,
+.settingActions {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.settingHead { justify-content: space-between; margin-bottom: var(--space-2); }
+
+/* A left rule marks a changed setting, like VS Code's modified indicator. */
+.settingModified::before {
+  content: '';
+  position: absolute;
+  left: calc(-1 * var(--space-3));
+  top: var(--space-1);
+  bottom: var(--space-1);
+  width: 2px;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+}
+
+.settingKey {
+  margin-left: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: 400;
+  color: var(--text-muted);
+  opacity: 0;
+  transition: opacity var(--duration-fast);
+  user-select: all;
+}
+
+.settingRow:hover .settingKey { opacity: 1; }
+
+.selectInput {
+  min-width: 160px;
+  padding: var(--space-1-5) var(--space-2-5);
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  font: inherit;
+  font-size: var(--text-md);
 }
