@@ -78,11 +78,16 @@ pub fn run() {
             commands::fragments::fragments_create_link,
             commands::fragments::fragments_delete_link,
             // auth
-            commands::auth::auth_has_users,
+            commands::auth::auth_lock_screen,
+            commands::auth::auth_current,
             commands::auth::auth_register,
             commands::auth::auth_login,
-            commands::auth::auth_logout,
-            commands::auth::auth_session,
+            commands::auth::auth_unlock_pin,
+            commands::auth::auth_set_pin,
+            commands::auth::auth_change_password,
+            commands::auth::auth_issue_recovery_key,
+            commands::auth::auth_recover,
+            commands::auth::auth_lock,
             // attachments
             commands::attachments::attachments_create,
             // settings
