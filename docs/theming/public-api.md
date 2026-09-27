@@ -166,6 +166,17 @@ choices from Settings.
 | `--editor-font-size` | Settings → Editor → Font size |
 | `--editor-line-width` | Settings → Editor → Line width |
 
+These are defined with neutral defaults and overridden only when the user
+changes the matching setting, so an augment may set them — its value holds
+until the user picks something else.
+
+| Token | Set from |
+|---|---|
+| `--text-scale` | Settings → Appearance → Interface text size (multiplies every `--text-*`) |
+| `--space-scale` | Settings → Appearance → Density (multiplies every `--space-*`) |
+| `--radius-scale` | Settings → Appearance → Corner roundness (multiplies the `--radius-*` steps) |
+| `--editor-font` | Settings → Editor → Font (defaults to `--font-ui`) |
+
 ## Classes
 
 A modifier class (one ending in a double-dash suffix, like

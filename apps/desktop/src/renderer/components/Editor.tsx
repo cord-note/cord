@@ -21,7 +21,6 @@ import { outboundMentions as findOutboundMentions } from '../shuttle/outboundMen
 import type { Note } from '@shared/types';
 import styles from './Editor.module.css';
 
-const SAVE_DEBOUNCE_MS = 750;
 /** The ruler's limits, matching the Line width slider in Settings. */
 const LINE_WIDTH_RANGE = { min: 480, max: 1200, step: 40 };
 
@@ -68,6 +67,7 @@ export default function Editor({ note }: Props) {
   const mentionsEnabled = useSetting('editor.unlinkedMentions');
   const spellCheck = useSetting('editor.spellCheck');
   const editorLineWidth = useSetting('editor.lineWidth');
+  const saveDelay = useSetting('editor.autosaveDelay');
   const { tags, createTag } = useTagStore();
   const { activeVaultId } = useVaultStore();
   const { setView } = useUIStore();
@@ -217,9 +217,9 @@ export default function Editor({ note }: Props) {
       if (titleTimer.current) clearTimeout(titleTimer.current);
       titleTimer.current = setTimeout(() => {
         updateNote(noteIdRef.current, { title: val });
-      }, SAVE_DEBOUNCE_MS);
+      }, saveDelay);
     },
-    [updateNote],
+    [updateNote, saveDelay],
   );
 
   const handleTitleKeyDown = useCallback(
@@ -326,7 +326,7 @@ export default function Editor({ note }: Props) {
           lineWidth={editorLineWidth}
           lineWidthRange={LINE_WIDTH_RANGE}
           onLineWidthChange={(w: number) => setSetting('editor.lineWidth', snapToSetting('editor.lineWidth', w))}
-          saveDebounceMs={SAVE_DEBOUNCE_MS}
+          saveDebounceMs={saveDelay}
           onChange={handleChange}
           onStats={setStats}
           onReady={handleReady}

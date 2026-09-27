@@ -66,39 +66,47 @@
   /* Type */
   --font-ui:   -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  /* The note editor's font; follows the UI font unless the user picks another. */
+  --editor-font: var(--font-ui);
 
-  --text-2xs:  10px;
-  --text-xs:   11px;
-  --text-sm:   12px;
-  --text-md:   13px;
-  --text-base: 14px;
-  --text-lg:   17px;
-  --text-xl:   20px;
-  --text-2xl:  28px;
+  /* Scales the type, spacing and radius steps below. Set from Settings →
+     Appearance; an augment can override a single step or a whole scale. */
+  --text-scale:   1;
+  --space-scale:  1;
+  --radius-scale: 1;
+
+  --text-2xs:  calc(10px * var(--text-scale));
+  --text-xs:   calc(11px * var(--text-scale));
+  --text-sm:   calc(12px * var(--text-scale));
+  --text-md:   calc(13px * var(--text-scale));
+  --text-base: calc(14px * var(--text-scale));
+  --text-lg:   calc(17px * var(--text-scale));
+  --text-xl:   calc(20px * var(--text-scale));
+  --text-2xl:  calc(28px * var(--text-scale));
 
   /* Spacing — the suffix is the step in 4px units (1-5 = 6px) */
-  --space-0-5: 2px;
-  --space-1:   4px;
-  --space-1-5: 6px;
-  --space-2:   8px;
-  --space-2-5: 10px;
-  --space-3:   12px;
-  --space-3-5: 14px;
-  --space-4:   16px;
-  --space-5:   20px;
-  --space-6:   24px;
-  --space-7:   28px;
-  --space-8:   32px;
-  --space-9:   36px;
-  --space-10:  40px;
-  --space-12:  48px;
+  --space-0-5: calc(2px * var(--space-scale));
+  --space-1:   calc(4px * var(--space-scale));
+  --space-1-5: calc(6px * var(--space-scale));
+  --space-2:   calc(8px * var(--space-scale));
+  --space-2-5: calc(10px * var(--space-scale));
+  --space-3:   calc(12px * var(--space-scale));
+  --space-3-5: calc(14px * var(--space-scale));
+  --space-4:   calc(16px * var(--space-scale));
+  --space-5:   calc(20px * var(--space-scale));
+  --space-6:   calc(24px * var(--space-scale));
+  --space-7:   calc(28px * var(--space-scale));
+  --space-8:   calc(32px * var(--space-scale));
+  --space-9:   calc(36px * var(--space-scale));
+  --space-10:  calc(40px * var(--space-scale));
+  --space-12:  calc(48px * var(--space-scale));
 
   /* Shape */
-  --radius-xs:   4px;
-  --radius-sm:   6px;
-  --radius-md:   8px;
-  --radius:      10px;
-  --radius-lg:   14px;
+  --radius-xs:   calc(4px * var(--radius-scale));
+  --radius-sm:   calc(6px * var(--radius-scale));
+  --radius-md:   calc(8px * var(--radius-scale));
+  --radius:      calc(10px * var(--radius-scale));
+  --radius-lg:   calc(14px * var(--radius-scale));
   --radius-full: 9999px;
 
   /* Motion */
