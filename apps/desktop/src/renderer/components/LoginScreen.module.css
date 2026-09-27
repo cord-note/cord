@@ -1,64 +1,180 @@
+/* The lock screen: a form column on the left, a dithered field bleeding in
+   from the right, and the account switcher pinned to the top-right corner.
+   The PIN is the one thing on screen that asks for attention. */
+
 .screen {
+  position: relative;
   flex: 1;
   display: flex;
-  align-items: center;
-  justify-content: center;
   background: var(--bg);
   overflow: hidden;
 }
 
-.card {
-  width: 380px;
-  max-width: calc(100vw - 32px);
-  background: var(--bg-panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-9) var(--space-8) var(--space-7);
-  box-shadow: var(--shadow-xl);
-  display: flex;
-  flex-direction: column;
-  gap: 0;
+/* ── Dither field ────────────────────────────────────────────────────────── */
+
+.art {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  /* Never under the form column, however narrow the window. */
+  left: max(36%, 540px);
+  /* Feathered so the frontier never ends on a hard vertical line. */
+  mask-image: linear-gradient(to right, transparent, #000 28%);
+  animation: artIn 1.2s var(--ease-out) both;
 }
 
-/* ── Logo ────────────────────────────────────────────────────────────────── */
+@keyframes artIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Top bar ─────────────────────────────────────────────────────────────── */
+
+.topBar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-5) var(--space-6);
+  pointer-events: none;
+}
+
+.topBar > * {
+  pointer-events: auto;
+}
 
 .logoRow {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  margin-bottom: var(--space-6);
 }
 
 .logoIcon {
-  color: var(--accent);
+  color: var(--text-primary);
   flex-shrink: 0;
 }
 
 .logoName {
-  font-size: var(--text-lg);
-  font-weight: 700;
+  font-size: var(--text-base);
+  font-weight: 600;
   color: var(--text-primary);
-  letter-spacing: 0.02em;
+  letter-spacing: -0.01em;
 }
 
-/* ── Heading ─────────────────────────────────────────────────────────────── */
+/* ── Account switcher ────────────────────────────────────────────────────── */
+
+.userPill {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: var(--bg-panel);
+  box-shadow: var(--shadow-md);
+  transition: border-color var(--duration-base);
+}
+
+.userPill:hover {
+  border-color: var(--border-strong);
+}
+
+.userPill:focus-within {
+  border-color: var(--text-secondary);
+}
+
+.userAvatar {
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  pointer-events: none;
+}
+
+/* The select is the whole pill, so a click anywhere on it opens the list. */
+.userSelect {
+  appearance: none;
+  height: 34px;
+  padding: 0 calc(var(--space-3) + 18px) 0 38px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-full);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--text-md);
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+}
+
+.userSelect option {
+  background: var(--bg-panel);
+  color: var(--text-primary);
+}
+
+.selectChevron {
+  position: absolute;
+  right: var(--space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+/* ── Form column ─────────────────────────────────────────────────────────── */
+
+.column {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  max-width: 460px;
+  margin-left: clamp(0px, 7vw, 120px);
+  padding: var(--space-12) var(--space-8);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 340px;
+}
 
 .heading {
-  font-size: var(--text-xl);
-  font-weight: 700;
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
   color: var(--text-primary);
-  margin: 0 0 var(--space-1-5);
+  margin: 0 0 var(--space-2);
   animation: copyFade var(--duration-slow) ease both;
 }
 
 .subheading {
-  font-size: var(--text-md);
-  color: var(--text-muted);
-  margin: 0 0 var(--space-5);
-  line-height: 1.5;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  margin: 0 0 var(--space-8);
+  line-height: 1.55;
   /* Two lines' worth, always. The register copy wraps and the sign-in copy
-     does not, and letting the box resize moved the whole card. */
-  min-height: 39px;
+     does not, and letting the box resize moved the whole form. */
+  min-height: calc(var(--text-sm) * 1.55 * 2);
   animation: copyFade var(--duration-slow) ease both;
 }
 
@@ -67,55 +183,16 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Tabs ────────────────────────────────────────────────────────────────── */
-
-.tabs {
-  position: relative;
-  display: flex;
-  border-radius: var(--radius-md);
-  background: var(--bg-active);
-  padding: var(--space-1);
-  margin-bottom: var(--space-5);
-}
-
-/* The selected-tab pill. One element that slides, rather than a background
-   that blinks from one button to the other. */
-.tabThumb {
+.disclaimer {
   position: absolute;
-  top: 3px;
-  bottom: 3px;
-  left: 3px;
-  width: calc(50% - 3px);
-  border-radius: var(--radius-sm);
-  background: var(--bg-panel);
-  box-shadow: var(--shadow-sm);
-  transition: transform var(--duration-slow) var(--ease-out);
-}
-
-.tabThumbRight { transform: translateX(100%); }
-
-.tab {
-  position: relative;
-  z-index: 1;
-  flex: 1;
-  padding: var(--space-2);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-md);
-  font-weight: 500;
+  left: var(--space-8);
+  right: var(--space-8);
+  bottom: var(--space-6);
+  max-width: 340px;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
   color: var(--text-muted);
-  background: none;
-  border: none;
-  cursor: pointer;
-  transition: color var(--duration-slow);
-  font-family: inherit;
-}
-
-.tab:hover {
-  color: var(--text-secondary);
-}
-
-.tabActive {
-  color: var(--text-primary);
+  line-height: 1.6;
 }
 
 /* ── Form ────────────────────────────────────────────────────────────────── */
@@ -123,7 +200,7 @@
 .form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3-5);
+  gap: var(--space-4);
 }
 
 .fieldGroup {
@@ -133,37 +210,46 @@
 }
 
 .label {
-  font-size: var(--text-sm);
-  font-weight: 600;
-  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: 500;
+  color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.12em;
 }
 
-/* Borderless by design: the filled surface already separates the field from
-   the card, and the extra outline read as a second, competing edge. Focus is
-   carried by a ring, which never shifts layout the way a border can. */
+/* Outlined pills, after the lock screen's print-like reference: a hairline
+   edge on the bare background rather than a filled well. Focus brightens the
+   edge instead of adding a ring, so nothing shifts. */
 .input {
   width: 100%;
-  padding: var(--space-2-5) var(--space-3);
-  background: var(--bg-input);
-  border: none;
-  border-radius: var(--radius);
+  height: 38px;
+  padding: 0 var(--space-4);
+  /* The page colour, not transparent: on narrow windows the dither runs behind. */
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-full);
   font-size: var(--text-base);
   color: var(--text-primary);
   outline: none;
-  transition: background var(--duration-base), box-shadow var(--duration-base);
+  transition: border-color var(--duration-base), background var(--duration-base);
   font-family: inherit;
   box-sizing: border-box;
 }
 
+.input::placeholder {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
 .input:hover:not(:disabled) {
-  background: var(--bg-active);
+  border-color: var(--text-muted);
 }
 
 .input:focus {
-  background: var(--bg-active);
-  box-shadow: inset 0 0 0 1.5px var(--accent);
+  border-color: var(--text-primary);
+  background: var(--bg-panel);
 }
 
 .input:disabled {
@@ -180,7 +266,7 @@
 
 .showPwBtn {
   position: absolute;
-  right: 10px;
+  right: 12px;
   top: 50%;
   transform: translateY(-50%);
   background: none;
@@ -190,26 +276,142 @@
   align-items: center;
   padding: var(--space-0-5);
   color: var(--text-muted);
-  opacity: 0.7;
-  transition: opacity var(--duration-fast);
+  transition: color var(--duration-fast);
 }
 
 .showPwBtn:hover {
-  opacity: 1;
+  color: var(--text-primary);
+}
+
+.pinInput {
+  font-size: var(--text-lg);
+  letter-spacing: 0.4em;
+  text-align: center;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+}
+
+/* ── PIN slots ───────────────────────────────────────────────────────────── */
+
+.pinHero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2-5);
+  margin-bottom: var(--space-1);
+}
+
+.pinSlots {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: var(--space-2);
+}
+
+.pinSlots:has(:disabled) {
+  opacity: 0.5;
+}
+
+.pinSlot {
+  position: relative;
+  height: 60px;
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  transition: border-color var(--duration-base), background var(--duration-base);
+}
+
+/* A PIN may end after four digits; the last two slots say so by being lighter. */
+.pinSlotOptional {
+  border-style: dashed;
+  border-color: var(--border);
+}
+
+.pinSlotFilled {
+  border-style: solid;
+  border-color: var(--text-secondary);
+  background: var(--bg-panel);
+}
+
+/* A square dot — the dither's own mark, standing in for a digit. */
+.pinSlotFilled::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  background: var(--text-primary);
+  transform: translate(-50%, -50%);
+  animation: dotIn var(--duration-base) var(--ease-out) both;
+}
+
+@keyframes dotIn {
+  from { transform: translate(-50%, -50%) scale(0.2); opacity: 0; }
+  to   { transform: translate(-50%, -50%) scale(1);   opacity: 1; }
+}
+
+.pinSlots:focus-within .pinSlotNext {
+  border-style: solid;
+  border-color: var(--text-primary);
+}
+
+/* The caret, in the slot the next digit lands in. */
+.pinSlots:focus-within .pinSlotNext::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  width: 14px;
+  height: 2px;
+  background: var(--text-primary);
+  transform: translateX(-50%);
+  animation: caretBlink 1.06s steps(1) infinite;
+}
+
+@keyframes caretBlink {
+  50% { opacity: 0; }
+}
+
+/* The real field, invisible, over the slots: it takes the typing, pasting and
+   focus, and is what a screen reader announces. */
+.pinSlotsInput {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: text;
+  font-size: 16px;
+}
+
+.pinSlotsInvalid .pinSlot:not(.pinSlotFilled) {
+  border-color: var(--danger-border);
+}
+
+.pinSlotsInvalid {
+  animation: shake 0.36s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes shake {
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
 }
 
 /* ── Collapsible rows ────────────────────────────────────────────────────── */
 
 /* A row that opens and closes without unmounting. Height animates through
    grid-template-rows (0fr → 1fr) so nothing has to measure the content, and
-   the card grows instead of snapping to a new size. */
+   the form grows instead of snapping to a new size. */
 .collapsible {
   display: grid;
   grid-template-rows: 0fr;
   opacity: 0;
   /* The form's flex gap applies even to a zero-height row, so it is cancelled
      while collapsed and paid back in step with the reveal. */
-  margin-bottom: -14px;
+  margin-bottom: calc(-1 * var(--space-4));
   transition: grid-template-rows var(--duration-slow) var(--ease-out),
               opacity var(--duration-base) ease,
               margin-bottom var(--duration-slow) var(--ease-out);
@@ -235,20 +437,21 @@
   color: var(--danger);
   border-radius: var(--radius);
   padding: var(--space-2-5) var(--space-3);
-  font-size: var(--text-md);
-  line-height: 1.4;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: 1.45;
 }
 
 /* ── Submit ──────────────────────────────────────────────────────────────── */
 
 .submitBtn {
   margin-top: var(--space-1);
-  padding: var(--space-2-5);
+  height: 38px;
   background: var(--accent);
   color: var(--accent-fg);
   border: none;
-  border-radius: var(--radius);
-  font-size: var(--text-base);
+  border-radius: var(--radius-full);
+  font-size: var(--text-md);
   font-weight: 600;
   cursor: pointer;
   transition: background var(--duration-base), opacity var(--duration-base);
@@ -260,80 +463,54 @@
 }
 
 .submitBtn:disabled {
-  opacity: 0.45;
+  opacity: 0.35;
   cursor: default;
 }
 
-/* ── Disclaimer ──────────────────────────────────────────────────────────── */
-
-.disclaimer {
-  margin-top: var(--space-5);
-  font-size: var(--text-xs);
-  color: var(--text-muted);
-  text-align: center;
-  line-height: 1.5;
-}
-
-/* ── Lock screen additions ───────────────────────────────────────────────── */
-
-.pinInput {
-  font-size: var(--text-lg);
-  letter-spacing: 0.4em;
-  text-align: center;
-}
-
-.selectRow {
-  position: relative;
-}
-
-.userSelect {
-  appearance: none;
-  cursor: pointer;
-  padding-right: calc(var(--space-3) + 20px);
-}
-
-.selectChevron {
-  position: absolute;
-  right: var(--space-3);
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-muted);
-  pointer-events: none;
-}
-
-.mono {
-  font-family: var(--font-mono, ui-monospace, monospace);
-  letter-spacing: 0.04em;
-}
+/* ── Secondary actions ───────────────────────────────────────────────────── */
 
 .links {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: var(--space-1) var(--space-3);
+  gap: var(--space-1) var(--space-4);
+  margin-top: var(--space-1);
 }
 
 .linkBtn {
   background: none;
   border: none;
-  padding: var(--space-1);
-  font: inherit;
-  font-size: var(--text-sm);
-  color: var(--text-muted);
+  padding: var(--space-1) 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 3px;
   cursor: pointer;
-  border-radius: var(--radius);
+  transition: color var(--duration-fast), text-decoration-color var(--duration-fast);
 }
 
-.linkBtn:hover { color: var(--text-primary); }
-.linkBtn:focus-visible { outline: 1.5px solid var(--accent); }
+.linkBtn:hover {
+  color: var(--text-primary);
+  text-decoration-color: currentColor;
+}
+
+.linkBtn:focus-visible {
+  outline: 1.5px solid var(--text-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
+/* ── Setup steps ─────────────────────────────────────────────────────────── */
 
 .keyBox {
   position: relative;
   padding: var(--space-3);
   padding-right: calc(var(--space-3) + 28px);
-  background: var(--bg-input);
-  border-radius: var(--radius);
-  font-family: var(--font-mono, ui-monospace, monospace);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono);
   font-size: var(--text-base);
   line-height: 1.6;
   user-select: all;
@@ -354,10 +531,35 @@
   cursor: pointer;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .heading,
-  .subheading { animation: none; }
+/* ── Narrow windows ──────────────────────────────────────────────────────── */
 
-  .tabThumb,
+/* No room beside the form: the field moves behind it, faint, and the form
+   centres. */
+@media (max-width: 760px) {
+  .art {
+    left: 0;
+    opacity: 0.22;
+    mask-image: none;
+    animation: none;
+  }
+
+  .column {
+    margin: 0 auto;
+  }
+
+  .disclaimer {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .art,
+  .heading,
+  .subheading,
+  .pinSlotFilled::after,
+  .pinSlotsInvalid { animation: none; }
+
+  .pinSlots:focus-within .pinSlotNext::before { animation: none; }
+
   .collapsible { transition: none; }
 }

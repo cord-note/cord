@@ -14,12 +14,28 @@
 }
 
 .empty {
+  position: relative;
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--text-muted);
   font-size: var(--text-md);
+  overflow: hidden;
+}
+
+/* A faint dithered ground along the bottom of an empty pane. Texture, not a
+   picture: one ink at low opacity, fading out well below the message. */
+.emptyArt {
+  position: absolute;
+  inset: 0;
+  opacity: 0.4;
+  mask-image: linear-gradient(to bottom, transparent 35%, #000);
+  pointer-events: none;
+}
+
+.emptyText {
+  position: relative;
 }
 
 /* ── Animated notes panel wrapper ───────────────────────────────────────── */

@@ -106,6 +106,8 @@
 .deleteBtn:hover { background: var(--danger-hover-bg); color: var(--danger); }
 
 .empty {
+  position: relative;
+  overflow: hidden;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -116,4 +118,14 @@
   font-size: var(--text-base);
 }
 
-.emptyIcon { opacity: 0.35; color: var(--text-muted); }
+.emptyIcon { position: relative; opacity: 0.35; color: var(--text-muted); }
+.emptyText { position: relative; }
+
+/* Same faint ground as the empty editor pane. */
+.emptyArt {
+  position: absolute;
+  inset: 0;
+  opacity: 0.4;
+  mask-image: linear-gradient(to bottom, transparent 35%, #000);
+  pointer-events: none;
+}

@@ -3,6 +3,7 @@ import { Trash2, RotateCcw } from 'lucide-react';
 import { useVaultStore } from '../store/vaults';
 import { useNoteStore } from '../store/notes';
 import { HoldButton } from './HoldButton';
+import Dither from './Dither';
 import { HOLD_DELETE_MS } from '@shared/constants';
 import { useSetting } from '../settings';
 import { holdDuration } from '../settings/derived';
@@ -36,8 +37,11 @@ export default function TrashView() {
 
       {trashedNotes.length === 0 ? (
         <div className={styles.empty}>
+          <div className={styles.emptyArt}>
+            <Dither seed={11} cell={6} from="bottom" reach={0.3} scale={26} animate={false} quiet />
+          </div>
           <div className={styles.emptyIcon}><Trash2 size={32} strokeWidth={1.25} /></div>
-          <p>Trash is empty</p>
+          <p className={styles.emptyText}>Trash is empty</p>
         </div>
       ) : (
         <>

@@ -79,6 +79,19 @@ Redefined by every built-in theme, per scheme.
 | `--close-hover-bg` | Window close button, hovered |
 | `--close-hover-fg` | Window close icon, hovered |
 
+### Dither
+
+The generated textures on the lock screen and other large empty surfaces are
+drawn on a canvas, so CSS cannot reach their pixels; these tokens are what the
+canvas reads. They default to the text and accent colours, so every theme gets
+matching dither without defining them.
+
+| Token | Used for |
+|---|---|
+| `--dither-ink` | Mid-tone marks |
+| `--dither-ink-strong` | Dense, bright marks — cloud tops, the thick of a field |
+| `--dither-accent` | Occasional patches of accent colour |
+
 ### Type
 
 | Token | Value |
@@ -255,6 +268,12 @@ The command palette dropdown, the new-note menu and the editor context menu.
 | `cord-chip--backlink` | A note linking here |
 | `cord-chip--unlinked` | An unlinked mention |
 | `cord-chip--link` | A block's outgoing link, beside the block |
+
+### Dither
+
+| Class | Surface |
+|---|---|
+| `cord-dither` | A generated dither texture (a canvas). Hide it, fade it or blend it; its colours come from the dither tokens |
 
 ### Keyboard shortcuts
 

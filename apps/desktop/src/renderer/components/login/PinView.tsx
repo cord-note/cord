@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuthStore } from '../../store/auth';
-import { ErrorPanel, LinkRow, PinField, UserPicker, isPin, useSubmit } from './shared';
+import { ErrorPanel, LinkRow, PinField, isPin, useSubmit } from './shared';
 import styles from '../LoginScreen.module.css';
 
 export function PinView() {
@@ -20,8 +20,7 @@ export function PinView() {
 
   return (
     <form className={styles.form} onSubmit={onSubmit} noValidate>
-      <UserPicker disabled={loading} />
-      <PinField id="auth-pin" label="PIN" value={pin} onChange={setPin} disabled={loading} autoFocus />
+      <PinField id="auth-pin" label="PIN" value={pin} onChange={setPin} disabled={loading} autoFocus hero invalid={!!error} />
       <ErrorPanel error={error} />
       <button type="submit" className={styles.submitBtn} disabled={loading || !isPin(pin)}>
         {loading ? 'Unlocking…' : 'Unlock'}

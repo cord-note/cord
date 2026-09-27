@@ -129,6 +129,17 @@
   --z-menu:     9999;
 }
 
+/* Dither ink — the generated textures on the lock screen and empty surfaces.
+   Declared on every theme scope, not only :root, so they resolve against the
+   theme of the element that paints them (the theme picker previews in place). */
+:root,
+[data-theme],
+[data-scheme] {
+  --dither-ink:        var(--text-secondary);
+  --dither-ink-strong: var(--text-primary);
+  --dither-accent:     var(--accent);
+}
+
 /* Dark-tuned shadows read as smudges on light surfaces. */
 [data-scheme="light"] {
   --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.12);

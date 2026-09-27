@@ -10,6 +10,7 @@ import NoteList from '../components/NoteList';
 import TrashView from '../components/TrashView';
 import SettingsPage from '../components/SettingsPage';
 import Editor from '../components/Editor';
+import Dither from '../components/Dither';
 import styles from './NotesPage.module.css';
 
 export default function NotesPage() {
@@ -107,7 +108,14 @@ export default function NotesPage() {
       }
       return <Editor key={activeNote.id} note={activeNote} />;
     }
-    return <div className={styles.empty}><p>Select or create a note</p></div>;
+    return (
+      <div className={styles.empty}>
+        <div className={styles.emptyArt}>
+          <Dither seed={3} cell={6} from="bottom" reach={0.34} scale={26} animate={false} quiet />
+        </div>
+        <p className={styles.emptyText}>Select or create a note</p>
+      </div>
+    );
   }
 
   return (

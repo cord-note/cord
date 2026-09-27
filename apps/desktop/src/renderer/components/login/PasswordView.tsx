@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuthStore } from '../../store/auth';
-import { ErrorPanel, LinkRow, PasswordField, UserPicker, useSelectedUser, useSubmit } from './shared';
+import { ErrorPanel, LinkRow, PasswordField, useSelectedUser, useSubmit } from './shared';
 import styles from '../LoginScreen.module.css';
 
 export function PasswordView() {
@@ -18,7 +18,6 @@ export function PasswordView() {
 
   return (
     <form className={styles.form} onSubmit={onSubmit} noValidate>
-      <UserPicker disabled={loading} />
       <PasswordField
         id="auth-password" label="Password" value={password} onChange={setPassword}
         autoComplete="current-password" disabled={loading} autoFocus
