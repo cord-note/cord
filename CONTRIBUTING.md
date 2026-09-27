@@ -12,14 +12,17 @@ settled deliberately, and a PR that crosses one of those lines will be declined
 however good the code is — that is a waste of your afternoon rather than a
 judgement on the work. The settled parts:
 
-- The stack. Tauri over Electron, Bun over Node, Tiptap OSS, React + Vite.
+- The stack. Tauri over Electron, Bun over Node, official Tiptap 3 (through
+  Shuttle), React + Vite.
 - The local database is the source of truth. Cloud would be a replication
   target, never the master.
 - `body_json` is the only stored representation of a document. Markdown is input
-  UX, via the clipboard.
+  UX, via the clipboard. `note_links` is derived from it on save, never written
+  directly.
 - No hard deletes — `deleted_at` / `archived_at` only.
 - Every write appends to `operation_log`.
-- Two note kinds, `note` and `notepad`. A notepad is **one** ProseMirror
+- Two note kinds, `note` and `notepad`, sharing one document format. A notepad
+  is a mode over the same schema (no wrapper node), and **one** ProseMirror
   instance, never one editor per block.
 - Notepad blocks are flat and per-top-level-node. You cannot tag or link an
   individual bullet; that was an accepted cost, not an oversight.
@@ -78,9 +81,11 @@ receive, validate, forward — and only search and file watching are allowed to 
 Rust-native, because those have a measured reason to be. Speculative Rust ports
 will be declined.
 
-The editor (Shuttle) lives under `apps/desktop/src/renderer/components/editor/`
-and is being extracted into its own package. Changes there are welcome, but
-expect them to move repositories eventually.
+The editor is the [`shuttle-editor`](https://github.com/cord-note/shuttle)
+package; changes to the editor itself belong in that repository. Cord's side of
+it is the host adapter in `apps/desktop/src/renderer/shuttle/` and the overlays
+(fragment chips, context menu, link pills) in
+`apps/desktop/src/renderer/components/overlays/`.
 
 ## Pull requests
 
