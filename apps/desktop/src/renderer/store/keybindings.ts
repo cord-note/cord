@@ -1,4 +1,11 @@
 import { create } from 'zustand';
+import {
+  SHUTTLE_KEYBINDINGS,
+  eventToAccel as shuttleEventToAccel,
+  eventToAccels,
+  formatAccel as shuttleFormatAccel,
+  type KeybindingId as ShuttleKeybindingId,
+} from 'shuttle-editor';
 
 /**
  * Every keyboard shortcut in the app, in one place, editable from Settings.
@@ -12,6 +19,10 @@ import { create } from 'zustand';
  * joined with '+', e.g. `Mod+Shift+D`. `Mod` is the platform's primary
  * modifier — Cmd on macOS, Ctrl everywhere else — so a binding means the same
  * thing on both without storing two of them.
+ *
+ * The editor's shortcuts belong to Shuttle: their ids, labels and defaults come
+ * from `SHUTTLE_KEYBINDINGS`, and the user's overrides go back to it through
+ * the host. Cord adds only its application shortcuts.
  */
 
 export const IS_MAC =
@@ -19,8 +30,7 @@ export const IS_MAC =
 
 const STORAGE_KEY = 'cord-keybindings';
 
-export type KeybindingId =
-  // Application
+type AppKeybindingId =
   | 'app.commandBar'
   | 'app.commandBarAlt'
   | 'app.newNote'
@@ -29,28 +39,9 @@ export type KeybindingId =
   | 'app.settings'
   | 'app.toggleNotesPanel'
   | 'app.prevVault'
-  | 'app.nextVault'
-  // Editor
-  | 'editor.bold'
-  | 'editor.italic'
-  | 'editor.inlineCode'
-  | 'editor.strike'
-  | 'editor.heading1'
-  | 'editor.heading2'
-  | 'editor.heading3'
-  | 'editor.bulletList'
-  | 'editor.orderedList'
-  | 'editor.taskList'
-  | 'editor.toggleTask'
-  | 'editor.blockquote'
-  | 'editor.codeBlock'
-  | 'editor.divider'
-  // Blocks (notepad only)
-  | 'block.moveUp'
-  | 'block.moveDown'
-  | 'block.duplicate'
-  | 'block.delete'
-  | 'block.insertRef';
+  | 'app.nextVault';
+
+export type KeybindingId = AppKeybindingId | ShuttleKeybindingId;
 
 export type KeybindingGroup = 'Application' | 'Editor' | 'Blocks';
 
@@ -71,7 +62,7 @@ export interface KeybindingDef {
   hint?: string;
 }
 
-export const KEYBINDINGS: readonly KeybindingDef[] = [
+const APP_KEYBINDINGS: readonly KeybindingDef[] = [
   // ── Application ───────────────────────────────────────────────────────────
   {
     id: 'app.commandBar', label: 'Open command bar', group: 'Application',
@@ -87,32 +78,19 @@ export const KEYBINDINGS: readonly KeybindingDef[] = [
   { id: 'app.toggleNotesPanel', label: 'Toggle notes panel', group: 'Application', scope: 'global', defaultAccel: 'Mod+\\' },
   { id: 'app.prevVault',  label: 'Previous vault',      group: 'Application', scope: 'global', defaultAccel: 'Mod+ArrowUp' },
   { id: 'app.nextVault',  label: 'Next vault',          group: 'Application', scope: 'global', defaultAccel: 'Mod+ArrowDown' },
+];
 
-  // ── Editor ────────────────────────────────────────────────────────────────
-  { id: 'editor.bold',        label: 'Bold',            group: 'Editor', scope: 'editor', defaultAccel: 'Mod+B' },
-  { id: 'editor.italic',      label: 'Italic',          group: 'Editor', scope: 'editor', defaultAccel: 'Mod+I' },
-  { id: 'editor.inlineCode',  label: 'Inline code',     group: 'Editor', scope: 'editor', defaultAccel: 'Mod+E' },
-  { id: 'editor.strike',      label: 'Strikethrough',   group: 'Editor', scope: 'editor', defaultAccel: 'Mod+Shift+X' },
-  { id: 'editor.heading1',    label: 'Heading 1',       group: 'Editor', scope: 'editor', defaultAccel: 'Mod+Alt+1' },
-  { id: 'editor.heading2',    label: 'Heading 2',       group: 'Editor', scope: 'editor', defaultAccel: 'Mod+Alt+2' },
-  { id: 'editor.heading3',    label: 'Heading 3',       group: 'Editor', scope: 'editor', defaultAccel: 'Mod+Alt+3' },
-  { id: 'editor.bulletList',  label: 'Bullet list',     group: 'Editor', scope: 'editor', defaultAccel: 'Mod+Shift+8' },
-  { id: 'editor.orderedList', label: 'Ordered list',    group: 'Editor', scope: 'editor', defaultAccel: 'Mod+Shift+7' },
-  { id: 'editor.taskList',    label: 'Task list',       group: 'Editor', scope: 'editor', defaultAccel: 'Mod+Shift+9' },
-  {
-    id: 'editor.toggleTask', label: 'Check / uncheck task', group: 'Editor', scope: 'editor',
-    defaultAccel: 'Mod+Enter', hint: 'Only while the caret is in a task item',
-  },
-  { id: 'editor.blockquote',  label: 'Blockquote',      group: 'Editor', scope: 'editor', defaultAccel: 'Mod+Shift+B' },
-  { id: 'editor.codeBlock',   label: 'Code block',      group: 'Editor', scope: 'editor', defaultAccel: 'Mod+Alt+C' },
-  { id: 'editor.divider',     label: 'Insert divider',  group: 'Editor', scope: 'editor', defaultAccel: '' },
-
-  // ── Blocks ────────────────────────────────────────────────────────────────
-  { id: 'block.moveUp',    label: 'Move block up',        group: 'Blocks', scope: 'editor', defaultAccel: 'Alt+ArrowUp',        notepadOnly: true },
-  { id: 'block.moveDown',  label: 'Move block down',      group: 'Blocks', scope: 'editor', defaultAccel: 'Alt+ArrowDown',      notepadOnly: true },
-  { id: 'block.duplicate', label: 'Duplicate block',      group: 'Blocks', scope: 'editor', defaultAccel: 'Mod+Shift+D',        notepadOnly: true },
-  { id: 'block.delete',    label: 'Delete block',         group: 'Blocks', scope: 'editor', defaultAccel: 'Mod+Shift+Backspace',notepadOnly: true },
-  { id: 'block.insertRef', label: 'Insert block reference',group: 'Blocks',scope: 'editor', defaultAccel: '',                   notepadOnly: true },
+export const KEYBINDINGS: readonly KeybindingDef[] = [
+  ...APP_KEYBINDINGS,
+  ...SHUTTLE_KEYBINDINGS.map((d): KeybindingDef => ({
+    id: d.id,
+    label: d.label,
+    group: d.group,
+    scope: 'editor',
+    defaultAccel: d.defaultAccel,
+    ...(d.notepadOnly ? { notepadOnly: true } : {}),
+    ...(d.hint ? { hint: d.hint } : {}),
+  })),
 ];
 
 export const KEYBINDING_GROUPS: readonly KeybindingGroup[] = ['Application', 'Editor', 'Blocks'];
@@ -135,55 +113,19 @@ function defaultMap(): KeybindingMap {
 
 // ── Accelerator encoding ────────────────────────────────────────────────────
 
-/** Keys that are only modifiers — pressing one alone never forms a binding. */
-const MODIFIER_KEYS = new Set(['Control', 'Alt', 'Shift', 'Meta', 'AltGraph', 'CapsLock', 'Dead']);
-
-function normalizeKey(key: string): string | null {
-  if (MODIFIER_KEYS.has(key)) return null;
-  if (key === ' ') return 'Space';
-  // Single characters are stored uppercase so Shift+n and n agree on the key
-  // and differ only in the Shift modifier.
-  return key.length === 1 ? key.toUpperCase() : key;
-}
-
 /**
- * Canonical accelerator for a keyboard event, or null if the event is a bare
- * modifier press (which is never a binding on its own).
+ * Canonical accelerator for a keyboard event, or null for a bare modifier
+ * press. Shuttle's encoding, so a recorded shortcut matches its catalogue —
+ * including the physical-key fallback (Ctrl+Shift+8 records as `Mod+Shift+8`
+ * even though the key typed `*`).
  */
 export function eventToAccel(e: KeyboardEvent): string | null {
-  const key = normalizeKey(e.key);
-  if (key === null) return null;
-
-  const parts: string[] = [];
-  const primary = IS_MAC ? e.metaKey : e.ctrlKey;
-  if (primary) parts.push('Mod');
-  // The non-primary modifier still gets its own token so Ctrl on a Mac and the
-  // Windows key on a PC remain bindable.
-  if (IS_MAC && e.ctrlKey) parts.push('Ctrl');
-  if (!IS_MAC && e.metaKey) parts.push('Meta');
-  if (e.altKey) parts.push('Alt');
-  if (e.shiftKey) parts.push('Shift');
-  parts.push(key);
-  return parts.join('+');
+  return shuttleEventToAccel(e, IS_MAC);
 }
-
-const DISPLAY_KEYS: Record<string, string> = {
-  ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→',
-  Enter: '⏎', Backspace: '⌫', Escape: 'Esc', ' ': 'Space',
-};
 
 /** Human-readable form of an accelerator, for buttons and hints. */
 export function formatAccel(accel: string): string {
-  if (!accel) return '';
-  const parts = accel.split('+').map((p) => {
-    if (p === 'Mod')   return IS_MAC ? '⌘' : 'Ctrl';
-    if (p === 'Alt')   return IS_MAC ? '⌥' : 'Alt';
-    if (p === 'Shift') return IS_MAC ? '⇧' : 'Shift';
-    if (p === 'Ctrl')  return IS_MAC ? '⌃' : 'Ctrl';
-    if (p === 'Meta')  return IS_MAC ? '⌘' : 'Win';
-    return DISPLAY_KEYS[p] ?? p;
-  });
-  return IS_MAC ? parts.join('') : parts.join('+');
+  return shuttleFormatAccel(accel, IS_MAC);
 }
 
 // ── Store ───────────────────────────────────────────────────────────────────
@@ -213,10 +155,14 @@ function persist(bindings: KeybindingMap): void {
   }
 }
 
-function readOverrides(): Partial<KeybindingMap> {
+/**
+ * Overrides from their stored JSON. Ids that no longer exist are dropped, as is
+ * anything that is not a string, so a corrupt or outdated entry never breaks
+ * the shortcuts that are still valid.
+ */
+export function parseOverrides(raw: string | null): Partial<KeybindingMap> {
+  if (!raw) return {};
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return {};
     const parsed: unknown = JSON.parse(raw);
     if (typeof parsed !== 'object' || parsed === null) return {};
     const out: Partial<KeybindingMap> = {};
@@ -227,7 +173,15 @@ function readOverrides(): Partial<KeybindingMap> {
     }
     return out;
   } catch {
-    // Corrupt entry — fall back to defaults rather than breaking every shortcut.
+    return {};
+  }
+}
+
+function readOverrides(): Partial<KeybindingMap> {
+  try {
+    return parseOverrides(localStorage.getItem(STORAGE_KEY));
+  } catch {
+    // Storage blocked — fall back to defaults rather than breaking every shortcut.
     return {};
   }
 }
@@ -272,8 +226,14 @@ export function currentAccel(id: KeybindingId): string {
 /** True when `e` is the key combination currently bound to `id`. */
 export function matchesBinding(e: KeyboardEvent, id: KeybindingId): boolean {
   const accel = currentAccel(id);
-  if (!accel) return false;
-  return eventToAccel(e) === accel;
+  return !!accel && eventToAccels(e, IS_MAC).includes(accel);
+}
+
+/** The editor's current bindings, for `ShuttleHost.keybindings`. */
+export function shuttleOverrides(bindings: KeybindingMap): Partial<Record<ShuttleKeybindingId, string>> {
+  const out: Partial<Record<ShuttleKeybindingId, string>> = {};
+  for (const def of SHUTTLE_KEYBINDINGS) out[def.id] = bindings[def.id];
+  return out;
 }
 
 /**
