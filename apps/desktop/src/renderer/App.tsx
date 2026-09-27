@@ -3,8 +3,6 @@ import TitleBar from './components/TitleBar';
 import LoginScreen from './components/LoginScreen';
 import NotesPage from './pages/NotesPage';
 import { useAuthStore } from './store/auth';
-import { useSettingsStore } from './store/settings';
-import { useThemeStore } from './store/theme';
 import { checkForUpdate } from './updater';
 
 // Temporary port of the CordDB shell: TitleBar sits above everything,
@@ -21,8 +19,6 @@ export function App() {
   prevUserRef.current = user;
 
   useEffect(() => {
-    useSettingsStore.getState().load();
-    useThemeStore.getState().init();
     check();
     // Fire-and-forget: never gates rendering, and swallows its own failures.
     void checkForUpdate();

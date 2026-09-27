@@ -3,7 +3,7 @@ import { X, Search, RotateCcw } from 'lucide-react';
 import { api } from '../ipc';
 import { useVaultStore } from '../store/vaults';
 import { useTagStore } from '../store/tags';
-import { useSettingsStore } from '../store/settings';
+import { setSetting, useSetting } from '../settings';
 import { useUIStore, type SettingsTab } from '../store/ui';
 import { useThemeStore, type ColorScheme } from '../store/theme';
 import { useThemeRegistry } from '../registry/ThemeRegistry';
@@ -241,24 +241,10 @@ const FONT_PREVIEW_TEXT =
   'The quick brown fox jumps over the lazy dog while the editor renders at this size.';
 
 function EditorChapter({ sectionRef }: ChapterProps) {
-  const { editorFontSize, editorLineWidth, spellCheck, distinctVaultColors, update } =
-    useSettingsStore();
-  const applyDistinctColors = useVaultStore((s) => s.applyDistinctColors);
-
-  /**
-   * Turning the setting on is not just a filter on the picker — it repaints
-   * the vaults you already have. A rail where half the dots come from the
-   * curated set and half don't defeats the point of the setting.
-   */
-  async function handleDistinctToggle(on: boolean) {
-    await update({ distinctVaultColors: on });
-    if (!on) return;
-    try {
-      await applyDistinctColors();
-    } catch (err) {
-      console.error('Failed to remap vault colors:', err);
-    }
-  }
+  const editorFontSize = useSetting('editor.fontSize');
+  const editorLineWidth = useSetting('editor.lineWidth');
+  const spellCheck = useSetting('editor.spellCheck');
+  const distinctVaultColors = useSetting('vaults.distinctColors');
 
   return (
     <section className={`${styles.chapter} cord-settings__section`} data-chapter="editor" ref={sectionRef}>
@@ -273,7 +259,7 @@ function EditorChapter({ sectionRef }: ChapterProps) {
             max={20}
             step={1}
             value={editorFontSize}
-            onChange={(v) => update({ editorFontSize: v })}
+            onChange={(v) => setSetting('editor.fontSize', v)}
           />
           <span className={styles.sliderValue}>{editorFontSize}px</span>
         </div>
@@ -295,7 +281,7 @@ function EditorChapter({ sectionRef }: ChapterProps) {
             step={40}
             notchStep={120}
             value={editorLineWidth}
-            onChange={(v) => update({ editorLineWidth: v })}
+            onChange={(v) => setSetting('editor.lineWidth', v)}
           />
           <span className={styles.sliderValue}>{editorLineWidth}px</span>
         </div>
@@ -305,14 +291,14 @@ function EditorChapter({ sectionRef }: ChapterProps) {
         label="Spell check"
         hint="Requires restart"
         checked={spellCheck}
-        onChange={(v) => update({ spellCheck: v })}
+        onChange={(v) => setSetting('editor.spellCheck', v)}
       />
 
       <ToggleField
         label="Use distinct vault colors"
         hint="Limits the palette to a curated set of high-contrast hues, and repaints existing vaults with their nearest match"
         checked={distinctVaultColors}
-        onChange={handleDistinctToggle}
+        onChange={(v) => setSetting('vaults.distinctColors', v)}
       />
     </section>
   );
@@ -460,7 +446,7 @@ function KeyboardChapter({ sectionRef }: ChapterProps) {
 function VaultChapter({ sectionRef }: ChapterProps) {
   const { vaults, activeVaultId, archiveVault, loadVaults } = useVaultStore();
   const { setView } = useUIStore();
-  const distinctVaultColors = useSettingsStore((s) => s.distinctVaultColors);
+  const distinctVaultColors = useSetting('vaults.distinctColors');
   const vault = vaults.find((v) => v.id === activeVaultId);
 
   const [name, setName] = useState(vault?.name ?? '');

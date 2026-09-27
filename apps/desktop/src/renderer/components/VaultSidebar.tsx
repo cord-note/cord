@@ -5,7 +5,7 @@ import { useNoteStore } from '../store/notes';
 import { useTagStore } from '../store/tags';
 import { useAuthStore } from '../store/auth';
 import { useUIStore } from '../store/ui';
-import { useSettingsStore } from '../store/settings';
+import { useSetting } from '../settings';
 import { randomVaultColor } from '@shared/constants/vaultColors';
 import styles from './VaultSidebar.module.css';
 
@@ -39,7 +39,7 @@ export default function VaultSidebar({ activeView, onOpenTrash }: Props) {
   const { loadTags }  = useTagStore();
   const { user, logout } = useAuthStore();
   const { openSettings, view, setView } = useUIStore();
-  const distinctVaultColors = useSettingsStore((s) => s.distinctVaultColors);
+  const distinctVaultColors = useSetting('vaults.distinctColors');
 
   const userInitial = user?.username?.[0]?.toUpperCase() ?? '?';
 

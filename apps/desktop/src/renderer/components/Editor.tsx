@@ -10,7 +10,7 @@ import { useFragmentStore } from '../store/fragments';
 import { useNoteStore } from '../store/notes';
 import { useTagStore } from '../store/tags';
 import { useVaultStore } from '../store/vaults';
-import { useSettingsStore } from '../store/settings';
+import { setSetting, snapToSetting, useSetting } from '../settings';
 import { useUIStore } from '../store/ui';
 import { useThemeStore, resolveScheme } from '../store/theme';
 import { useKeybindingStore, shuttleOverrides } from '../store/keybindings';
@@ -65,7 +65,9 @@ export default function Editor({ note }: Props) {
   const { updateNote, backlinks, notes, setActiveNote, loadLinks,
           activeNoteTags, loadNoteTags, attachTag, detachTag,
           unlinkedMentions, loadUnlinkedMentions } = useNoteStore();
-  const { unlinkedMentions: mentionsEnabled, spellCheck, editorLineWidth, update: updateSettings } = useSettingsStore();
+  const mentionsEnabled = useSetting('editor.unlinkedMentions');
+  const spellCheck = useSetting('editor.spellCheck');
+  const editorLineWidth = useSetting('editor.lineWidth');
   const { tags, createTag } = useTagStore();
   const { activeVaultId } = useVaultStore();
   const { setView } = useUIStore();
@@ -323,7 +325,7 @@ export default function Editor({ note }: Props) {
           spellCheck={spellCheck}
           lineWidth={editorLineWidth}
           lineWidthRange={LINE_WIDTH_RANGE}
-          onLineWidthChange={(w: number) => { void updateSettings({ editorLineWidth: w }); }}
+          onLineWidthChange={(w: number) => setSetting('editor.lineWidth', snapToSetting('editor.lineWidth', w))}
           saveDebounceMs={SAVE_DEBOUNCE_MS}
           onChange={handleChange}
           onStats={setStats}
