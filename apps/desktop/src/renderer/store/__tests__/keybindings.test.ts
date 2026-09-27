@@ -242,7 +242,7 @@ describe('unloadKeybindings', () => {
 
     await unloadKeybindings();
 
-    expect(disk.text).toContain('Ctrl+Alt+F12');
+    expect(disk.text ?? '').toContain('Ctrl+Alt+F12');
     expect(useKeybindingStore.getState().bindings[def.id]).toBe(def.defaultAccel);
   });
 });
