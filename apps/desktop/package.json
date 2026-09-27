@@ -12,6 +12,7 @@
   "scripts": {
     "dev": "tauri dev",
     "dev:sidecar": "bun --watch src/sidecar/index.ts",
+    "build:sidecar:host": "bun scripts/build-sidecar-host.ts",
     "dev:renderer": "vite",
     "dev:all": "concurrently -k -n sidecar,vite -c cyan,green \"bun run dev:sidecar\" \"bun run dev:renderer\"",
     "build": "bun run build:renderer && bun run build:sidecar",
