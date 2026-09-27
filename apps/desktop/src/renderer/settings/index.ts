@@ -1,5 +1,5 @@
 import { ipcConfigIO } from './ipcConfigIO';
-import { clearLegacySettings, readLegacySettings } from './migration';
+import { adoptLegacyCache, clearLegacySettings, readLegacySettings, userCacheKey } from './migration';
 import { settingDefinition, useSettingsRegistry } from './registry';
 import type { SettingKey, SettingValues } from './schema';
 import { createSettingsStore } from './store';
@@ -7,15 +7,39 @@ import { createSettingsStore } from './store';
 export type { SettingKey, SettingValues } from './schema';
 export { registerSetting, settingDefinition, useSettingsRegistry } from './registry';
 
-const CACHE_KEY = 'cord-settings-cache';
+/** Remembers whose cache painted the last frame, so the next launch paints it before the sidecar answers. */
+const CACHE_USER_KEY = 'cord-settings-cache-user';
+
+/** Whose boot cache `useSettings` reads and writes. Null when nobody is chosen. */
+let cacheUserId: string | null = null;
+
+/** Point the boot cache at `userId`. Call before the store is touched on a user switch. */
+export function setSettingsCacheUser(userId: string | null): void {
+  cacheUserId = userId;
+  if (!userId) return;
+  try {
+    localStorage.setItem(CACHE_USER_KEY, userId);
+    adoptLegacyCache(localStorage, userId);
+  } catch {
+    // Storage blocked: the lock screen paints defaults until unlock.
+  }
+}
+
+export function lastCacheUser(): string | null {
+  try {
+    return localStorage.getItem(CACHE_USER_KEY);
+  } catch {
+    return null;
+  }
+}
 
 /** The app's settings. File-backed through the sidecar. */
 export const useSettings = createSettingsStore({
   io: ipcConfigIO,
   definitions: () => useSettingsRegistry.getState().definitions,
   cache: {
-    read: () => localStorage.getItem(CACHE_KEY),
-    write: (text) => localStorage.setItem(CACHE_KEY, text),
+    read: () => (cacheUserId ? localStorage.getItem(userCacheKey(cacheUserId)) : null),
+    write: (text) => { if (cacheUserId) localStorage.setItem(userCacheKey(cacheUserId), text); },
   },
   migrate: () => readLegacySettings(localStorage, useSettingsRegistry.getState().definitions),
   onMigrated: () => clearLegacySettings(localStorage),

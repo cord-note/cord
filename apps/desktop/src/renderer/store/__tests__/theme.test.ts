@@ -15,14 +15,17 @@ mock.module('@renderer/ipc', () => ({
   api: { settings: { read: async () => ({ text: null }), write: async () => ({ ok: true }) } },
 }));
 
-const { registerSetting, useSettings, setSetting, getSetting } = await import('../../settings');
+const { registerSetting, settingDefinition, useSettings, setSetting, getSetting } = await import('../../settings');
 const { useThemeStore } = await import('../theme');
 const { useThemeRegistry, BUILTIN_THEMES } = await import('../../registry/ThemeRegistry');
 
-registerSetting({
-  key: 'appearance.theme', type: 'string', title: '', description: '', section: 'Appearance',
-  default: 'mono', pattern: /^[a-z0-9][a-z0-9-]{0,63}$/,
-});
+// Test files share one module registry, so another file may have registered it already.
+if (!settingDefinition('appearance.theme')) {
+  registerSetting({
+    key: 'appearance.theme', type: 'string', title: '', description: '', section: 'Appearance',
+    default: 'mono', pattern: /^[a-z0-9][a-z0-9-]{0,63}$/,
+  });
+}
 registerSetting({
   key: 'appearance.colorScheme', type: 'enum', title: '', description: '', section: 'Appearance', default: 'dark',
   options: [{ value: 'dark', label: '' }, { value: 'light', label: '' }, { value: 'system', label: '' }],
