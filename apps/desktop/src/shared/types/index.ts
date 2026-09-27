@@ -258,3 +258,6 @@ export interface CordModule {
   tier: 'free' | 'premium';
   requires?: string[];
 }
+
+/** The user's hand-editable config files in ~/.cord. */
+export type ConfigFileName = 'settings' | 'keybindings';
