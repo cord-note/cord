@@ -1,4 +1,5 @@
 import { registry } from '../../registry';
+import AccountPage from './AccountPage';
 import KeyboardPage from './KeyboardPage';
 import TagsPage from './TagsPage';
 import VaultPage from './VaultPage';
@@ -10,3 +11,4 @@ import VaultPage from './VaultPage';
 registry.addPage('settings', { id: 'keyboard', label: 'Keyboard', component: KeyboardPage, position: 10 });
 registry.addPage('settings', { id: 'vault',    label: 'Vault',    component: VaultPage,    position: 20 });
 registry.addPage('settings', { id: 'tags',     label: 'Tags',     component: TagsPage,     position: 30 });
+registry.addPage('settings', { id: 'account',  label: 'Account',  component: AccountPage,  position: 40 });
