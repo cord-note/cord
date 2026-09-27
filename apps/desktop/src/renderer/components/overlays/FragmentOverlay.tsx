@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
-import type { Editor } from '@tiptap/core';
+import type { Editor } from 'shuttle-editor';
 import { X } from 'lucide-react';
 import { useFragmentStore } from '../../store/fragments';
 import { useNoteStore } from '../../store/notes';
+import { blockElement } from './blockDom';
 import styles from './FragmentOverlay.module.css';
 
 interface Props {
@@ -19,7 +20,7 @@ export function FragmentOverlay({ editor, noteId: _noteId, contentEl }: Props) {
     const { state, view } = editor;
     let range: { from: number; to: number } | null = null;
     state.doc.descendants((node, pos) => {
-      if (node.type.name === 'fragmentLinkNode' && node.attrs.linkId === linkId) {
+      if (node.type.name === 'fragmentLink' && node.attrs['linkId'] === linkId) {
         range = { from: pos, to: pos + node.nodeSize };
         return false;
       }
@@ -47,7 +48,7 @@ export function FragmentOverlay({ editor, noteId: _noteId, contentEl }: Props) {
 
       const newPos: Record<string, number> = {};
       for (const blockId of Object.keys(annotations)) {
-        const el = pm.querySelector(`[data-block-id="${blockId}"]`) as HTMLElement | null;
+        const el = blockElement(pm, blockId);
         if (!el) continue;
         const rect = el.getBoundingClientRect();
         newPos[blockId] = rect.top - containerRect.top + contentEl.scrollTop;
@@ -78,7 +79,7 @@ export function FragmentOverlay({ editor, noteId: _noteId, contentEl }: Props) {
     if (!pm) return;
     pm.querySelectorAll('.fragment-highlight').forEach((el) => el.classList.remove('fragment-highlight'));
     if (highlightedBlockId) {
-      pm.querySelector(`[data-block-id="${highlightedBlockId}"]`)?.classList.add('fragment-highlight');
+      blockElement(pm, highlightedBlockId)?.classList.add('fragment-highlight');
     }
   }, [highlightedBlockId, editor]);
 

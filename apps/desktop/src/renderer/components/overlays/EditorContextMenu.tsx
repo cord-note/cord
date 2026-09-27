@@ -1,11 +1,13 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import type { Editor } from '@tiptap/core';
+import type { Editor } from 'shuttle-editor';
 import { ArrowLeft, Tag as TagIcon, Link2, Plus, Copy, Scissors, Clipboard, FileText } from 'lucide-react';
 import { useFragmentStore } from '../../store/fragments';
 import { useTagStore } from '../../store/tags';
 import { useNoteStore } from '../../store/notes';
 import { useVaultStore } from '../../store/vaults';
 import type { Note } from '@shared/types';
+import { api } from '../../ipc';
+import { blockElement, topLevelBlockId } from './blockDom';
 import styles from './EditorContextMenu.module.css';
 
 type BlockEntry = {
@@ -14,41 +16,6 @@ type BlockEntry = {
   type: string;
   level?: number | undefined;
 };
-
-function nodeText(node: Record<string, unknown>): string {
-  if (typeof node.text === 'string') return node.text;
-  return ((node.content as Record<string, unknown>[] | undefined) ?? [])
-    .map(nodeText)
-    .join('');
-}
-
-function walk(node: Record<string, unknown>, result: BlockEntry[]) {
-  const attrs = node.attrs as Record<string, unknown> | undefined;
-  const type  = node.type as string | undefined;
-  if (attrs?.blockId && type) {
-    const t = nodeText(node).trim();
-    if (t) {
-      result.push({
-        blockId: attrs.blockId as string,
-        text:    t,
-        type,
-        level:   typeof attrs.level === 'number' ? attrs.level : undefined,
-      });
-    }
-  }
-  ((node.content as Record<string, unknown>[] | undefined) ?? []).forEach((n) => walk(n, result));
-}
-
-function extractBlocks(bodyJson: string): BlockEntry[] {
-  try {
-    const doc = JSON.parse(bodyJson);
-    const result: BlockEntry[] = [];
-    ((doc.content as Record<string, unknown>[] | undefined) ?? []).forEach((n) => walk(n, result));
-    return result;
-  } catch {
-    return [];
-  }
-}
 
 interface MenuState {
   x: number;
@@ -78,6 +45,7 @@ export function EditorContextMenu({ editor, noteId }: Props) {
   const [sub, setSub]           = useState<SubView>(null);
   const [query, setQuery]       = useState('');
   const [listIndex, setListIndex] = useState(0);
+  const [targetBlocks, setTargetBlocks] = useState<BlockEntry[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const menuRef  = useRef<HTMLDivElement>(null);
 
@@ -93,8 +61,7 @@ export function EditorContextMenu({ editor, noteId }: Props) {
 
     const handleContextMenu = (e: MouseEvent) => {
       e.preventDefault();
-      const blockEl = (e.target as HTMLElement).closest('[data-block-id]') as HTMLElement | null;
-      setMenu({ x: e.clientX, y: e.clientY, blockId: blockEl?.getAttribute('data-block-id') ?? null });
+      setMenu({ x: e.clientX, y: e.clientY, blockId: topLevelBlockId(pm, e.target) });
       setSub(null);
       setQuery('');
     };
@@ -124,11 +91,27 @@ export function EditorContextMenu({ editor, noteId }: Props) {
 
   useEffect(() => { setListIndex(0); }, [query]);
 
+  // Blocks of the note being linked to, from the index. Synthetic ids (which
+  // contain ':') are positional and can't be link targets.
+  const targetNoteId = sub?.kind === 'fragmentLink' && sub.step === 2 ? sub.targetNote.id : null;
+  useEffect(() => {
+    setTargetBlocks([]);
+    if (!targetNoteId) return;
+    let cancelled = false;
+    void api.blocks.listForNote(targetNoteId).then((rows) => {
+      if (cancelled) return;
+      setTargetBlocks(rows
+        .filter((b) => !b.id.includes(':') && b.text.trim())
+        .map((b) => ({ blockId: b.id, text: b.text, type: b.type, level: b.level ?? undefined })));
+    }).catch(() => { if (!cancelled) setTargetBlocks([]); });
+    return () => { cancelled = true; };
+  }, [targetNoteId]);
+
   useEffect(() => {
     const handler = (e: Event) => {
       const { type, blockId } = (e as CustomEvent<{ type: 'tag' | 'noteLink' | 'fragmentLink'; blockId: string }>).detail;
       const pm = editor?.view.dom as HTMLElement | undefined;
-      const blockEl = pm?.querySelector(`[data-block-id="${blockId}"]`) as HTMLElement | null;
+      const blockEl = pm ? blockElement(pm, blockId) : null;
       const rect = blockEl?.getBoundingClientRect();
       const x = rect ? rect.left : 200;
       const y = rect ? rect.bottom + 4 : 200;
@@ -170,10 +153,7 @@ export function EditorContextMenu({ editor, noteId }: Props) {
   async function doLinkNote(toNoteId: string, noteTitle: string) {
     if (!blockId) return;
     const link = await createLink({ fromFragmentId: blockId, fromNoteId: noteId, vaultId: activeVaultId ?? '', toNoteId });
-    editor.chain().focus().insertContent({
-      type: 'fragmentLinkNode',
-      attrs: { linkId: link.id, toNoteId, toFragmentId: null, label: noteTitle },
-    }).run();
+    editor.chain().focus().insertFragmentLink({ linkId: link.id, toNoteId, toFragmentId: null, label: noteTitle }).run();
     close();
   }
 
@@ -187,9 +167,8 @@ export function EditorContextMenu({ editor, noteId }: Props) {
       toFragmentId,
       toFragmentNoteId: targetNote.id,
     });
-    editor.chain().focus().insertContent({
-      type: 'fragmentLinkNode',
-      attrs: { linkId: link.id, toNoteId: targetNote.id, toFragmentId, label: fragmentText.slice(0, 30) },
+    editor.chain().focus().insertFragmentLink({
+      linkId: link.id, toNoteId: targetNote.id, toFragmentId, label: fragmentText.slice(0, 30),
     }).run();
     close();
   }
@@ -348,7 +327,7 @@ export function EditorContextMenu({ editor, noteId }: Props) {
       )}
 
       {sub?.kind === 'fragmentLink' && sub.step === 2 && (() => {
-        const allBlocks = extractBlocks(sub.targetNote.bodyJson);
+        const allBlocks = targetBlocks;
         const blocks = q
           ? allBlocks.filter((b) => b.text.toLowerCase().includes(q))
           : allBlocks;
