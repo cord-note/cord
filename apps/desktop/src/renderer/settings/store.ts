@@ -100,9 +100,10 @@ export function createSettingsStore(deps: SettingsDeps): UseBoundStore<StoreApi<
         try {
           text = await deps.io.read('settings');
         } catch (err) {
-          set({ saveError: `Couldn't read settings: ${message(err)}` });
+          set({ saveError: `Couldn't read settings.json (${message(err)}). Changes made here are not saved until it can be read.` });
           return;
         }
+        set({ saveError: null });
         if (text === null) {
           const seed = deps.migrate?.() ?? {};
           text = Object.entries(seed).reduce((t, [k, v]) => setKeyInText(t, k, v), '');
@@ -139,8 +140,10 @@ export function createSettingsStore(deps: SettingsDeps): UseBoundStore<StoreApi<
         if (Object.is(previous, value)) return;
         const values = { ...get().values, [key]: value };
 
-        if (get().syntaxError) {
-          // Never overwrite a file the user broke; the banner says so.
+        if (get().syntaxError || !get().loaded) {
+          // Never overwrite a file that is broken or has not been read yet —
+          // writing from empty text would replace the user's settings. The
+          // banner says the change is not saved.
           set({ values });
         } else {
           const stored = Object.is(value, def.default) ? undefined : value;
@@ -161,6 +164,9 @@ export function createSettingsStore(deps: SettingsDeps): UseBoundStore<StoreApi<
       },
 
       saveText: async (text) => {
+        if (!get().loaded) {
+          return [{ key: null, severity: 'error', message: 'settings.json has not been read yet, so saving could overwrite it' }];
+        }
         const parsed = parseJsoncObject(text);
         if (!parsed.data) return parsed.problems;
         applyText(text);
