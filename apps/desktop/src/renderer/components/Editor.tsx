@@ -22,6 +22,8 @@ import type { Note } from '@shared/types';
 import styles from './Editor.module.css';
 
 const SAVE_DEBOUNCE_MS = 750;
+/** The ruler's limits, matching the Line width slider in Settings. */
+const LINE_WIDTH_RANGE = { min: 480, max: 1200, step: 40 };
 
 interface Props {
   note: Note;
@@ -63,7 +65,7 @@ export default function Editor({ note }: Props) {
   const { updateNote, backlinks, notes, setActiveNote, loadLinks,
           activeNoteTags, loadNoteTags, attachTag, detachTag,
           unlinkedMentions, loadUnlinkedMentions } = useNoteStore();
-  const { unlinkedMentions: mentionsEnabled } = useSettingsStore();
+  const { unlinkedMentions: mentionsEnabled, spellCheck, editorLineWidth, update: updateSettings } = useSettingsStore();
   const { tags, createTag } = useTagStore();
   const { activeVaultId } = useVaultStore();
   const { setView } = useUIStore();
@@ -73,7 +75,7 @@ export default function Editor({ note }: Props) {
   const [newTagName, setNewTagName] = useState('');
 
   const [editor, setEditor] = useState<ShuttleEditorInstance | null>(null);
-  const controls = useRef<ShuttleControls | null>(null);
+  const [controls, setControls] = useState<ShuttleControls | null>(null);
   const [stats, setStats] = useState({ words: 0, characters: 0 });
   const [outboundMentions, setOutboundMentions] = useState<Note[]>([]);
   /** Set when wiki links changed; the save that follows re-derives note_links. */
@@ -131,7 +133,7 @@ export default function Editor({ note }: Props) {
 
   const handleReady = useCallback((e: ShuttleEditorInstance | null, c: ShuttleControls | null) => {
     setEditor(e);
-    controls.current = c;
+    setControls(c);
   }, []);
 
   useEffect(() => {
@@ -193,12 +195,12 @@ export default function Editor({ note }: Props) {
         case 'block:moveDown':  if (isNotepad) editor.commands.moveBlock(at, 1); break;
         case 'block:duplicate': if (isNotepad) editor.commands.duplicateBlock(at); break;
         case 'block:delete':    if (isNotepad) editor.commands.deleteBlock(at); break;
-        case 'block:insertRef': if (isNotepad) controls.current?.openRefPicker(); break;
+        case 'block:insertRef': if (isNotepad) controls?.openRefPicker(); break;
       }
     }
     window.addEventListener('corddb:editor-command', onCmd);
     return () => window.removeEventListener('corddb:editor-command', onCmd);
-  }, [editor, isNotepad]);
+  }, [editor, controls, isNotepad]);
 
   useEffect(() => {
     return () => {
@@ -318,6 +320,10 @@ export default function Editor({ note }: Props) {
           host={host}
           twitch={false}
           colorScheme={colorScheme}
+          spellCheck={spellCheck}
+          lineWidth={editorLineWidth}
+          lineWidthRange={LINE_WIDTH_RANGE}
+          onLineWidthChange={(w: number) => { void updateSettings({ editorLineWidth: w }); }}
           saveDebounceMs={SAVE_DEBOUNCE_MS}
           onChange={handleChange}
           onStats={setStats}
@@ -328,7 +334,7 @@ export default function Editor({ note }: Props) {
         </ShuttleEditor>
       </div>
 
-      {editor && <EditorContextMenu editor={editor} noteId={note.id} />}
+      {editor && <EditorContextMenu editor={editor} noteId={note.id} controls={controls} />}
 
       <div className={styles.statusBar}>
         <div className={styles.statusBacklinks}>

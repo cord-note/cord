@@ -6,4 +6,4 @@ allowBuilds:
   esbuild: true
 
 minimumReleaseAgeExclude:
-  - shuttle-editor@0.2.1
+  - shuttle-editor@0.3.0
