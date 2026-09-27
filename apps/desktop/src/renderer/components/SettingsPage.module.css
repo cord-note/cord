@@ -507,7 +507,7 @@
   width: 100%;
   height: 72px;
   border-radius: var(--radius-sm);
-  background: #1a1a1a;
+  background: var(--bg);
   display: flex;
   overflow: hidden;
   flex-shrink: 0;
@@ -515,7 +515,7 @@
 
 .previewSidebar {
   width: 24px;
-  background: #212121;
+  background: var(--bg-sidebar);
   flex-shrink: 0;
 }
 
@@ -531,6 +531,7 @@
   height: 7px;
   width: 55%;
   border-radius: 3px;
+  background: var(--accent);
 }
 
 .previewLines {
@@ -543,7 +544,7 @@
   display: block;
   height: 4px;
   border-radius: 2px;
-  background: #404040;
+  background: var(--border-strong);
   width: 100%;
 }
 

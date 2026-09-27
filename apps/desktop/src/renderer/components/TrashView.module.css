@@ -103,7 +103,7 @@
   transition: background 0.15s, color 0.15s;
 }
 
-.deleteBtn:hover { background: rgba(255, 80, 80, 0.2); color: #ff6b6b; }
+.deleteBtn:hover { background: var(--danger-hover-bg); color: var(--danger); }
 
 .empty {
   flex: 1;

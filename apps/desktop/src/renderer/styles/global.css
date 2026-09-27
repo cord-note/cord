@@ -7,9 +7,15 @@
 /* ════════════════════════════════════════════════════════════════════════════
    BASE TOKENS  (dark · mono — the default)
    All other theme/scheme combos override only what changes.
+
+   Theme selectors are bare attribute selectors rather than html[...] so any
+   element can carry data-theme / data-scheme and get that theme's tokens —
+   the theme picker previews each theme this way. [data-scheme="dark"] resets
+   to this base so a dark preview renders correctly inside a light app.
    ════════════════════════════════════════════════════════════════════════════ */
 
-:root {
+:root,
+[data-scheme="dark"] {
   --sidebar-width:    50px;
   --note-list-width:  260px;
 
@@ -42,6 +48,7 @@
   --link-underline:  rgba(138, 138, 138, 0.3);
   --danger:          #e05c5c;
   --danger-hover-bg: rgba(224, 92, 92, 0.12);
+  --danger-border:   rgba(224, 92, 92, 0.3);
   /* Muted, in the same family as --danger. The old #c42b1c was the Windows
      system red and read far louder than every other destructive control. */
   --close-hover-bg:  #c25b5b;
@@ -58,7 +65,7 @@
    LIGHT MODE  (overrides backgrounds, borders, text)
    ════════════════════════════════════════════════════════════════════════════ */
 
-html[data-scheme="light"] {
+[data-scheme="light"] {
   /* Light surfaces sit in the mid-tones rather than near-white — a full-bleed
      near-white editor is fatiguing under sustained reading. */
   --bg:          #e8e8e8;
@@ -89,6 +96,7 @@ html[data-scheme="light"] {
   --link-underline:  rgba(100, 100, 100, 0.3);
   --danger:          #d94040;
   --danger-hover-bg: rgba(217, 64, 64, 0.10);
+  --danger-border:   rgba(217, 64, 64, 0.3);
   --close-hover-bg:  #c05252;
   --close-hover-fg:  #fdf3f3;
 }
@@ -97,7 +105,7 @@ html[data-scheme="light"] {
    BLUE THEME — dark
    ════════════════════════════════════════════════════════════════════════════ */
 
-html[data-theme="blue"] {
+[data-theme="blue"] {
   --accent:       #4a8ff5;
   --accent-hover: #3a7ce0;
   --accent-fg:    #ffffff;
@@ -121,7 +129,7 @@ html[data-theme="blue"] {
    BLUE THEME — light
    ════════════════════════════════════════════════════════════════════════════ */
 
-html[data-theme="blue"][data-scheme="light"] {
+[data-theme="blue"][data-scheme="light"] {
   --accent:       #2563eb;
   --accent-hover: #1d4ed8;
   --accent-fg:    #ffffff;
@@ -150,7 +158,7 @@ html[data-theme="blue"][data-scheme="light"] {
    OLIVE THEME — dark (forest green + amber)
    ════════════════════════════════════════════════════════════════════════════ */
 
-html[data-theme="olive"] {
+[data-theme="olive"] {
   --accent:       #c9a84c;
   --accent-hover: #b8963e;
   --accent-fg:    #1b1e14;
@@ -170,7 +178,7 @@ html[data-theme="olive"] {
   --link-underline: rgba(201, 168, 76, 0.3);
 }
 
-html[data-theme="olive"][data-scheme="light"] {
+[data-theme="olive"][data-scheme="light"] {
   --accent:       #7a5c1e;
   --accent-hover: #6a4e18;
   --accent-fg:    #f5f0e8;
@@ -199,7 +207,7 @@ html[data-theme="olive"][data-scheme="light"] {
    TEAL THEME — dark (deep sea + coral)
    ════════════════════════════════════════════════════════════════════════════ */
 
-html[data-theme="teal"] {
+[data-theme="teal"] {
   --accent:       #e07a54;
   --accent-hover: #cc6840;
   --accent-fg:    #ffffff;
@@ -219,7 +227,7 @@ html[data-theme="teal"] {
   --link-underline: rgba(224, 122, 84, 0.3);
 }
 
-html[data-theme="teal"][data-scheme="light"] {
+[data-theme="teal"][data-scheme="light"] {
   --accent:       #c05a38;
   --accent-hover: #a84828;
   --accent-fg:    #ffffff;
@@ -248,7 +256,7 @@ html[data-theme="teal"][data-scheme="light"] {
    MIDNIGHT THEME — dark (deep navy + rose)
    ════════════════════════════════════════════════════════════════════════════ */
 
-html[data-theme="midnight"] {
+[data-theme="midnight"] {
   --accent:       #f7768e;
   --accent-hover: #e05070;
   --accent-fg:    #ffffff;
@@ -268,7 +276,7 @@ html[data-theme="midnight"] {
   --link-underline: rgba(187, 154, 247, 0.3);
 }
 
-html[data-theme="midnight"][data-scheme="light"] {
+[data-theme="midnight"][data-scheme="light"] {
   --accent:       #d93060;
   --accent-hover: #c02050;
   --accent-fg:    #ffffff;
@@ -297,7 +305,7 @@ html[data-theme="midnight"][data-scheme="light"] {
    ROSEWOOD THEME — dark (warm brown + dusty rose)
    ════════════════════════════════════════════════════════════════════════════ */
 
-html[data-theme="rosewood"] {
+[data-theme="rosewood"] {
   --accent:       #d4856b;
   --accent-hover: #c06e56;
   --accent-fg:    #ffffff;
@@ -317,7 +325,7 @@ html[data-theme="rosewood"] {
   --link-underline: rgba(212, 133, 107, 0.3);
 }
 
-html[data-theme="rosewood"][data-scheme="light"] {
+[data-theme="rosewood"][data-scheme="light"] {
   --accent:       #a05040;
   --accent-hover: #884030;
   --accent-fg:    #ffffff;
@@ -346,7 +354,7 @@ html[data-theme="rosewood"][data-scheme="light"] {
    PARCHMENT THEME — dark (warm dark + caramel)
    ════════════════════════════════════════════════════════════════════════════ */
 
-html[data-theme="parchment"] {
+[data-theme="parchment"] {
   --accent:       #d4a572;
   --accent-hover: #c08e5a;
   --accent-fg:    #1e1a14;
@@ -366,7 +374,7 @@ html[data-theme="parchment"] {
   --link-underline: rgba(212, 165, 114, 0.3);
 }
 
-html[data-theme="parchment"][data-scheme="light"] {
+[data-theme="parchment"][data-scheme="light"] {
   --accent:       #7c5835;
   --accent-hover: #6a4828;
   --accent-fg:    #e9e0ce;

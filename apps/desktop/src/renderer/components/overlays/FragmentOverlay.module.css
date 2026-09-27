@@ -108,8 +108,8 @@
 
 /* The block a hovered chip refers to. Shuttle renders block ids as data-blockid. */
 :global(.ProseMirror [data-blockid].fragment-highlight) {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg-hover);
   border-radius: 4px;
-  outline: 1px solid rgba(255, 255, 255, 0.15);
+  outline: 1px solid var(--border-strong);
   transition: background 0.15s, outline-color 0.15s;
 }

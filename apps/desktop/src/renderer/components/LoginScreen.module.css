@@ -230,9 +230,9 @@
 /* ── Error ───────────────────────────────────────────────────────────────── */
 
 .error {
-  background: rgba(255, 80, 80, 0.1);
-  border: 1px solid rgba(255, 80, 80, 0.3);
-  color: #ff6b6b;
+  background: var(--danger-hover-bg);
+  border: 1px solid var(--danger-border);
+  color: var(--danger);
   border-radius: var(--radius);
   padding: 9px 12px;
   font-size: 13px;

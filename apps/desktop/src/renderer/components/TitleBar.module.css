@@ -99,7 +99,7 @@
   border: none;
   border-bottom-left-radius: 8px;
   border-bottom-right-radius: 8px;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255,255,255,0.03);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--border-muted);
   overflow: hidden;
   z-index: 9999;
   animation: dropRoll 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;

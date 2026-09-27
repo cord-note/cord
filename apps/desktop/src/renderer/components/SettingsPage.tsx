@@ -135,14 +135,16 @@ interface ChapterProps {
 
 // ── Appearance ────────────────────────────────────────────────────────────────
 
-const THEMES: { id: Theme; label: string; desc: string; accentDark: string; accentLight: string; bgDark?: string; bgLight?: string; sidebarDark?: string; sidebarLight?: string }[] = [
-  { id: 'mono',      label: 'Monochrome', desc: 'Classic black & white',  accentDark: '#e2e2e2', accentLight: '#1a1a1a', bgDark: '#1a1a1a',  bgLight: '#e8e8e8',  sidebarDark: '#212121',  sidebarLight: '#dedede' },
-  { id: 'blue',      label: 'Blue',       desc: 'Deep navy + sky blue',   accentDark: '#4a8ff5', accentLight: '#2563eb', bgDark: '#11151c',  bgLight: '#dde5f4',  sidebarDark: '#151b25',  sidebarLight: '#d0dcf0' },
-  { id: 'olive',     label: 'Olive',      desc: 'Forest green + amber',   accentDark: '#c9a84c', accentLight: '#7a5c1e', bgDark: '#1b1e14',  bgLight: '#e9e2cd',  sidebarDark: '#1f2318',  sidebarLight: '#e0d8c0' },
-  { id: 'teal',      label: 'Teal',       desc: 'Deep sea + coral',       accentDark: '#e07a54', accentLight: '#c05a38', bgDark: '#0e2323',  bgLight: '#d6e9e9',  sidebarDark: '#122929',  sidebarLight: '#c7e0e0' },
-  { id: 'midnight',  label: 'Midnight',   desc: 'Dark navy + rose',       accentDark: '#f7768e', accentLight: '#d93060', bgDark: '#16161e',  bgLight: '#e4e4f0',  sidebarDark: '#1a1b26',  sidebarLight: '#d9d9ea' },
-  { id: 'rosewood',  label: 'Rosewood',   desc: 'Warm brown + dusty rose',accentDark: '#d4856b', accentLight: '#a05040', bgDark: '#221818',  bgLight: '#ebdcd8',  sidebarDark: '#281e1e',  sidebarLight: '#e0cdc7' },
-  { id: 'parchment', label: 'Parchment',  desc: 'Warm paper + caramel',   accentDark: '#d4a572', accentLight: '#7c5835', bgDark: '#1e1a14',  bgLight: '#e9e0ce',  sidebarDark: '#241f18',  sidebarLight: '#ded4bf' },
+// Previews read each theme's own tokens (data-theme on the preview element),
+// so colours are defined once, in global.css.
+const THEMES: { id: Theme; label: string; desc: string }[] = [
+  { id: 'mono',      label: 'Monochrome', desc: 'Classic black & white' },
+  { id: 'blue',      label: 'Blue',       desc: 'Deep navy + sky blue' },
+  { id: 'olive',     label: 'Olive',      desc: 'Forest green + amber' },
+  { id: 'teal',      label: 'Teal',       desc: 'Deep sea + coral' },
+  { id: 'midnight',  label: 'Midnight',   desc: 'Dark navy + rose' },
+  { id: 'rosewood',  label: 'Rosewood',   desc: 'Warm brown + dusty rose' },
+  { id: 'parchment', label: 'Parchment',  desc: 'Warm paper + caramel' },
 ];
 
 const SCHEMES: { id: ColorScheme; label: string }[] = [
@@ -218,17 +220,12 @@ function AppearanceChapter({ sectionRef }: ChapterProps) {
               >
                 <div
                   className={styles.themePreview}
-                  style={t.bgDark ? { background: isDark ? t.bgDark : t.bgLight } : undefined}
+                  data-theme={t.id}
+                  data-scheme={isDark ? 'dark' : 'light'}
                 >
-                  <div
-                    className={styles.previewSidebar}
-                    style={t.sidebarDark ? { background: isDark ? t.sidebarDark : t.sidebarLight } : undefined}
-                  />
+                  <div className={styles.previewSidebar} />
                   <div className={styles.previewContent}>
-                    <div
-                      className={styles.previewAccent}
-                      style={{ background: isDark ? t.accentDark : t.accentLight }}
-                    />
+                    <div className={styles.previewAccent} />
                     <div className={styles.previewLines}>
                       <span /><span /><span style={{ width: '60%' }} />
                     </div>
