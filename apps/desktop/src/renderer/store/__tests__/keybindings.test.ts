@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'bun:test';
+import { beforeEach, describe, expect, it, mock } from 'bun:test';
 import { SHUTTLE_KEYBINDINGS } from 'shuttle-editor';
 import {
   KEYBINDINGS,
@@ -6,6 +6,7 @@ import {
   eventToAccel,
   formatAccel,
   matchesBinding,
+  flushKeybindings,
   parseOverrides,
   shuttleOverrides,
   useKeybindingStore,
@@ -13,6 +14,16 @@ import {
   type KeybindingId,
   type KeybindingMap,
 } from '../keybindings';
+
+const disk: { text: string | null; writes: string[] } = { text: null, writes: [] };
+mock.module('@renderer/ipc', () => ({
+  api: {
+    settings: {
+      read: async () => ({ text: disk.text }),
+      write: async (_file: string, text: string) => { disk.text = text; disk.writes.push(text); return { ok: true }; },
+    },
+  },
+}));
 
 // The accel encoding is the contract between the settings recorder and every
 // place that matches a key event. If the two ever disagree about how a chord
@@ -168,5 +179,36 @@ describe('physical-key fallback', () => {
 
   it('matches them against the catalogue', () => {
     expect(matchesBinding(star, 'editor.bulletList')).toBe(true);
+  });
+});
+
+describe('keybindings.json', () => {
+  // Earlier tests leave debounced writes pending; land them before resetting
+  // the fake disk so they cannot leak into these assertions.
+  beforeEach(async () => { await flushKeybindings(); disk.text = null; disk.writes = []; });
+
+  it('loads overrides from the file, comments allowed', async () => {
+    disk.text = '{\n  // mine\n  "app.newNote": "Mod+J",\n}';
+    await useKeybindingStore.getState().load();
+    expect(useKeybindingStore.getState().bindings['app.newNote']).toBe('Mod+J');
+  });
+
+  it('edits the file in place, keeping comments and unknown keys', async () => {
+    disk.text = '{\n  // mine\n  "app.newNote": "Mod+J",\n  "future.action": "Mod+Q"\n}';
+    await useKeybindingStore.getState().load();
+    useKeybindingStore.getState().setBinding('app.settings', 'Mod+Shift+K');
+    await flushKeybindings();
+    expect(disk.text).toContain('// mine');
+    expect(disk.text).toContain('"future.action": "Mod+Q"');
+    expect(disk.text).toContain('"app.settings": "Mod+Shift+K"');
+  });
+
+  it('never overwrites a file that does not parse', async () => {
+    disk.text = '{ "app.newNote": ';
+    await useKeybindingStore.getState().load();
+    expect(useKeybindingStore.getState().fileError).toMatch(/line 1/);
+    useKeybindingStore.getState().setBinding('app.settings', 'Mod+Shift+K');
+    await flushKeybindings();
+    expect(disk.writes).toEqual([]);
   });
 });

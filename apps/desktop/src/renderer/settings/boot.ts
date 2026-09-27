@@ -1,3 +1,4 @@
+import { useKeybindingStore } from '../store/keybindings';
 import { useThemeStore } from '../store/theme';
 import { useSettings } from './index';
 
@@ -10,8 +11,10 @@ export function bootSettings(): void {
   useSettings.getState().applyBootCache();
   useThemeStore.getState().init();
   void useSettings.getState().load();
+  void useKeybindingStore.getState().load();
 
   window.addEventListener('focus', () => {
     void useSettings.getState().reload();
+    void useKeybindingStore.getState().reload();
   });
 }
