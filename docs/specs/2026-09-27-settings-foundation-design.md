@@ -74,8 +74,9 @@ Keys are typed through declaration merging: each module that declares settings
 also augments `interface SettingValues { 'editor.fontSize': number }`, so a
 typo in a key or a wrong value type is a compile error.
 
-**`renderer/settings/SettingsView/`** — the generated page (replaces the body of
-`SettingsPage.tsx`): nav, search, sections, rows, controls, JSON view.
+**`renderer/components/settings/`** — the generated page's parts (rows,
+controls, JSON view, problems banner, custom pages), used by a rewritten
+`components/SettingsPage.tsx`.
 
 **Existing stores, adapted.**
 - `store/settings.ts` is removed; its consumers (Editor, SettingsPage,
