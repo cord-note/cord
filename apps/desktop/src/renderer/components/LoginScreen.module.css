@@ -14,7 +14,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: var(--space-9) var(--space-8) var(--space-7);
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-xl);
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -54,7 +54,7 @@
 .subheading {
   font-size: var(--text-md);
   color: var(--text-muted);
-  margin: 0 0 22px;
+  margin: 0 0 var(--space-5);
   line-height: 1.5;
   /* Two lines' worth, always. The register copy wraps and the sign-in copy
      does not, and letting the box resize moved the whole card. */
@@ -74,8 +74,8 @@
   display: flex;
   border-radius: var(--radius-md);
   background: var(--bg-active);
-  padding: 3px;
-  margin-bottom: 22px;
+  padding: var(--space-1);
+  margin-bottom: var(--space-5);
 }
 
 /* The selected-tab pill. One element that slides, rather than a background
@@ -88,8 +88,8 @@
   width: calc(50% - 3px);
   border-radius: var(--radius-sm);
   background: var(--bg-panel);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
-  transition: transform 0.26s var(--ease-out);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--duration-slow) var(--ease-out);
 }
 
 .tabThumbRight { transform: translateX(100%); }
@@ -98,7 +98,7 @@
   position: relative;
   z-index: 1;
   flex: 1;
-  padding: 7px;
+  padding: var(--space-2);
   border-radius: var(--radius-sm);
   font-size: var(--text-md);
   font-weight: 500;
@@ -106,7 +106,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  transition: color 0.2s;
+  transition: color var(--duration-slow);
   font-family: inherit;
 }
 
@@ -175,7 +175,7 @@
 }
 
 .passwordRow .input {
-  padding-right: 42px;
+  padding-right: var(--space-10);
 }
 
 .showPwBtn {
@@ -210,9 +210,9 @@
   /* The form's flex gap applies even to a zero-height row, so it is cancelled
      while collapsed and paid back in step with the reveal. */
   margin-bottom: -14px;
-  transition: grid-template-rows 0.26s var(--ease-out),
-              opacity 0.18s ease,
-              margin-bottom 0.26s var(--ease-out);
+  transition: grid-template-rows var(--duration-slow) var(--ease-out),
+              opacity var(--duration-base) ease,
+              margin-bottom var(--duration-slow) var(--ease-out);
 }
 
 .collapsibleOpen {
@@ -234,7 +234,7 @@
   border: 1px solid var(--danger-border);
   color: var(--danger);
   border-radius: var(--radius);
-  padding: 9px var(--space-3);
+  padding: var(--space-2-5) var(--space-3);
   font-size: var(--text-md);
   line-height: 1.4;
 }

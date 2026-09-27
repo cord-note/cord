@@ -75,10 +75,10 @@
 .chapter {
   max-width: 720px;
   margin: 0 auto;
-  padding: 0 var(--space-12) 56px;
+  padding: 0 var(--space-12) var(--space-12);
   display: flex;
   flex-direction: column;
-  gap: 26px;
+  gap: var(--space-6);
   /* Leave room under the sticky-ish heading when scrollIntoView lands here. */
   scroll-margin-top: 24px;
 }
@@ -123,7 +123,7 @@
   background: var(--bg-input);
   border: none;
   border-radius: var(--radius);
-  padding: 11px var(--space-3-5);
+  padding: var(--space-3) var(--space-3-5);
   outline: none;
   transition: background var(--duration-base), box-shadow var(--duration-base);
   width: 100%;
@@ -181,7 +181,7 @@
   border: 1px solid var(--border);
   position: relative;
   flex-shrink: 0;
-  transition: background 0.2s, border-color 0.2s;
+  transition: background var(--duration-slow), border-color var(--duration-slow);
   cursor: pointer;
 }
 
@@ -195,7 +195,7 @@
   height: 14px;
   border-radius: 50%;
   background: var(--text-muted);
-  transition: transform 0.2s, background 0.2s;
+  transition: transform var(--duration-slow), background var(--duration-slow);
 }
 
 .toggleOn .toggleThumb { transform: translateX(18px); background: var(--accent-fg); }
@@ -241,7 +241,7 @@
 
 .colorSwatch:hover {
   transform: scale(1.14);
-  box-shadow: 0 2px 6px rgb(0 0 0 / 0.3);
+  box-shadow: var(--shadow-sm);
   z-index: 1;
 }
 
@@ -296,7 +296,7 @@
   font-size: var(--text-sm);
   text-align: center;
   flex-shrink: 0;
-  transition: background 0.12s, color 0.12s, box-shadow 0.12s;
+  transition: background var(--duration-fast), color var(--duration-fast), box-shadow var(--duration-fast);
 }
 
 .keyChord:hover { background: var(--bg-active); }
@@ -405,7 +405,7 @@
 }
 
 .schemeBtn {
-  padding: 7px 18px;
+  padding: var(--space-2) var(--space-4);
   border-radius: var(--radius);
   font-size: var(--text-md);
   color: var(--text-secondary);
@@ -524,7 +524,7 @@
   padding: var(--space-2);
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: var(--space-1);
 }
 
 .previewAccent {

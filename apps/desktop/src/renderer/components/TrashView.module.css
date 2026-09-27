@@ -56,7 +56,7 @@
 .itemInfo {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: var(--space-1);
   min-width: 0;
 }
 
@@ -81,7 +81,7 @@
 }
 
 .restoreBtn {
-  padding: 5px var(--space-3);
+  padding: var(--space-1) var(--space-3);
   font-size: var(--text-sm);
   border-radius: var(--radius);
   background: var(--bg-active);
@@ -89,13 +89,13 @@
   transition: background var(--duration-base);
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--space-1);
 }
 
 .restoreBtn:hover { background: var(--accent); color: var(--accent-fg); }
 
 .deleteBtn {
-  padding: 5px var(--space-3);
+  padding: var(--space-1) var(--space-3);
   font-size: var(--text-sm);
   border-radius: var(--radius);
   background: var(--bg-active);

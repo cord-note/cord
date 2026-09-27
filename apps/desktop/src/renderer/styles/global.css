@@ -107,11 +107,36 @@
   --duration-slow: 0.24s;
   --ease-out:      cubic-bezier(0.16, 1, 0.3, 1);
 
+  /* Elevation — sm: thumbs and small raised controls · md: small popovers ·
+     lg: menus and dropdowns · xl: floating cards */
+  --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.3);
+  --shadow-md: 0 8px 24px rgb(0 0 0 / 0.25);
+  --shadow-lg: 0 14px 44px rgb(0 0 0 / 0.55);
+  --shadow-xl: 0 24px 80px rgb(0 0 0 / 0.5);
+
   /* Stacking — app-wide layers only; component-local z-index stays literal */
   --z-raised:   10;
   --z-popover:  60;
   --z-titlebar: 100;
   --z-menu:     9999;
+}
+
+/* Dark-tuned shadows read as smudges on light surfaces. */
+[data-scheme="light"] {
+  --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.12);
+  --shadow-md: 0 8px 24px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 14px 44px rgb(0 0 0 / 0.16);
+  --shadow-xl: 0 24px 80px rgb(0 0 0 / 0.16);
+}
+
+/* Every transition and animation reads its duration from these tokens, so
+   zeroing them honours the OS reduced-motion setting app-wide. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0s;
+    --duration-base: 0s;
+    --duration-slow: 0s;
+  }
 }
 
 /* ════════════════════════════════════════════════════════════════════════════

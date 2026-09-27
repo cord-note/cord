@@ -71,12 +71,12 @@
   -webkit-appearance: none;
   width: 12px;
   height: 12px;
-  margin-top: 3px;
+  margin-top: var(--space-1);
   border-radius: 50%;
   background: var(--accent);
   border: 2px solid var(--bg);
-  box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
-  transition: transform 0.12s;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--duration-fast);
 }
 
 .input::-moz-range-thumb {
@@ -85,8 +85,8 @@
   border-radius: 50%;
   background: var(--accent);
   border: 2px solid var(--bg);
-  box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
-  transition: transform 0.12s;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--duration-fast);
 }
 
 .input:hover::-webkit-slider-thumb { transform: scale(1.15); }
