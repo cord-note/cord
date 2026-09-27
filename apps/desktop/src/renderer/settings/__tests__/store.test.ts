@@ -81,6 +81,34 @@ describe('settings store', () => {
     expect(h.disk.writes).toEqual([]);
   });
 
+  it('never writes before the file has been read, so an unreadable file is not clobbered', async () => {
+    const writes: string[] = [];
+    let readable = false;
+    const store = createSettingsStore({
+      io: {
+        read: async () => { if (!readable) throw new Error('sidecar down'); return '{ "editor.fontSize": 17 }'; },
+        write: async (_f, text) => { writes.push(text); },
+      },
+      definitions: () => defs,
+      cache: { read: () => null, write: () => {} },
+      writeDelayMs: 5,
+    });
+    await store.getState().load();
+    expect(store.getState().saveError).toMatch(/not saved/);
+    store.getState().set('editor.spellCheck', true);
+    await store.getState().flush();
+    expect(writes).toEqual([]);
+    expect(store.getState().values['editor.spellCheck']).toBe(true);
+    const blocked = await store.getState().saveText('{ "editor.fontSize": 12 }');
+    expect(blocked[0]?.message).toMatch(/has not been read/);
+    expect(writes).toEqual([]);
+
+    readable = true;
+    await store.getState().reload();
+    expect(store.getState().values['editor.fontSize']).toBe(17);
+    expect(store.getState().saveError).toBeNull();
+  });
+
   it('reports invalid values and keeps defaults for them', async () => {
     const h = harness('{ "editor.fontSize": 99, "future.thing": 1 }');
     await h.store.getState().load();

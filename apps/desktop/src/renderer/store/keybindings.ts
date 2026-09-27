@@ -206,7 +206,7 @@ export const useKeybindingStore = create<KeybindingStore>((set, get) => ({
     try {
       text = await ipcConfigIO.read('keybindings');
     } catch (err) {
-      set({ fileError: `Couldn't read keybindings: ${err instanceof Error ? err.message : String(err)}` });
+      set({ fileError: `Couldn't read keybindings.json (${err instanceof Error ? err.message : String(err)}). Shortcut changes are not saved until it can be read.` });
       return;
     }
     if (text === null) {
@@ -224,7 +224,7 @@ export const useKeybindingStore = create<KeybindingStore>((set, get) => ({
     fileText = text;
     const parsed = parseJsoncObject(text);
     if (!parsed.data) {
-      set({ fileError: `keybindings.json: ${parsed.problems.map((p) => p.message).join('; ')}` });
+      set({ fileError: `keybindings.json: ${parsed.problems.map((p) => p.message).join('; ')}. Shortcut changes are not saved until it is fixed.` });
       return;
     }
     set({ bindings: { ...defaultMap(), ...overridesFrom(parsed.data) }, fileError: null });
