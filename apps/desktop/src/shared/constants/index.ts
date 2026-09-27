@@ -13,29 +13,6 @@ export const HOLD_ARCHIVE_MS = 400;
  */
 export const HOLD_NOTE_DELETE_MS = 50;
 
-// Node types that can carry a blockId in a plain note, and therefore be
-// annotated with fragment tags and links. In a notepad the `block` wrapper
-// carries the id instead, so every block is annotatable regardless of type.
-export const ANNOTATABLE_TYPES: readonly string[] = [
-  'paragraph', 'heading', 'blockquote', 'codeBlock',
-];
-
-/**
- * Name of the notepad wrapper node.
- *
- * Deliberately NOT "block": in a ProseMirror content expression a node-type name
- * takes precedence over a group name, so a node called `block` would silently
- * redefine every built-in `block+` / `block*` expression — `blockquote` and
- * `listItem` would stop accepting paragraphs and accept only wrappers.
- */
-export const BLOCK_NODE_NAME = 'notepadBlock';
-
-// What a notepad block may contain — one of these, exactly one deep.
-export const BLOCK_CONTENT_TYPES: readonly string[] = [
-  'paragraph', 'heading', 'bulletList', 'orderedList', 'taskList',
-  'blockquote', 'codeBlock', 'mathBlock', 'horizontalRule', 'blockRef',
-];
-
 export const DEFAULT_SETTINGS = {
   editorFontSize: 15,
   editorLineWidth: 720,

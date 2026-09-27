@@ -1,0 +1,8 @@
+/* Shuttle reads --bg-primary, --bg-secondary and --on-accent; Cord names them
+   differently. Everything else (--accent, --border, --text-primary,
+   --text-muted, --link-color, --editor-font-size, --font-mono) matches. */
+.sh-root, .sh-popup-anchor {
+  --bg-primary: var(--bg);
+  --bg-secondary: var(--bg-elevated);
+  --on-accent: var(--accent-fg);
+}
