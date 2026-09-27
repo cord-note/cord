@@ -54,11 +54,64 @@
   --close-hover-bg:  #c25b5b;
   --close-hover-fg:  #fdf3f3;
 
-  /* Shape */
-  --radius:    10px;
-  --radius-sm: 6px;
-  --radius-lg: 14px;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   SCALE TOKENS  (theme-independent)
+   Themes and augments may override these, but component CSS must reference
+   them rather than hard-coding values.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Type */
+  --font-ui:   -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+
+  --text-2xs:  10px;
+  --text-xs:   11px;
+  --text-sm:   12px;
+  --text-md:   13px;
+  --text-base: 14px;
+  --text-lg:   17px;
+  --text-xl:   20px;
+  --text-2xl:  28px;
+
+  /* Spacing — the suffix is the step in 4px units (1-5 = 6px) */
+  --space-0-5: 2px;
+  --space-1:   4px;
+  --space-1-5: 6px;
+  --space-2:   8px;
+  --space-2-5: 10px;
+  --space-3:   12px;
+  --space-3-5: 14px;
+  --space-4:   16px;
+  --space-5:   20px;
+  --space-6:   24px;
+  --space-7:   28px;
+  --space-8:   32px;
+  --space-9:   36px;
+  --space-10:  40px;
+  --space-12:  48px;
+
+  /* Shape */
+  --radius-xs:   4px;
+  --radius-sm:   6px;
+  --radius-md:   8px;
+  --radius:      10px;
+  --radius-lg:   14px;
+  --radius-full: 9999px;
+
+  /* Motion */
+  --duration-fast: 0.1s;
+  --duration-base: 0.15s;
+  --duration-slow: 0.24s;
+  --ease-out:      cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Stacking — app-wide layers only; component-local z-index stays literal */
+  --z-raised:   10;
+  --z-popover:  60;
+  --z-titlebar: 100;
+  --z-menu:     9999;
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -408,15 +461,15 @@ html, body, #root {
   overflow: hidden;
   background: var(--bg);
   color: var(--text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  font-size: 14px;
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
 
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: var(--radius-xs); }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
 /* Keyboard focus ring for controls that have no focus treatment of their own.

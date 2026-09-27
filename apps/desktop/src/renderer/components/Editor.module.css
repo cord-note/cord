@@ -14,8 +14,8 @@
   margin: 0 auto;
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding: 36px 48px 10px;
+  gap: var(--space-2-5);
+  padding: var(--space-9) var(--space-12) var(--space-2-5);
   flex-shrink: 0;
 }
 
@@ -23,7 +23,7 @@
   flex: 1;
   min-width: 0;
   display: block;
-  font-size: 28px;
+  font-size: var(--text-2xl);
   font-weight: 700;
   color: var(--text-primary);
   background: transparent;
@@ -45,7 +45,7 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 5px;
-  padding: 0 48px 12px;
+  padding: 0 var(--space-12) var(--space-3);
   max-width: calc(var(--editor-line-width, 720px) + 96px);
   margin: 0 auto;
   width: 100%;
@@ -56,14 +56,14 @@
 .tagChip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 3px 10px 3px 8px;
-  border-radius: 99px;
+  gap: var(--space-1-5);
+  padding: 3px var(--space-2-5) 3px var(--space-2);
+  border-radius: var(--radius-full);
   background: var(--bg-active);
   border: 1px solid var(--border-strong);
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--text-secondary);
-  transition: border-color 0.1s;
+  transition: border-color var(--duration-fast);
 }
 
 .tagChip:hover { border-color: var(--border-strong); }
@@ -83,19 +83,19 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  transition: background 0.1s, color 0.1s;
+  transition: background var(--duration-fast), color var(--duration-fast);
   margin-left: 1px;
 }
 
 .tagChipRemove:hover { background: var(--danger-hover-bg); color: var(--danger); }
 
 .addTagBtn {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--text-muted);
-  padding: 3px 10px;
-  border-radius: 99px;
+  padding: 3px var(--space-2-5);
+  border-radius: var(--radius-full);
   border: 1px dashed var(--border-strong);
-  transition: border-color 0.1s, color 0.1s, background 0.1s;
+  transition: border-color var(--duration-fast), color var(--duration-fast), background var(--duration-fast);
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -122,13 +122,13 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 3px 10px;
-  border-radius: 99px;
-  font-size: 11px;
+  padding: 3px var(--space-2-5);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
   color: var(--text-secondary);
   background: var(--bg-active);
   border: 1px solid var(--border);
-  transition: background 0.1s, color 0.1s, border-color 0.1s;
+  transition: background var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast);
 }
 
 .tagPickerItem:hover {
@@ -145,7 +145,7 @@
 }
 
 .tagPickerInput {
-  font-size: 12px;
+  font-size: var(--text-sm);
   padding: 3px 0;
   background: none;
   color: var(--text-primary);
@@ -157,43 +157,43 @@
 .content {
   flex: 1;
   overflow-y: auto;
-  padding: 0 48px 48px;
+  padding: 0 var(--space-12) var(--space-12);
   position: relative;
 }
 
 /* ── Status bar ──────────────────────────────────────────────────────────── */
 .statusBar {
   border-top: 1px solid var(--border);
-  padding: 6px 48px;
+  padding: var(--space-1-5) var(--space-12);
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .statusBacklinks {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1-5);
   flex-wrap: wrap;
   min-width: 0;
 }
 
 .statusBacklinkCount {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--text-muted);
   flex-shrink: 0;
 }
 
 .backlinkChip {
-  padding: 2px 8px;
+  padding: var(--space-0-5) var(--space-2);
   background: var(--bg-active);
-  border-radius: 6px;
-  font-size: 11px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
   color: var(--text-secondary);
   cursor: pointer;
-  transition: background 0.1s, color 0.1s;
+  transition: background var(--duration-fast), color var(--duration-fast);
 }
 
 .backlinkChip:hover {
@@ -204,12 +204,12 @@
 .statusStats {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1-5);
   flex-shrink: 0;
 }
 
 .statusDim {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--text-muted);
 }
 
@@ -222,14 +222,14 @@
 }
 
 .statusDividerDot {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--text-muted);
   opacity: 0.5;
   flex-shrink: 0;
 }
 
 .statusUnlinkedLabel {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--text-muted);
   flex-shrink: 0;
 }

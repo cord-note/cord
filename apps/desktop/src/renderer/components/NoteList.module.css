@@ -15,23 +15,23 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 14px 6px;
+  padding: var(--space-4) var(--space-3-5) var(--space-1-5);
   flex-shrink: 0;
 }
 
 .title {
-  font-size: 10px;
+  font-size: var(--text-2xs);
   font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1-5);
 }
 
 .count {
-  font-size: 10px;
+  font-size: var(--text-2xs);
   font-weight: 600;
   color: var(--text-muted);
   opacity: 0.7;
@@ -40,7 +40,7 @@
 .headerActions {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: var(--space-0-5);
 }
 
 .newBtn {
@@ -51,7 +51,7 @@
   justify-content: center;
   border-radius: var(--radius-sm);
   color: var(--text-muted);
-  transition: background 0.12s, color 0.12s, transform 0.1s;
+  transition: background 0.12s, color 0.12s, transform var(--duration-fast);
 }
 
 .newBtn:hover {
@@ -97,16 +97,16 @@
 .kindBackdrop {
   position: fixed;
   inset: 0;
-  z-index: 60;
+  z-index: var(--z-popover);
 }
 
 .kindMenu {
   position: absolute;
   top: 30px;
   right: 0;
-  z-index: 61;
+  z-index: calc(var(--z-popover) + 1);
   width: 226px;
-  padding: 4px;
+  padding: var(--space-1);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--bg-input);
@@ -116,9 +116,9 @@
 .kindItem {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: var(--space-2);
   width: 100%;
-  padding: 7px 8px;
+  padding: 7px var(--space-2);
   border-radius: var(--radius-sm);
   color: var(--text-muted);
   text-align: left;
@@ -137,13 +137,13 @@
 
 .kindTitle {
   color: var(--text-primary);
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-weight: 500;
 }
 
 .kindHint {
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: var(--text-xs);
   line-height: 1.35;
 }
 
@@ -160,8 +160,8 @@
 .vaultLine {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 2px 14px 10px;
+  gap: var(--space-1-5);
+  padding: var(--space-0-5) var(--space-3-5) var(--space-2-5);
   flex-shrink: 0;
 }
 
@@ -173,7 +173,7 @@
 }
 
 .vaultName {
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-weight: 500;
   color: var(--text-secondary);
   overflow: hidden;
@@ -184,7 +184,7 @@
 /* ── Tag filter dropdown ─────────────────────────────────────────────────── */
 
 .tagFilter {
-  padding: 4px 8px 8px;
+  padding: var(--space-1) var(--space-2) var(--space-2);
   display: flex;
   flex-direction: column;
   gap: 1px;
@@ -200,14 +200,14 @@
 .tagFilterItem {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   width: 100%;
-  padding: 6px 8px;
+  padding: var(--space-1-5) var(--space-2);
   border-radius: var(--radius-sm);
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: var(--text-secondary);
   text-align: left;
-  transition: background 0.1s, color 0.1s;
+  transition: background var(--duration-fast), color var(--duration-fast);
 }
 
 .tagFilterItem:hover { background: var(--bg-hover); color: var(--text-primary); }
@@ -229,14 +229,14 @@
 .searchBar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 0 10px 10px;
-  padding: 7px 10px;
+  gap: var(--space-2);
+  margin: 0 var(--space-2-5) var(--space-2-5);
+  padding: 7px var(--space-2-5);
   background: var(--bg-input);
   border-radius: var(--radius-sm);
   border: none;
   flex-shrink: 0;
-  transition: background 0.15s, box-shadow 0.15s;
+  transition: background var(--duration-base), box-shadow var(--duration-base);
 }
 
 /* Filled, not outlined — matching every other text field in the app. */
@@ -249,7 +249,7 @@
 
 .searchInput {
   flex: 1;
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: var(--text-primary);
   min-width: 0;
 }
@@ -265,7 +265,7 @@
   justify-content: center;
   border-radius: 50%;
   flex-shrink: 0;
-  transition: background 0.1s, color 0.1s;
+  transition: background var(--duration-fast), color var(--duration-fast);
 }
 
 .clearSearch:hover { background: var(--bg-active); color: var(--text-secondary); }
@@ -275,13 +275,13 @@
 .tagActivePill {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin: 0 10px 8px;
-  padding: 5px 10px;
+  gap: var(--space-1-5);
+  margin: 0 var(--space-2-5) var(--space-2);
+  padding: 5px var(--space-2-5);
   background: var(--bg-active);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--text-secondary);
   flex-shrink: 0;
   animation: slideDown 0.14s ease;
@@ -296,7 +296,7 @@
   justify-content: center;
   border-radius: 50%;
   color: var(--text-muted);
-  transition: background 0.1s, color 0.1s;
+  transition: background var(--duration-fast), color var(--duration-fast);
 }
 
 .tagPillClear:hover { background: var(--bg-hover); color: var(--text-secondary); }
@@ -307,14 +307,14 @@
   list-style: none;
   overflow-y: auto;
   flex: 1;
-  padding: 0 8px 12px;
+  padding: 0 var(--space-2) var(--space-3);
 }
 
 .item {
-  padding: 8px 10px;
+  padding: var(--space-2) var(--space-2-5);
   cursor: pointer;
   border-radius: var(--radius-sm);
-  transition: background 0.1s, border-color 0.1s;
+  transition: background var(--duration-fast), border-color var(--duration-fast);
   margin-bottom: 1px;
   position: relative;
   border: 1px solid transparent;
@@ -335,13 +335,13 @@
 .itemTitleRow {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
   margin-bottom: 3px;
 }
 
 .itemTitle {
   flex: 1;
-  font-size: 13px;
+  font-size: var(--text-md);
   font-weight: 500;
   color: var(--text-primary);
   overflow: hidden;
@@ -354,7 +354,7 @@
 .itemActions {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: var(--space-0-5);
   opacity: 0;
   transition: opacity 0.12s;
   flex-shrink: 0;
@@ -371,7 +371,7 @@
   justify-content: center;
   border-radius: var(--radius-sm);
   color: var(--text-muted);
-  transition: background 0.1s, color 0.1s, transform 0.1s;
+  transition: background var(--duration-fast), color var(--duration-fast), transform var(--duration-fast);
 }
 
 .pinBtn:hover {
@@ -390,7 +390,7 @@
   justify-content: center;
   border-radius: var(--radius-sm);
   color: var(--text-muted);
-  transition: background 0.1s, color 0.1s, transform 0.1s;
+  transition: background var(--duration-fast), color var(--duration-fast), transform var(--duration-fast);
 }
 
 .deleteBtn:hover {
@@ -402,16 +402,16 @@
 .itemMeta {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-0-5);
 }
 
 .itemDate {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--text-muted);
 }
 
 .itemExcerpt {
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: var(--text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -422,17 +422,17 @@
 .itemTags {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: var(--space-1);
   margin-top: 5px;
 }
 
 .itemTagChip {
-  font-size: 10px;
-  padding: 2px 7px;
-  border-radius: 99px;
+  font-size: var(--text-2xs);
+  padding: var(--space-0-5) 7px;
+  border-radius: var(--radius-full);
   border: 1px solid var(--border-strong);
   color: var(--text-muted);
-  transition: border-color 0.1s, color 0.1s;
+  transition: border-color var(--duration-fast), color var(--duration-fast);
 }
 
 .item:hover .itemTagChip {
@@ -448,20 +448,20 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 14px;
+  gap: var(--space-3-5);
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--text-md);
   text-align: center;
-  padding: 24px;
+  padding: var(--space-6);
 }
 
 .createFirst {
-  padding: 8px 18px;
+  padding: var(--space-2) 18px;
   background: var(--bg-active);
   color: var(--text-secondary);
   border-radius: var(--radius-sm);
-  font-size: 12px;
-  transition: background 0.15s, color 0.15s, transform 0.1s;
+  font-size: var(--text-sm);
+  transition: background var(--duration-base), color var(--duration-base), transform var(--duration-fast);
   border: 1px solid var(--border-strong);
 }
 
