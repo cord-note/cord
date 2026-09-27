@@ -1,59 +1,135 @@
 import { nanoid } from 'nanoid';
-import { eq } from 'drizzle-orm';
+import { asc, eq } from 'drizzle-orm';
 import { getDb } from '../db/client';
-import { users } from '../db/schema';
-import type { User, RegisterInput, LoginInput, AuthSession } from '@shared/types';
+import { appState, users } from '../db/schema';
+import type {
+  AuthSession,
+  AuthUser,
+  LockScreenState,
+  LoginInput,
+  PinUnlockResult,
+  RegisterInput,
+  SetPinInput,
+} from '@shared/types';
 
 // In-process session — the sidecar is a single-user local process.
 let _session: AuthSession | null = null;
 
+/** Wrong PINs in a row before the PIN is refused until a password sign-in. */
+export const MAX_PIN_ATTEMPTS = 5;
+
+const PIN_PATTERN = /^\d{4,6}$/;
+const LAST_USER_KEY = 'last_user_id';
+
+type UserRow = typeof users.$inferSelect;
+
+export interface AuthServiceOptions {
+  /** bcrypt cost. Tests lower it; the app uses the default. */
+  hashCost?: number;
+  /** Pause after a wrong recovery key, to slow guessing. */
+  recoveryFailureDelayMs?: number;
+  /** Runs after a user is created — the sidecar creates their settings folder here. */
+  onRegister?: (userId: string) => void;
+}
+
+/**
+ * Accounts on this machine. Password, PIN and recovery-key hashes, the
+ * attempt counter and `last_user_id` are machine-local and must never
+ * replicate, so none of these writes go to operation_log (CLAUDE.md,
+ * principle 2).
+ */
 export class AuthService {
-  hasUsers(): boolean {
-    const db = getDb();
-    return db.select({ id: users.id }).from(users).limit(1).all().length > 0;
+  private readonly hashCost: number;
+  private readonly recoveryFailureDelayMs: number;
+  private readonly onRegister: (userId: string) => void;
+
+  constructor(options: AuthServiceOptions = {}) {
+    this.hashCost = options.hashCost ?? 12;
+    this.recoveryFailureDelayMs = options.recoveryFailureDelayMs ?? 1000;
+    this.onRegister = options.onRegister ?? ((): void => {});
   }
 
-  async register(input: RegisterInput): Promise<User> {
+  /** Everything the lock screen shows before anyone has unlocked. */
+  getLockScreenState(): LockScreenState {
+    const db = getDb();
+    const rows = db.select().from(users).orderBy(asc(users.username)).all();
+    const last = db.select().from(appState).where(eq(appState.key, LAST_USER_KEY)).get();
+    return {
+      users: rows.map((r) => ({
+        id: r.id,
+        username: r.username,
+        hasPin: r.pinHash !== null,
+        pinLocked: r.failedPinAttempts >= MAX_PIN_ATTEMPTS,
+      })),
+      lastUserId: last && rows.some((r) => r.id === last.value) ? last.value : null,
+    };
+  }
+
+  async register(input: RegisterInput): Promise<AuthUser> {
     const db = getDb();
     const id = nanoid();
-    const now = Date.now();
-    const passwordHash = await Bun.password.hash(input.password, { algorithm: 'bcrypt', cost: 12 });
-
     db.insert(users).values({
       id,
       username:     input.username.toLowerCase().trim(),
-      passwordHash,
-      createdAt:    now,
+      passwordHash: await this.hash(input.password),
+      createdAt:    Date.now(),
     }).run();
 
-    const row = db.select().from(users).where(eq(users.id, id)).get();
+    const row = this.findById(id);
     if (!row) throw new Error('User not found after insert');
-
-    // Registering signs you in — otherwise the renderer would show the
-    // authenticated UI while every subsequent request failed requireSession().
-    _session = { userId: row.id, username: row.username, loggedInAt: Date.now() };
-    return toUser(row);
+    this.onRegister(id);
+    // Registering signs you in — setup continues with choosing a PIN.
+    return this.startSession(row);
   }
 
-  async login(input: LoginInput): Promise<User> {
-    const db = getDb();
-    const row = db
-      .select()
-      .from(users)
-      .where(eq(users.username, input.username.toLowerCase().trim()))
-      .get();
-
-    if (!row) throw new Error('Invalid username or password');
-
-    const valid = await Bun.password.verify(input.password, row.passwordHash);
-    if (!valid) throw new Error('Invalid username or password');
-
-    _session = { userId: row.id, username: row.username, loggedInAt: Date.now() };
-    return toUser(row);
+  async login(input: LoginInput): Promise<AuthUser> {
+    const row = this.findByUsername(input.username);
+    if (!row || !(await Bun.password.verify(input.password, row.passwordHash))) {
+      throw new Error('Invalid username or password');
+    }
+    // A password sign-in is what re-enables a PIN refused after wrong attempts.
+    this.update(row.id, { failedPinAttempts: 0 });
+    return this.startSession({ ...row, failedPinAttempts: 0 });
   }
 
-  logout(): void {
+  async unlockWithPin(userId: string, pin: string): Promise<PinUnlockResult> {
+    const row = this.findById(userId);
+    if (!row) throw new Error('Unknown user');
+    if (row.pinHash === null) throw new Error('This user has no PIN yet. Sign in with your password.');
+    if (row.failedPinAttempts >= MAX_PIN_ATTEMPTS) {
+      throw new Error('Too many wrong PINs. Sign in with your password.');
+    }
+
+    if (!(await Bun.password.verify(pin, row.pinHash))) {
+      const attempts = row.failedPinAttempts + 1;
+      this.update(row.id, { failedPinAttempts: attempts });
+      return { ok: false, triesLeft: MAX_PIN_ATTEMPTS - attempts };
+    }
+
+    this.update(row.id, { failedPinAttempts: 0 });
+    return { ok: true, user: this.startSession({ ...row, failedPinAttempts: 0 }) };
+  }
+
+  /** The first PIN is part of setup; replacing one needs the password. */
+  async setPin(input: SetPinInput): Promise<AuthUser> {
+    const row = this.sessionRow();
+    if (!PIN_PATTERN.test(input.pin)) throw new Error('PIN must be 4 to 6 digits');
+    if (row.pinHash !== null) await this.requirePassword(row, input.password);
+
+    const next = { pinHash: await this.hash(input.pin), failedPinAttempts: 0 };
+    this.update(row.id, next);
+    return toAuthUser({ ...row, ...next });
+  }
+
+  lock(): void {
     _session = null;
+  }
+
+  /** The signed-in user, or null. */
+  currentUser(): AuthUser | null {
+    if (!_session) return null;
+    const row = this.findById(_session.userId);
+    return row ? toAuthUser(row) : null;
   }
 
   getSession(): AuthSession | null {
@@ -64,8 +140,55 @@ export class AuthService {
     if (!_session) throw new Error('Not authenticated');
     return _session;
   }
+
+  // ── internals ──────────────────────────────────────────────────────────────
+
+  private startSession(row: UserRow): AuthUser {
+    const now = Date.now();
+    _session = { userId: row.id, username: row.username, loggedInAt: now };
+    getDb()
+      .insert(appState)
+      .values({ key: LAST_USER_KEY, value: row.id, updatedAt: now })
+      .onConflictDoUpdate({ target: appState.key, set: { value: row.id, updatedAt: now } })
+      .run();
+    return toAuthUser(row);
+  }
+
+  private sessionRow(): UserRow {
+    const row = this.findById(this.requireSession().userId);
+    if (!row) throw new Error('Not authenticated');
+    return row;
+  }
+
+  private async requirePassword(row: UserRow, password: string | undefined): Promise<void> {
+    if (!password || !(await Bun.password.verify(password, row.passwordHash))) {
+      throw new Error('Wrong password');
+    }
+  }
+
+  private hash(secret: string): Promise<string> {
+    return Bun.password.hash(secret, { algorithm: 'bcrypt', cost: this.hashCost });
+  }
+
+  private findById(id: string): UserRow | undefined {
+    return getDb().select().from(users).where(eq(users.id, id)).get();
+  }
+
+  private findByUsername(username: string): UserRow | undefined {
+    return getDb().select().from(users).where(eq(users.username, username.toLowerCase().trim())).get();
+  }
+
+  private update(id: string, values: Partial<UserRow>): void {
+    getDb().update(users).set(values).where(eq(users.id, id)).run();
+  }
 }
 
-function toUser(row: typeof users.$inferSelect): User {
-  return { id: row.id, username: row.username, createdAt: row.createdAt };
+function toAuthUser(row: UserRow): AuthUser {
+  return {
+    id: row.id,
+    username: row.username,
+    createdAt: row.createdAt,
+    hasPin: row.pinHash !== null,
+    hasRecoveryKey: row.recoveryKeyHash !== null,
+  };
 }
