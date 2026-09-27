@@ -80,6 +80,9 @@ export const CMD = {
     GET_FOR_NOTE:  'tags_get_for_note',
     GET_NOTE_MAP:  'tags_get_note_map',
   },
+  ATTACHMENTS: {
+    CREATE: 'attachments_create',
+  },
   FRAGMENTS: {
     GET_FOR_NOTE: 'fragments_get_for_note',
     ATTACH_TAG:   'fragments_attach_tag',

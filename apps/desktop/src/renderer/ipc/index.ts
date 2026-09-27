@@ -9,6 +9,7 @@ import type {
   Block, BlockRefTarget,
   Tag, CreateTagInput, NoteTagRow,
   FragmentAnnotationMap, CreateFragmentLinkInput, FragmentLink,
+  Attachment, CreateAttachmentInput,
   User, RegisterInput, LoginInput, AuthSession,
 } from '@shared/types';
 
@@ -49,6 +50,10 @@ export const api = {
     detach:      (noteId: string, tagId: string)  => invoke<void>('tags_detach', { noteId, tagId }),
     getForNote:  (noteId: string)                 => invoke<Tag[]>('tags_get_for_note', { noteId }),
     getNoteMap:  (vaultId: string)                => invoke<NoteTagRow[]>('tags_get_note_map', { vaultId }),
+  },
+
+  attachments: {
+    create: (data: CreateAttachmentInput) => invoke<Attachment>('attachments_create', { data }),
   },
 
   fragments: {

@@ -1,7 +1,9 @@
+mod attachments;
 mod commands;
 mod search;
 mod state;
 
+use std::path::Path;
 use std::sync::Mutex;
 
 use state::AppState;
@@ -22,6 +24,16 @@ pub fn run() {
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
+        // Images in notes: `cord-attachment://<id>` reads `attachments/<id>.<ext>`
+        // beside the database. Reads happen off the main thread.
+        .register_asynchronous_uri_scheme_protocol("cord-attachment", |ctx, request, responder| {
+            let id = request.uri().path().trim_start_matches('/').to_owned();
+            let dir = ctx
+                .app_handle()
+                .try_state::<AppState>()
+                .and_then(|s| s.db_path.as_deref().map(|p| attachments::attachments_dir(Path::new(p))));
+            std::thread::spawn(move || responder.respond(attachments::respond(dir.as_deref(), &id)));
+        })
         .setup(|app| {
             let (port, db_path, child) = start_sidecar(app)?;
             app.manage(AppState::new(port, db_path.as_deref()));
@@ -71,6 +83,8 @@ pub fn run() {
             commands::auth::auth_login,
             commands::auth::auth_logout,
             commands::auth::auth_session,
+            // attachments
+            commands::attachments::attachments_create,
         ])
         .build(tauri::generate_context!())
         .expect("error building Cord");
