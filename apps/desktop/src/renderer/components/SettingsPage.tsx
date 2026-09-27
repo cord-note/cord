@@ -5,7 +5,8 @@ import { useVaultStore } from '../store/vaults';
 import { useTagStore } from '../store/tags';
 import { useSettingsStore } from '../store/settings';
 import { useUIStore, type SettingsTab } from '../store/ui';
-import { useThemeStore, type Theme, type ColorScheme } from '../store/theme';
+import { useThemeStore, type ColorScheme } from '../store/theme';
+import { useThemeRegistry } from '../registry/ThemeRegistry';
 import {
   KEYBINDINGS,
   KEYBINDING_GROUPS,
@@ -135,18 +136,6 @@ interface ChapterProps {
 
 // ── Appearance ────────────────────────────────────────────────────────────────
 
-// Previews read each theme's own tokens (data-theme on the preview element),
-// so colours are defined once, in global.css.
-const THEMES: { id: Theme; label: string; desc: string }[] = [
-  { id: 'mono',      label: 'Monochrome', desc: 'Classic black & white' },
-  { id: 'blue',      label: 'Blue',       desc: 'Deep navy + sky blue' },
-  { id: 'olive',     label: 'Olive',      desc: 'Forest green + amber' },
-  { id: 'teal',      label: 'Teal',       desc: 'Deep sea + coral' },
-  { id: 'midnight',  label: 'Midnight',   desc: 'Dark navy + rose' },
-  { id: 'rosewood',  label: 'Rosewood',   desc: 'Warm brown + dusty rose' },
-  { id: 'parchment', label: 'Parchment',  desc: 'Warm paper + caramel' },
-];
-
 const SCHEMES: { id: ColorScheme; label: string }[] = [
   { id: 'dark',   label: 'Dark'   },
   { id: 'light',  label: 'Light'  },
@@ -154,7 +143,8 @@ const SCHEMES: { id: ColorScheme; label: string }[] = [
 ];
 
 function AppearanceChapter({ sectionRef }: ChapterProps) {
-  const { theme, colorScheme, setTheme, setColorScheme } = useThemeStore();
+  const { activeTheme, colorScheme, setTheme, setColorScheme } = useThemeStore();
+  const themes = useThemeRegistry((s) => s.themes);
   const [filter, setFilter] = useState('');
 
   // Subscribing to colorScheme (rather than reading the DOM attribute during
@@ -166,11 +156,11 @@ function AppearanceChapter({ sectionRef }: ChapterProps) {
 
   const visibleThemes = useMemo(() => {
     const q = filter.trim().toLowerCase();
-    if (!q) return THEMES;
-    return THEMES.filter(
-      (t) => t.label.toLowerCase().includes(q) || t.desc.toLowerCase().includes(q),
+    if (!q) return themes;
+    return themes.filter(
+      (t) => t.label.toLowerCase().includes(q) || t.description.toLowerCase().includes(q),
     );
-  }, [filter]);
+  }, [filter, themes]);
 
   return (
     <section className={`${styles.chapter} cord-settings__section`} data-chapter="appearance" ref={sectionRef}>
@@ -215,9 +205,11 @@ function AppearanceChapter({ sectionRef }: ChapterProps) {
             {visibleThemes.map((t) => (
               <button
                 key={t.id}
-                className={`${styles.themeCard} ${theme === t.id ? styles.themeCardActive : ''}`}
+                className={`${styles.themeCard} ${activeTheme === t.id ? styles.themeCardActive : ''}`}
                 onClick={() => setTheme(t.id)}
               >
+                {/* Previews read each theme's own tokens, so a theme's colours are
+                    defined once: in global.css, or in its augment's stylesheet. */}
                 <div
                   className={styles.themePreview}
                   data-theme={t.id}
@@ -232,8 +224,8 @@ function AppearanceChapter({ sectionRef }: ChapterProps) {
                   </div>
                 </div>
                 <div className={styles.themeCardLabel}>{t.label}</div>
-                <div className={styles.themeCardDesc}>{t.desc}</div>
-                {theme === t.id && <div className={styles.themeCardCheck}>✓</div>}
+                <div className={styles.themeCardDesc}>{t.description}</div>
+                {activeTheme === t.id && <div className={styles.themeCardCheck}>✓</div>}
               </button>
             ))}
           </div>
