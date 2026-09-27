@@ -648,3 +648,66 @@
   font: inherit;
   font-size: var(--text-md);
 }
+
+/* ── JSON view and problems ─────────────────────────────────────────────── */
+
+.jsonView {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.jsonBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.jsonEditor {
+  min-height: 360px;
+  resize: vertical;
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--text-md);
+  line-height: 1.6;
+  tab-size: 2;
+  white-space: pre;
+}
+
+.jsonEditor:focus { border-color: var(--border-strong); }
+
+.problemList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+}
+
+.problemError   { color: var(--danger); }
+.problemWarning { color: var(--text-secondary); }
+
+.problemsBanner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-bottom: var(--space-4);
+  padding: var(--space-2-5) var(--space-3);
+  border-radius: var(--radius);
+  border: 1px solid var(--danger-border);
+  background: var(--danger-hover-bg);
+  color: var(--text-primary);
+  font-size: var(--text-md);
+}
+
+.bannerLink {
+  align-self: flex-start;
+  color: var(--danger);
+  text-decoration: underline;
+  font-size: var(--text-sm);
+}
