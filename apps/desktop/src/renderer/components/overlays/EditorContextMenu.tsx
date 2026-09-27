@@ -1,21 +1,12 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import type { Editor } from 'shuttle-editor';
+import type { Editor, ShuttleControls } from 'shuttle-editor';
 import { ArrowLeft, Tag as TagIcon, Link2, Plus, Copy, Scissors, Clipboard, FileText } from 'lucide-react';
 import { useFragmentStore } from '../../store/fragments';
 import { useTagStore } from '../../store/tags';
-import { useNoteStore } from '../../store/notes';
 import { useVaultStore } from '../../store/vaults';
-import type { Note } from '@shared/types';
-import { api } from '../../ipc';
+import { log } from '../../lib/log';
 import { blockElement, topLevelBlockId } from './blockDom';
 import styles from './EditorContextMenu.module.css';
-
-type BlockEntry = {
-  blockId: string;
-  text: string;
-  type: string;
-  level?: number | undefined;
-};
 
 interface MenuState {
   x: number;
@@ -23,29 +14,26 @@ interface MenuState {
   blockId: string | null;
 }
 
-type SubView =
-  | null
-  | { kind: 'tag' }
-  | { kind: 'noteLink' }
-  | { kind: 'fragmentLink'; step: 1 }
-  | { kind: 'fragmentLink'; step: 2; targetNote: Note };
+type SubView = null | { kind: 'tag' };
+
+type FragmentAction = 'tag' | 'noteLink' | 'fragmentLink';
 
 interface Props {
   editor: Editor;
   noteId: string;
+  /** Shuttle's pickers, which the link actions use. */
+  controls: ShuttleControls | null;
 }
 
-export function EditorContextMenu({ editor, noteId }: Props) {
+export function EditorContextMenu({ editor, noteId, controls }: Props) {
   const { annotations, attachTag, createLink } = useFragmentStore();
   const { tags, createTag } = useTagStore();
-  const { notes } = useNoteStore();
   const { activeVaultId } = useVaultStore();
 
   const [menu, setMenu]         = useState<MenuState | null>(null);
   const [sub, setSub]           = useState<SubView>(null);
   const [query, setQuery]       = useState('');
   const [listIndex, setListIndex] = useState(0);
-  const [targetBlocks, setTargetBlocks] = useState<BlockEntry[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const menuRef  = useRef<HTMLDivElement>(null);
 
@@ -54,6 +42,40 @@ export function EditorContextMenu({ editor, noteId }: Props) {
     setSub(null);
     setQuery('');
   }, []);
+
+  /** Link a block to a note, chosen in Shuttle's picker. */
+  const linkToNote = useCallback(async (fromBlockId: string) => {
+    const target = await controls?.pickNote({ title: 'Link block to a note' });
+    if (!target) return;
+    try {
+      const link = await createLink({ fromFragmentId: fromBlockId, fromNoteId: noteId, vaultId: activeVaultId ?? '', toNoteId: target.id });
+      editor.chain().focus().insertFragmentLink({ linkId: link.id, toNoteId: target.id, toFragmentId: null, label: target.title || 'Untitled' }).run();
+    } catch (error) {
+      log('error', 'links', 'Linking the block to a note failed', { error: String(error) });
+    }
+  }, [controls, createLink, noteId, activeVaultId, editor]);
+
+  /** Link a block to another note's block, chosen in Shuttle's picker. */
+  const linkToFragment = useCallback(async (fromBlockId: string) => {
+    const picked = await controls?.pickBlock({ title: 'Link block to a block' });
+    if (!picked) return;
+    const { note, block } = picked;
+    try {
+      const link = await createLink({
+        fromFragmentId:   fromBlockId,
+        fromNoteId:       noteId,
+        vaultId:          activeVaultId ?? '',
+        toNoteId:         note.id,
+        toFragmentId:     block.id,
+        toFragmentNoteId: note.id,
+      });
+      editor.chain().focus().insertFragmentLink({
+        linkId: link.id, toNoteId: note.id, toFragmentId: block.id, label: (block.text || note.title || 'block').slice(0, 30),
+      }).run();
+    } catch (error) {
+      log('error', 'links', 'Linking the block to a block failed', { error: String(error) });
+    }
+  }, [controls, createLink, noteId, activeVaultId, editor]);
 
   useEffect(() => {
     const pm = editor?.view.dom as HTMLElement | undefined;
@@ -91,37 +113,22 @@ export function EditorContextMenu({ editor, noteId }: Props) {
 
   useEffect(() => { setListIndex(0); }, [query]);
 
-  // Blocks of the note being linked to, from the index. Synthetic ids (which
-  // contain ':') are positional and can't be link targets.
-  const targetNoteId = sub?.kind === 'fragmentLink' && sub.step === 2 ? sub.targetNote.id : null;
-  useEffect(() => {
-    setTargetBlocks([]);
-    if (!targetNoteId) return;
-    let cancelled = false;
-    void api.blocks.listForNote(targetNoteId).then((rows) => {
-      if (cancelled) return;
-      setTargetBlocks(rows
-        .filter((b) => !b.id.includes(':') && b.text.trim())
-        .map((b) => ({ blockId: b.id, text: b.text, type: b.type, level: b.level ?? undefined })));
-    }).catch(() => { if (!cancelled) setTargetBlocks([]); });
-    return () => { cancelled = true; };
-  }, [targetNoteId]);
-
+  // Block actions from Shuttle's slash menu and block menu. Links open the
+  // picker directly; tagging opens this menu's tag view under the block.
   useEffect(() => {
     const handler = (e: Event) => {
-      const { type, blockId } = (e as CustomEvent<{ type: 'tag' | 'noteLink' | 'fragmentLink'; blockId: string }>).detail;
+      const { type, blockId } = (e as CustomEvent<{ type: FragmentAction; blockId: string }>).detail;
+      if (type === 'noteLink') { void linkToNote(blockId); return; }
+      if (type === 'fragmentLink') { void linkToFragment(blockId); return; }
       const pm = editor?.view.dom as HTMLElement | undefined;
-      const blockEl = pm ? blockElement(pm, blockId) : null;
-      const rect = blockEl?.getBoundingClientRect();
-      const x = rect ? rect.left : 200;
-      const y = rect ? rect.bottom + 4 : 200;
-      setMenu({ x, y, blockId });
-      setSub(type === 'tag' ? { kind: 'tag' } : type === 'noteLink' ? { kind: 'noteLink' } : { kind: 'fragmentLink', step: 1 });
+      const rect = (pm ? blockElement(pm, blockId) : null)?.getBoundingClientRect();
+      setMenu({ x: rect ? rect.left : 200, y: rect ? rect.bottom + 4 : 200, blockId });
+      setSub({ kind: 'tag' });
       setQuery('');
     };
     window.addEventListener('corddb:fragment-action', handler);
     return () => window.removeEventListener('corddb:fragment-action', handler);
-  }, [editor]);
+  }, [editor, linkToNote, linkToFragment]);
 
   function execCopy()  { document.execCommand('copy');  close(); }
   function execCut()   { document.execCommand('cut');   close(); }
@@ -150,44 +157,15 @@ export function EditorContextMenu({ editor, noteId }: Props) {
     await doAttachTag(tag.id);
   }
 
-  async function doLinkNote(toNoteId: string, noteTitle: string) {
-    if (!blockId) return;
-    const link = await createLink({ fromFragmentId: blockId, fromNoteId: noteId, vaultId: activeVaultId ?? '', toNoteId });
-    editor.chain().focus().insertFragmentLink({ linkId: link.id, toNoteId, toFragmentId: null, label: noteTitle }).run();
-    close();
-  }
-
-  async function doLinkFragment(targetNote: Note, toFragmentId: string, fragmentText: string) {
-    if (!blockId) return;
-    const link = await createLink({
-      fromFragmentId:   blockId,
-      fromNoteId:       noteId,
-      vaultId:          activeVaultId ?? '',
-      toNoteId:         targetNote.id,
-      toFragmentId,
-      toFragmentNoteId: targetNote.id,
-    });
-    editor.chain().focus().insertFragmentLink({
-      linkId: link.id, toNoteId: targetNote.id, toFragmentId, label: fragmentText.slice(0, 30),
-    }).run();
-    close();
-  }
-
   const q = query.toLowerCase();
   const attachedTagIds = new Set(annotation.tags.map((t) => t.id));
   const filteredTags = tags.filter((t) => !attachedTagIds.has(t.id) && t.name.toLowerCase().includes(q));
   const tagExists = tags.some((t) => t.name.toLowerCase() === query.trim().toLowerCase());
 
-  const linkedNoteIds = new Set(annotation.links.map((l) => l.toNoteId).filter(Boolean));
-  const filteredNotes = notes.filter(
-    (n) => n.id !== noteId && !linkedNoteIds.has(n.id) && (n.title || 'Untitled').toLowerCase().includes(q),
-  );
-
   if (!menu) return null;
 
-  const isFragStep2 = sub?.kind === 'fragmentLink' && sub.step === 2;
-  const MENU_W = isFragStep2 ? 380 : 200;
-  const MENU_H = isFragStep2 ? 460 : (sub ? 280 : 180);
+  const MENU_W = 200;
+  const MENU_H = sub ? 280 : 180;
   const left = Math.min(menu.x, window.innerWidth  - MENU_W - 8);
   const top  = Math.min(menu.y, window.innerHeight - MENU_H - 8);
 
@@ -219,11 +197,11 @@ export function EditorContextMenu({ editor, noteId }: Props) {
                 <TagIcon size={13} strokeWidth={1.75} className={styles.itemIcon} />
                 <span className={styles.itemLabel}>Add tag to block</span>
               </button>
-              <button className={styles.item} onClick={() => { setSub({ kind: 'noteLink' }); setQuery(''); }}>
+              <button className={styles.item} onClick={() => { close(); void linkToNote(blockId); }}>
                 <FileText size={13} strokeWidth={1.75} className={styles.itemIcon} />
                 <span className={styles.itemLabel}>Link block → note</span>
               </button>
-              <button className={styles.item} onClick={() => { setSub({ kind: 'fragmentLink', step: 1 }); setQuery(''); }}>
+              <button className={styles.item} onClick={() => { close(); void linkToFragment(blockId); }}>
                 <Link2 size={13} strokeWidth={1.75} className={styles.itemIcon} />
                 <span className={styles.itemLabel}>Link block → fragment</span>
               </button>
@@ -266,104 +244,6 @@ export function EditorContextMenu({ editor, noteId }: Props) {
           </div>
         </>
       )}
-
-      {sub?.kind === 'noteLink' && (
-        <>
-          <SubHeader label="Link → note" onBack={() => { setSub(null); setQuery(''); }} />
-          <input
-            ref={inputRef}
-            className={styles.input}
-            placeholder="Search notes…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'ArrowDown') { e.preventDefault(); setListIndex((i) => Math.min(i + 1, filteredNotes.length - 1)); }
-              else if (e.key === 'ArrowUp') { e.preventDefault(); setListIndex((i) => Math.max(i - 1, 0)); }
-              else if (e.key === 'Enter') { if (filteredNotes[listIndex]) doLinkNote(filteredNotes[listIndex].id, filteredNotes[listIndex].title || 'Untitled'); }
-              else if (e.key === 'Escape') close();
-            }}
-          />
-          <div className={styles.list}>
-            {filteredNotes.map((note, i) => (
-              <button key={note.id} className={`${styles.item} ${i === listIndex ? styles.itemActive : ''}`} onClick={() => doLinkNote(note.id, note.title || 'Untitled')} onMouseEnter={() => setListIndex(i)}>
-                {note.title || 'Untitled'}
-              </button>
-            ))}
-            {filteredNotes.length === 0 && <div className={styles.empty}>No notes found</div>}
-          </div>
-        </>
-      )}
-
-      {sub?.kind === 'fragmentLink' && sub.step === 1 && (
-        <>
-          <SubHeader label="Link → fragment (pick note)" onBack={() => { setSub(null); setQuery(''); }} />
-          <input
-            ref={inputRef}
-            className={styles.input}
-            placeholder="Search notes…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'ArrowDown') { e.preventDefault(); setListIndex((i) => Math.min(i + 1, filteredNotes.length - 1)); }
-              else if (e.key === 'ArrowUp') { e.preventDefault(); setListIndex((i) => Math.max(i - 1, 0)); }
-              else if (e.key === 'Enter') { if (filteredNotes[listIndex]) { setSub({ kind: 'fragmentLink', step: 2, targetNote: filteredNotes[listIndex] }); setQuery(''); } }
-              else if (e.key === 'Escape') close();
-            }}
-          />
-          <div className={styles.list}>
-            {filteredNotes.map((note, i) => (
-              <button
-                key={note.id}
-                className={`${styles.item} ${i === listIndex ? styles.itemActive : ''}`}
-                onClick={() => { setSub({ kind: 'fragmentLink', step: 2, targetNote: note }); setQuery(''); }}
-                onMouseEnter={() => setListIndex(i)}
-              >
-                {note.title || 'Untitled'} →
-              </button>
-            ))}
-            {filteredNotes.length === 0 && <div className={styles.empty}>No notes found</div>}
-          </div>
-        </>
-      )}
-
-      {sub?.kind === 'fragmentLink' && sub.step === 2 && (() => {
-        const allBlocks = targetBlocks;
-        const blocks = q
-          ? allBlocks.filter((b) => b.text.toLowerCase().includes(q))
-          : allBlocks;
-        return (
-          <>
-            <SubHeader
-              label={sub.targetNote.title || 'Untitled'}
-              onBack={() => { setSub({ kind: 'fragmentLink', step: 1 }); setQuery(''); }}
-            />
-            <input
-              ref={inputRef}
-              className={styles.input}
-              placeholder="Filter by text…"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Escape') close(); }}
-            />
-            <div className={styles.notePreview}>
-              {blocks.length === 0 && <div className={styles.empty}>No blocks found</div>}
-              {blocks.map((b) => (
-                <button
-                  key={b.blockId}
-                  className={`${styles.previewBlock} ${styles[`previewBlock_${b.type}` as keyof typeof styles] ?? ''}`}
-                  data-level={b.level}
-                  onClick={() => doLinkFragment(sub.targetNote, b.blockId, b.text)}
-                  title="Click to link to this block"
-                >
-                  {b.type === 'codeBlock'
-                    ? <code className={styles.previewCode}>{b.text}</code>
-                    : b.text}
-                </button>
-              ))}
-            </div>
-          </>
-        );
-      })()}
     </div>
   );
 }

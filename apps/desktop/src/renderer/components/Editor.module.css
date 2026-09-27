@@ -161,12 +161,6 @@
   position: relative;
 }
 
-/* Shuttle renders the document; the line width is Cord's setting. */
-.content :global(.sh-root) {
-  max-width: var(--editor-line-width, 720px);
-  margin: 0 auto;
-}
-
 /* ── Status bar ──────────────────────────────────────────────────────────── */
 .statusBar {
   border-top: 1px solid var(--border);
