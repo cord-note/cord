@@ -8,6 +8,7 @@ import {
   formatAccel,
   matchesBinding,
   flushKeybindings,
+  unloadKeybindings,
   parseOverrides,
   shuttleOverrides,
   useKeybindingStore,
@@ -228,5 +229,20 @@ describe('keybindings.json', () => {
     useKeybindingStore.getState().setBinding('app.settings', 'Mod+Shift+K');
     await flushKeybindings();
     expect(disk.writes).toEqual([]);
+  });
+});
+
+describe('unloadKeybindings', () => {
+  it('writes pending changes, then falls back to the defaults', async () => {
+    disk.text = null;
+    disk.writes = [];
+    await useKeybindingStore.getState().load();
+    const def = KEYBINDINGS[0]!;
+    useKeybindingStore.getState().setBinding(def.id, 'Ctrl+Alt+F12');
+
+    await unloadKeybindings();
+
+    expect(disk.text).toContain('Ctrl+Alt+F12');
+    expect(useKeybindingStore.getState().bindings[def.id]).toBe(def.defaultAccel);
   });
 });
