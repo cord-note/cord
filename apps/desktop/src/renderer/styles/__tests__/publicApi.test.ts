@@ -12,7 +12,7 @@ const REPO = join(RENDERER, '..', '..', '..', '..');
 
 const doc = readFileSync(join(REPO, 'docs', 'theming', 'public-api.md'), 'utf8');
 const globalCss = readFileSync(join(RENDERER, 'styles', 'global.css'), 'utf8');
-const settingsTs = readFileSync(join(RENDERER, 'store', 'settings.ts'), 'utf8');
+const settingsTs = readFileSync(join(RENDERER, 'settings', 'builtin.ts'), 'utf8');
 
 const CLASS = /\bcord-[a-z]+(?:-[a-z]+)*(?:__[a-z]+(?:-[a-z]+)*)?(?:--[a-z]+(?:-[a-z]+)*)?/g;
 

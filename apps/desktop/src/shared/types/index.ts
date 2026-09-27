@@ -222,17 +222,6 @@ export interface CreateFragmentLinkInput {
   toFragmentNoteId?: string;
 }
 
-// ─── Settings ─────────────────────────────────────────────────────────────────
-
-export interface AppSettings {
-  editorFontSize: number;
-  editorLineWidth: number;
-  spellCheck: boolean;
-  unlinkedMentions: boolean;
-  /** Restrict the vault colour picker to a curated high-contrast subset. */
-  distinctVaultColors: boolean;
-}
-
 // ─── Operation log ────────────────────────────────────────────────────────────
 
 export type EntityType = 'note' | 'vault' | 'tag' | 'link' | 'fragment' | 'attachment';
