@@ -1,27 +1,62 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
-import { X, List, ListOrdered, CheckSquare, Quote, Code2, Minus, Sigma, Tag } from 'lucide-react';
-import { EditorContent } from '@tiptap/react';
+import { useEffect, useRef, useCallback, useMemo, useState } from 'react';
+import { X, Tag } from 'lucide-react';
+import { convertFileSrc } from '@tauri-apps/api/core';
+import { ShuttleEditor, type Editor as ShuttleEditorInstance, type JSONContent, type ShuttleControls } from 'shuttle-editor';
 import { FragmentOverlay } from './overlays/FragmentOverlay';
 import { EditorContextMenu } from './overlays/EditorContextMenu';
+import { WikiLinkPills } from './overlays/WikiLinkPills';
+import { blockElement } from './overlays/blockDom';
 import { useFragmentStore } from '../store/fragments';
 import { useNoteStore } from '../store/notes';
 import { useTagStore } from '../store/tags';
 import { useVaultStore } from '../store/vaults';
 import { useSettingsStore } from '../store/settings';
 import { useUIStore } from '../store/ui';
+import { useThemeStore, resolveScheme } from '../store/theme';
+import { useKeybindingStore, shuttleOverrides } from '../store/keybindings';
+import { api } from '../ipc';
+import { log } from '../lib/log';
+import { createCordHost } from '../shuttle/cordHost';
+import { outboundMentions as findOutboundMentions } from '../shuttle/outboundMentions';
 import type { Note } from '@shared/types';
 import styles from './Editor.module.css';
-
-import { WikiLinkPills } from './overlays/WikiLinkPills';
-import { useNoteDoc } from './editor/useNoteDoc';
-import BlockChrome from './editor/BlockChrome';
-import BlockRefPicker from './editor/BlockRefPicker';
-import { OPEN_REF_PICKER_EVENT } from './editor/blockTarget';
 
 const SAVE_DEBOUNCE_MS = 750;
 
 interface Props {
   note: Note;
+}
+
+/**
+ * The stored body as a document for Shuttle, or null for an empty note. A
+ * document from before Shuttle passes through unchanged: Shuttle opens it
+ * read-only and never saves it.
+ */
+function parseStoredDoc(bodyJson: string): JSONContent | null {
+  try {
+    const parsed: unknown = JSON.parse(bodyJson);
+    if (typeof parsed === 'object' && parsed !== null && (parsed as JSONContent).type === 'doc') {
+      return parsed as JSONContent;
+    }
+  } catch {
+    // Unreadable body — open as an empty document.
+  }
+  return null;
+}
+
+/** Cord's light/dark scheme, following the system when set to `system`. */
+function useResolvedScheme(): 'light' | 'dark' {
+  const colorScheme = useThemeStore((s) => s.colorScheme);
+  const [resolved, setResolved] = useState(() => resolveScheme(colorScheme));
+  useEffect(() => {
+    setResolved(resolveScheme(colorScheme));
+    if (colorScheme !== 'system') return;
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = (): void => setResolved(resolveScheme('system'));
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, [colorScheme]);
+  return resolved;
 }
 
 export default function Editor({ note }: Props) {
@@ -32,9 +67,17 @@ export default function Editor({ note }: Props) {
   const { tags, createTag } = useTagStore();
   const { activeVaultId } = useVaultStore();
   const { setView } = useUIStore();
+  const bindings = useKeybindingStore((s) => s.bindings);
+  const colorScheme = useResolvedScheme();
   const [showTagPicker, setShowTagPicker] = useState(false);
   const [newTagName, setNewTagName] = useState('');
-  const [showRefPicker, setShowRefPicker] = useState(false);
+
+  const [editor, setEditor] = useState<ShuttleEditorInstance | null>(null);
+  const controls = useRef<ShuttleControls | null>(null);
+  const [stats, setStats] = useState({ words: 0, characters: 0 });
+  const [outboundMentions, setOutboundMentions] = useState<Note[]>([]);
+  /** Set when wiki links changed; the save that follows re-derives note_links. */
+  const linksDirty = useRef(false);
 
   const noteIdRef = useRef(note.id);
   const titleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -44,10 +87,52 @@ export default function Editor({ note }: Props) {
   const { loadForNote: loadFragments, pendingScroll, setPendingScroll } = useFragmentStore();
 
   const [localTitle, setLocalTitle] = useState(note.title);
-
-  // The editor instance, its save cycle and its counters.
-  const { editor, wordCount, charCount, outboundMentions } = useNoteDoc(note);
   const isNotepad = note.kind === 'notepad';
+
+  // Read only when the note changes: Shuttle owns the document after that.
+  const doc = useMemo(() => parseStoredDoc(note.bodyJson), [note.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const openNote = useCallback((id: string, blockId?: string) => {
+    setView('notes');
+    void setActiveNote(id);
+    void loadLinks(id);
+    if (blockId) setPendingScroll(blockId);
+  }, [setView, setActiveNote, loadLinks, setPendingScroll]);
+
+  // A new host whenever the note list changes, so Shuttle refreshes the
+  // unlinked-mention highlighting it derives from the titles.
+  const host = useMemo(() => createCordHost({
+    getNotes: () => notes,
+    getActiveVaultId: () => activeVaultId,
+    api,
+    convertFileSrc,
+    openNote,
+    onFragmentAction: ({ type, blockId }) => {
+      window.dispatchEvent(new CustomEvent('corddb:fragment-action', { detail: { type, blockId } }));
+    },
+    reloadFragments: (noteId) => { void loadFragments(noteId); },
+    onLinksMaybeChanged: () => { linksDirty.current = true; },
+    keybindingOverrides: shuttleOverrides(bindings),
+    log,
+  }), [notes, activeVaultId, openNote, loadFragments, bindings]);
+
+  const handleChange = useCallback((id: string, json: JSONContent) => {
+    void updateNote(id, { bodyJson: JSON.stringify(json) })
+      .then(() => {
+        // note_links is derived by the sidecar on save, so reload after it lands.
+        if (linksDirty.current) {
+          linksDirty.current = false;
+          void loadLinks(id);
+        }
+      })
+      .catch((error: unknown) => log('error', 'editor', 'Saving the note failed', { noteId: id, error: String(error) }));
+    setOutboundMentions(findOutboundMentions(json, useNoteStore.getState().notes, id));
+  }, [updateNote, loadLinks]);
+
+  const handleReady = useCallback((e: ShuttleEditorInstance | null, c: ShuttleControls | null) => {
+    setEditor(e);
+    controls.current = c;
+  }, []);
 
   useEffect(() => {
     noteIdRef.current = note.id;
@@ -57,6 +142,11 @@ export default function Editor({ note }: Props) {
     if (mentionsEnabled) loadUnlinkedMentions(note.id, note.vaultId);
     setShowTagPicker(false);
   }, [note.id, note.title]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    linksDirty.current = false;
+    setOutboundMentions(doc ? findOutboundMentions(doc, useNoteStore.getState().notes, note.id) : []);
+  }, [note.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Clicking away is a dismissal, same as Escape. Without this the picker
   // stayed open — and kept its half-typed draft — until Enter or Escape.
@@ -73,19 +163,11 @@ export default function Editor({ note }: Props) {
     return () => document.removeEventListener('pointerdown', onPointerDown, true);
   }, [showTagPicker]);
 
-  // The slash menu cannot open a React modal itself, so it asks for one.
-  useEffect(() => {
-    function onOpen() { setShowRefPicker(true); }
-    window.addEventListener(OPEN_REF_PICKER_EVENT, onOpen);
-    return () => window.removeEventListener(OPEN_REF_PICKER_EVENT, onOpen);
-  }, []);
-
   useEffect(() => {
     if (!pendingScroll || !editor) return;
     setPendingScroll(null);
     const t = setTimeout(() => {
-      const el = editor.view.dom.querySelector(`[data-block-id="${pendingScroll}"]`) as HTMLElement | null;
-      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      blockElement(editor.view.dom, pendingScroll)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 80);
     return () => clearTimeout(t);
   }, [pendingScroll, editor, setPendingScroll]);
@@ -94,6 +176,7 @@ export default function Editor({ note }: Props) {
     function onCmd(e: Event) {
       const { cmd } = (e as CustomEvent<{ cmd: string }>).detail;
       if (!editor || editor.isDestroyed) return;
+      const at = editor.state.selection.from;
       switch (cmd) {
         case 'bold':      editor.chain().focus().toggleBold().run(); break;
         case 'italic':    editor.chain().focus().toggleItalic().run(); break;
@@ -102,25 +185,15 @@ export default function Editor({ note }: Props) {
         case 'h3':        editor.chain().focus().toggleHeading({ level: 3 }).run(); break;
         case 'codeBlock': editor.chain().focus().toggleCodeBlock().run(); break;
         case 'taskList':  editor.chain().focus().toggleTaskList().run(); break;
-        case 'hr':
-          // In a notepad a divider is its own block; setHorizontalRule would
-          // try to place one inside the current block, where it cannot go.
-          if (isNotepad) {
-            editor.chain().focus().command(({ commands, state }) =>
-              commands.replaceBlockWith(state.selection.from, [{ type: 'horizontalRule' }]),
-            ).run();
-          } else {
-            editor.chain().focus().setHorizontalRule().run();
-          }
-          break;
+        case 'hr':        editor.chain().focus().setHorizontalRule().run(); break;
 
         // Notepad-only. The command bar hides these for a plain note, but guard
         // anyway — the event is on `window` and anything can dispatch it.
-        case 'block:moveUp':    if (isNotepad) editor.commands.moveBlock(editor.state.selection.from, -1); break;
-        case 'block:moveDown':  if (isNotepad) editor.commands.moveBlock(editor.state.selection.from, 1); break;
-        case 'block:duplicate': if (isNotepad) editor.commands.duplicateBlock(editor.state.selection.from); break;
-        case 'block:delete':    if (isNotepad) editor.commands.deleteBlock(editor.state.selection.from); break;
-        case 'block:insertRef': if (isNotepad) setShowRefPicker(true); break;
+        case 'block:moveUp':    if (isNotepad) editor.commands.moveBlock(at, -1); break;
+        case 'block:moveDown':  if (isNotepad) editor.commands.moveBlock(at, 1); break;
+        case 'block:duplicate': if (isNotepad) editor.commands.duplicateBlock(at); break;
+        case 'block:delete':    if (isNotepad) editor.commands.deleteBlock(at); break;
+        case 'block:insertRef': if (isNotepad) controls.current?.openRefPicker(); break;
       }
     }
     window.addEventListener('corddb:editor-command', onCmd);
@@ -158,31 +231,6 @@ export default function Editor({ note }: Props) {
   const backlinkNotes = backlinks
     .map((l) => notes.find((n) => n.id === l.fromNoteId))
     .filter(Boolean);
-
-  function ToolbarBtn({
-    onClick,
-    active,
-    title,
-    children,
-  }: {
-    onClick: () => void;
-    active?: boolean;
-    title: string;
-    children: React.ReactNode;
-  }) {
-    return (
-      <button
-        className={`${styles.toolbarBtn} ${active ? styles.toolbarBtnActive : ''}`}
-        onMouseDown={(e) => {
-          e.preventDefault();
-          onClick();
-        }}
-        title={title}
-      >
-        {children}
-      </button>
-    );
-  }
 
   return (
     <div className={styles.editor}>
@@ -262,145 +310,25 @@ export default function Editor({ note }: Props) {
         ) : null}
       </div>
 
-      {editor && (
-        <div className={styles.toolbar}>
-          <ToolbarBtn
-            onClick={() => editor.chain().focus().toggleBold().run()}
-            active={editor.isActive('bold')}
-            title="Bold (Ctrl+B)"
-          >
-            <strong>B</strong>
-          </ToolbarBtn>
-          <ToolbarBtn
-            onClick={() => editor.chain().focus().toggleItalic().run()}
-            active={editor.isActive('italic')}
-            title="Italic (Ctrl+I)"
-          >
-            <em>I</em>
-          </ToolbarBtn>
-          <ToolbarBtn
-            onClick={() => editor.chain().focus().toggleCode().run()}
-            active={editor.isActive('code')}
-            title="Inline code"
-          >
-            {'</>'}
-          </ToolbarBtn>
-          <div className={styles.toolbarDivider} />
-          <ToolbarBtn
-            onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-            active={editor.isActive('heading', { level: 1 })}
-            title="Heading 1"
-          >
-            H1
-          </ToolbarBtn>
-          <ToolbarBtn
-            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-            active={editor.isActive('heading', { level: 2 })}
-            title="Heading 2"
-          >
-            H2
-          </ToolbarBtn>
-          <ToolbarBtn
-            onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-            active={editor.isActive('heading', { level: 3 })}
-            title="Heading 3"
-          >
-            H3
-          </ToolbarBtn>
-          <div className={styles.toolbarDivider} />
-          <ToolbarBtn
-            onClick={() => editor.chain().focus().toggleBulletList().run()}
-            active={editor.isActive('bulletList')}
-            title="Bullet list"
-          >
-            <List size={14} strokeWidth={1.75} />
-          </ToolbarBtn>
-          <ToolbarBtn
-            onClick={() => editor.chain().focus().toggleOrderedList().run()}
-            active={editor.isActive('orderedList')}
-            title="Ordered list"
-          >
-            <ListOrdered size={14} strokeWidth={1.75} />
-          </ToolbarBtn>
-          <ToolbarBtn
-            onClick={() => editor.chain().focus().toggleTaskList().run()}
-            active={editor.isActive('taskList')}
-            title="Task list (Ctrl+Enter to toggle)"
-          >
-            <CheckSquare size={14} strokeWidth={1.75} />
-          </ToolbarBtn>
-          <ToolbarBtn
-            onClick={() => editor.chain().focus().toggleBlockquote().run()}
-            active={editor.isActive('blockquote')}
-            title="Blockquote"
-          >
-            <Quote size={14} strokeWidth={1.75} />
-          </ToolbarBtn>
-          <ToolbarBtn
-            onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-            active={editor.isActive('codeBlock')}
-            title="Code block"
-          >
-            <Code2 size={14} strokeWidth={1.75} />
-          </ToolbarBtn>
-          <div className={styles.toolbarDivider} />
-          <ToolbarBtn
-            onClick={() => editor.chain().focus().setHorizontalRule().run()}
-            active={false}
-            title="Divider"
-          >
-            <Minus size={14} strokeWidth={1.75} />
-          </ToolbarBtn>
-          <ToolbarBtn
-            onClick={() =>
-              editor
-                .chain()
-                .focus()
-                .insertContent({ type: 'mathInline', attrs: { latex: '' } })
-                .run()
-            }
-            active={editor.isActive('mathInline')}
-            title="Math formula (inline)"
-          >
-            <Sigma size={14} strokeWidth={1.75} />
-          </ToolbarBtn>
-        </div>
-      )}
-
-      <div className={`${styles.content} ${isNotepad ? styles.notepad : ''}`} ref={contentRef}>
-        <EditorContent editor={editor} />
-        {editor && isNotepad && (
-          <BlockChrome
-            editor={editor}
-            noteId={note.id}
-            vaultId={note.vaultId}
-            contentEl={contentRef.current}
-          />
-        )}
-        {editor && (
-          <FragmentOverlay
-            editor={editor}
-            noteId={note.id}
-            contentEl={contentRef.current}
-          />
-        )}
-        {editor && (
-          <WikiLinkPills
-            editor={editor}
-            contentEl={contentRef.current}
-          />
-        )}
+      <div className={styles.content} ref={contentRef}>
+        <ShuttleEditor
+          docKey={note.id}
+          doc={doc}
+          mode={note.kind}
+          host={host}
+          twitch={false}
+          colorScheme={colorScheme}
+          saveDebounceMs={SAVE_DEBOUNCE_MS}
+          onChange={handleChange}
+          onStats={setStats}
+          onReady={handleReady}
+        >
+          {editor && <FragmentOverlay editor={editor} noteId={note.id} contentEl={contentRef.current} />}
+          {editor && <WikiLinkPills editor={editor} contentEl={contentRef.current} />}
+        </ShuttleEditor>
       </div>
 
       {editor && <EditorContextMenu editor={editor} noteId={note.id} />}
-
-      {editor && showRefPicker && (
-        <BlockRefPicker
-          editor={editor}
-          currentNoteId={note.id}
-          onClose={() => setShowRefPicker(false)}
-        />
-      )}
 
       <div className={styles.statusBar}>
         <div className={styles.statusBacklinks}>
@@ -461,9 +389,9 @@ export default function Editor({ note }: Props) {
           )}
         </div>
         <div className={styles.statusStats}>
-          <span className={styles.statusDim}>{wordCount} words</span>
+          <span className={styles.statusDim}>{stats.words} words</span>
           <span className={styles.statusDot} />
-          <span className={styles.statusDim}>{charCount} chars</span>
+          <span className={styles.statusDim}>{stats.characters} chars</span>
         </div>
       </div>
     </div>

@@ -1,4 +1,14 @@
-import type { DocNode } from '@shared/blockDoc';
+/**
+ * The parts of a document node this reads. Loose enough to accept both a
+ * stored `DocNode` and the editor's `JSONContent`, whose optional fields may
+ * be explicitly undefined.
+ */
+interface TextNode {
+  type?: string | undefined;
+  attrs?: Record<string, unknown> | undefined;
+  content?: TextNode[] | undefined;
+  text?: string | undefined;
+}
 
 /** Shorter titles ("AI", "Go") match too much ordinary prose to be useful. */
 const MIN_TITLE_LENGTH = 3;
@@ -16,13 +26,13 @@ const escapeRe = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
  * Unicode-aware, so "Café" is not found inside "Cafés".
  */
 export function outboundMentions<T extends MentionCandidate>(
-  doc: DocNode,
+  doc: TextNode,
   notes: readonly T[],
   currentNoteId: string,
 ): T[] {
   const linked = new Set<string>();
   const parts: string[] = [];
-  (function walk(n: DocNode): void {
+  (function walk(n: TextNode): void {
     if (n.type === 'mention') {
       const id = n.attrs?.['id'];
       if (typeof id === 'string') linked.add(id);

@@ -47,23 +47,6 @@
   --close-hover-bg:  #c25b5b;
   --close-hover-fg:  #fdf3f3;
 
-  /* Editor */
-  --code-color: #fff6d2;
-
-  /* Syntax */
-  --syntax-keyword:  #bb9af7;
-  --syntax-string:   #9ece6a;
-  --syntax-comment:  #565f89;
-  --syntax-number:   #ff9e64;
-  --syntax-function: #7aa2f7;
-  --syntax-type:     #e0af68;
-  --syntax-builtin:  #73daca;
-  --syntax-variable: #f7768e;
-  --syntax-tag:      #f7768e;
-  --syntax-attr:     #9ece6a;
-  --syntax-meta:     #2ac3de;
-  --syntax-operator: #89ddff;
-
   /* Shape */
   --radius:    10px;
   --radius-sm: 6px;
@@ -108,20 +91,6 @@ html[data-scheme="light"] {
   --danger-hover-bg: rgba(217, 64, 64, 0.10);
   --close-hover-bg:  #c05252;
   --close-hover-fg:  #fdf3f3;
-  --code-color:      #1a7f9e;
-
-  --syntax-keyword:  #7c4dff;
-  --syntax-string:   #388e3c;
-  --syntax-comment:  #9e9e9e;
-  --syntax-number:   #e65100;
-  --syntax-function: #1565c0;
-  --syntax-type:     #f57f17;
-  --syntax-builtin:  #00695c;
-  --syntax-variable: #c62828;
-  --syntax-tag:      #c62828;
-  --syntax-attr:     #388e3c;
-  --syntax-meta:     #006064;
-  --syntax-operator: #0277bd;
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -176,7 +145,6 @@ html[data-theme="blue"][data-scheme="light"] {
   --link-color:     #1d4ed8;
   --link-underline: rgba(29, 78, 216, 0.3);
 }
-
 
 /* ════════════════════════════════════════════════════════════════════════════
    OLIVE THEME — dark (forest green + amber)
@@ -426,90 +394,6 @@ html[data-theme="parchment"][data-scheme="light"] {
 /* ════════════════════════════════════════════════════════════════════════════
    BASE STYLES
    ════════════════════════════════════════════════════════════════════════════ */
-
-/* ════════════════════════════════════════════════════════════════════════════
-   TASK LIST  — global because CSS Modules :global() is unreliable for
-   Tiptap NodeView-built elements (label gets contenteditable="false" which
-   causes Chromium to treat it as block-level, breaking flex layouts).
-   ════════════════════════════════════════════════════════════════════════════ */
-
-.ProseMirror ul[data-type="taskList"] {
-  padding-left: 0 !important;
-  list-style: none !important;
-}
-
-.ProseMirror li[data-type="taskItem"] {
-  position: relative !important;
-  padding-left: 1.75em !important;
-  margin-bottom: 0.3em !important;
-  list-style: none !important;
-  display: block !important;
-}
-
-.ProseMirror li[data-type="taskItem"] > label {
-  position: absolute !important;
-  left: 0 !important;
-  top: 0.2em !important;
-  display: flex !important;
-  align-items: center !important;
-  cursor: pointer !important;
-  user-select: none !important;
-  line-height: 1 !important;
-}
-
-.ProseMirror li[data-type="taskItem"] > div {
-  min-width: 0;
-}
-
-.ProseMirror li[data-type="taskItem"] > div > p {
-  margin: 0 !important;
-}
-
-.ProseMirror li[data-type="taskItem"] input[type="checkbox"] {
-  -webkit-appearance: none !important;
-  appearance: none !important;
-  display: block !important;
-  width: 13px !important;
-  height: 13px !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  flex-shrink: 0;
-  position: relative;
-  border: 1.5px solid var(--border-strong);
-  border-radius: 3px;
-  background: transparent;
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
-  box-sizing: border-box;
-}
-
-.ProseMirror li[data-type="taskItem"] input[type="checkbox"]:hover {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
-}
-
-.ProseMirror li[data-type="taskItem"] input[type="checkbox"]:checked {
-  background: var(--accent) !important;
-  border-color: var(--accent) !important;
-}
-
-.ProseMirror li[data-type="taskItem"] input[type="checkbox"]:checked::after {
-  content: '';
-  position: absolute;
-  left: 2px;
-  top: 0px;
-  width: 7px;
-  height: 4px;
-  border-left: 2px solid var(--accent-fg);
-  border-bottom: 2px solid var(--accent-fg);
-  transform: rotate(-45deg);
-}
-
-.ProseMirror li[data-type="taskItem"][data-checked="true"] > div {
-  color: var(--text-muted);
-  text-decoration: line-through;
-  text-decoration-color: color-mix(in srgb, var(--text-muted) 50%, transparent);
-}
 
 html, body, #root {
   height: 100%;

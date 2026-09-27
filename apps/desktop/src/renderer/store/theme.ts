@@ -11,7 +11,7 @@ interface ThemeStore {
   init:        () => void;
 }
 
-function resolveScheme(scheme: ColorScheme): 'dark' | 'light' {
+export function resolveScheme(scheme: ColorScheme): 'dark' | 'light' {
   if (scheme !== 'system') return scheme;
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
