@@ -57,7 +57,7 @@ that user's cached theme.
   the password field.
 
 **Register.** Username, password, confirm → choose PIN (entered twice) →
-recovery key screen. The key is shown once with Copy and Save to file, and
+recovery key screen. The key is shown once with a Copy button, and
 Continue stays disabled until "I've saved my recovery key" is ticked.
 
 **First launch after the update.** Password sign-in as today → choose PIN →
@@ -72,9 +72,9 @@ that many minutes with no keyboard or pointer input in the app, Cord
 flushes pending saves and returns to the PIN screen for
 the same user.
 
-**Settings → Security page.** Change PIN (needs current PIN or password),
-change password (needs current password), generate new recovery key (needs
-password), and the idle lock option.
+**Settings → Account page.** Change PIN (needs the password), change
+password (needs the current one), and make a new recovery key (needs the
+password). The idle lock option is in the generated **Security** section.
 
 **Lock / switch user.** The existing Log out command becomes **Lock**, which
 returns to the PIN screen with the current user preselected; switching user
@@ -162,8 +162,8 @@ CLAUDE.md principle 2 gains this as its second documented exception.
 
 - PIN format and the 5-attempt limit are enforced here, not only in the UI.
   `unlockWithPin` refuses while the counter is at 5.
-- Unknown user and wrong PIN both take a hash comparison, and error messages
-  never reveal whether a username exists.
+- Password sign-in and recovery never reveal whether a username exists. (The
+  lock screen lists users anyway, so PIN unlock takes a user id.)
 - `SettingsFileService` takes the session user from `AuthService` and ensures
   the folder (with seeding) on first access.
 
@@ -173,7 +173,7 @@ Tauri gains thin commands for each new route; the existing test that every
 ## Renderer
 
 - `LoginScreen` becomes a small state machine of views: `pin`, `password`,
-  `register`, `setPin`, `recoveryKey`, `recover`. Existing styles and the
+  `forgotPin`, `register`, `setPin`, `recoveryKey`, `recover`. Existing styles and the
   `cord-login` public classes are kept; new views use `cord-login__*` names
   added to `docs/theming/public-api.md`.
 - The auth store gains `lockScreen` state and the new actions; `logout`
@@ -182,8 +182,8 @@ Tauri gains thin commands for each new route; the existing test that every
   preselected user's boot cache; `load()` runs after unlock.
 - Idle lock: one listener hook on `pointermove`, `keydown`, `wheel` that
   resets a timer read from `security.idleLockMinutes`.
-- Settings page gets a **Security** section registered through the settings
-  schema / UI registry, like every other page.
+- Settings gets a **Security** section (the idle-lock setting) and an
+  **Account** page registered through the UI registry, like every other page.
 
 ## Error handling
 
