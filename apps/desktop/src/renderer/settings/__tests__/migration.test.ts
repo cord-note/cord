@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'bun:test';
-import { clearLegacySettings, readLegacySettings } from '../migration';
+import { adoptLegacyCache, clearLegacySettings, readLegacySettings } from '../migration';
 import type { SettingDefinition } from '../schema';
 
 // Settings used to live in scattered localStorage keys. They move into the
@@ -44,5 +44,30 @@ describe('clearLegacySettings', () => {
     const s = storage({ 'cord-font-size': '17', 'cord-theme': 'teal', 'cord-vault-order': '[]' });
     clearLegacySettings(s);
     expect([...s.map.keys()]).toEqual(['cord-vault-order']);
+  });
+});
+
+describe('adoptLegacyCache', () => {
+  function fullStorage(entries: Record<string, string>) {
+    const map = new Map(Object.entries(entries));
+    return {
+      map,
+      getItem: (k: string) => map.get(k) ?? null,
+      setItem: (k: string, v: string) => { map.set(k, v); },
+      removeItem: (k: string) => { map.delete(k); },
+    };
+  }
+
+  it('hands the shared boot cache to the first user, once', () => {
+    const s = fullStorage({ 'cord-settings-cache': '{"a":1}' });
+    adoptLegacyCache(s, 'u1');
+    adoptLegacyCache(s, 'u2');
+    expect(Object.fromEntries(s.map)).toEqual({ 'cord-settings-cache:u1': '{"a":1}' });
+  });
+
+  it('never overwrites a user’s own cache', () => {
+    const s = fullStorage({ 'cord-settings-cache': '{"a":1}', 'cord-settings-cache:u1': '{"a":2}' });
+    adoptLegacyCache(s, 'u1');
+    expect(Object.fromEntries(s.map)).toEqual({ 'cord-settings-cache:u1': '{"a":2}' });
   });
 });

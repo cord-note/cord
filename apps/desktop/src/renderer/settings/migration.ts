@@ -36,3 +36,21 @@ export function readLegacySettings(
 export function clearLegacySettings(storage: Pick<Storage, 'removeItem'>): void {
   for (const { storageKey } of Object.values(LEGACY)) storage.removeItem(storageKey);
 }
+
+/** Before PINs there was one boot cache for everybody. */
+export const LEGACY_CACHE_KEY = 'cord-settings-cache';
+
+export function userCacheKey(userId: string): string {
+  return `${LEGACY_CACHE_KEY}:${userId}`;
+}
+
+/** Hand the shared boot cache to the first user whose cache is looked up, then drop it. */
+export function adoptLegacyCache(
+  storage: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>,
+  userId: string,
+): void {
+  const legacy = storage.getItem(LEGACY_CACHE_KEY);
+  if (legacy === null) return;
+  if (storage.getItem(userCacheKey(userId)) === null) storage.setItem(userCacheKey(userId), legacy);
+  storage.removeItem(LEGACY_CACHE_KEY);
+}
