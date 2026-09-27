@@ -426,14 +426,6 @@
   margin: 4px 0;
 }
 
-/* ── Fragment block highlight ────────────────────────────────────────────── */
-.content :global(.ProseMirror [data-block-id].fragment-highlight) {
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 4px;
-  outline: 1px solid rgba(255, 255, 255, 0.15);
-  transition: background 0.15s, outline-color 0.15s;
-}
-
 /* ── Status bar ──────────────────────────────────────────────────────────── */
 .statusBar {
   border-top: 1px solid var(--border);

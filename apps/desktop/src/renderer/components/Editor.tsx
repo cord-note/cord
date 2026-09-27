@@ -1,8 +1,8 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { X, List, ListOrdered, CheckSquare, Quote, Code2, Minus, Sigma, Tag } from 'lucide-react';
 import { EditorContent } from '@tiptap/react';
-import { FragmentOverlay } from './editor/FragmentOverlay';
-import { EditorContextMenu } from './editor/EditorContextMenu';
+import { FragmentOverlay } from './overlays/FragmentOverlay';
+import { EditorContextMenu } from './overlays/EditorContextMenu';
 import { useFragmentStore } from '../store/fragments';
 import { useNoteStore } from '../store/notes';
 import { useTagStore } from '../store/tags';
@@ -12,7 +12,7 @@ import { useUIStore } from '../store/ui';
 import type { Note } from '@shared/types';
 import styles from './Editor.module.css';
 
-import { WikiLinkPills } from './editor/WikiLinkPills';
+import { WikiLinkPills } from './overlays/WikiLinkPills';
 import { useNoteDoc } from './editor/useNoteDoc';
 import BlockChrome from './editor/BlockChrome';
 import BlockRefPicker from './editor/BlockRefPicker';

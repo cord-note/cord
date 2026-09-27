@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import type { Editor } from '@tiptap/core';
+import type { Editor } from 'shuttle-editor';
 import { useNoteStore } from '../../store/notes';
 import styles from './WikiLinkPills.module.css';
 
@@ -33,11 +33,11 @@ export function WikiLinkPills({ editor, contentEl }: Props) {
       editor.state.doc.descendants((node, pos) => {
         let title: string | null = null;
 
-        if (node.type.name === 'wikiLink') {
-          const note = notes.find((n) => n.id === node.attrs.id);
-          title = note?.title || node.attrs.label || 'note';
-        } else if (node.type.name === 'fragmentLinkNode' && node.attrs.toNoteId) {
-          const note = notes.find((n) => n.id === node.attrs.toNoteId);
+        if (node.type.name === 'mention') {
+          const note = notes.find((n) => n.id === node.attrs['id']);
+          title = note?.title || (node.attrs['label'] as string | null) || 'note';
+        } else if (node.type.name === 'fragmentLink' && node.attrs['toNoteId']) {
+          const note = notes.find((n) => n.id === node.attrs['toNoteId']);
           title = note?.title || 'note';
         }
 
