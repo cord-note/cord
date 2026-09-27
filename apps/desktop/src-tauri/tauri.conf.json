@@ -4,7 +4,7 @@
   "version": "1.7.0",
   "identifier": "app.cord.desktop",
   "build": {
-    "beforeDevCommand": "bun run build:sidecar:host && bun run dev:renderer",
+    "beforeDevCommand": "bun run dev:renderer",
     "devUrl": "http://localhost:5173",
     "beforeBuildCommand": "bun run build",
     "frontendDist": "../dist/renderer"
