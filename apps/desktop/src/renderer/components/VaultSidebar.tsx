@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Database, Trash2, Settings, LogOut, Plus, Link2, GripVertical } from 'lucide-react';
+import { Database, Trash2, Settings, Lock, Plus, Link2, GripVertical } from 'lucide-react';
 import { useVaultStore } from '../store/vaults';
 import { useNoteStore } from '../store/notes';
 import { useTagStore } from '../store/tags';
@@ -37,7 +37,8 @@ export default function VaultSidebar({ activeView, onOpenTrash }: Props) {
   const { vaults, activeVaultId, setActiveVault, createVault, reorderVaults } = useVaultStore();
   const { loadNotes } = useNoteStore();
   const { loadTags }  = useTagStore();
-  const { user, logout } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
+  const lock = useAuthStore((s) => s.lock);
   const { openSettings, view, setView } = useUIStore();
   const distinctVaultColors = useSetting('vaults.distinctColors');
 
@@ -129,9 +130,8 @@ export default function VaultSidebar({ activeView, onOpenTrash }: Props) {
     openSettings();
   }
 
-  async function handleLogout() {
-    if (!confirm('Log out?')) return;
-    await logout();
+  async function handleLock() {
+    await lock();
   }
 
   // --- reordering -------------------------------------------------------
@@ -313,7 +313,7 @@ export default function VaultSidebar({ activeView, onOpenTrash }: Props) {
           {expanded && <span className={styles.navLabel}>Settings</span>}
         </button>
 
-        {/* A div, not a button: the logout control nests inside it, and a
+        {/* A div, not a button: the lock control nests inside it, and a
             button inside a button is invalid HTML — React warns about it and
             the inner click target behaves inconsistently across engines. */}
         <div
@@ -329,8 +329,8 @@ export default function VaultSidebar({ activeView, onOpenTrash }: Props) {
           <span className={styles.navInitial}>{userInitial}</span>
           {expanded && <span className={styles.navLabel}>{user?.username ?? 'Account'}</span>}
           {expanded && (
-            <button className={styles.logoutBtn} onClick={(e) => { e.stopPropagation(); handleLogout(); }} title="Log out">
-              <LogOut size={14} strokeWidth={1.75} />
+            <button className={styles.logoutBtn} onClick={(e) => { e.stopPropagation(); void handleLock(); }} title="Lock">
+              <Lock size={14} strokeWidth={1.75} />
             </button>
           )}
         </div>

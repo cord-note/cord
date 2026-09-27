@@ -25,6 +25,7 @@ declare module './schema' {
     'notes.defaultKind': 'note' | 'notepad';
     'notes.listDateFormat': ListDateFormat;
     'general.holdToConfirm': HoldSpeed;
+    'security.idleLockMinutes': number;
   }
 }
 
@@ -177,6 +178,13 @@ registerSetting({
     { value: 'deliberate', label: 'Deliberate' },
   ],
   keywords: ['delete', 'archive', 'hold'],
+});
+
+registerSetting({
+  key: 'security.idleLockMinutes', type: 'number', section: 'Security', order: 10,
+  title: 'Lock when idle',
+  description: 'Return to the PIN screen after this many minutes without keyboard or mouse input. 0 turns it off.',
+  default: 0, min: 0, max: 120, step: 5, unit: 'min', keywords: ['pin', 'lock', 'timeout', 'away'],
 });
 
 // ── Effects ──────────────────────────────────────────────────────────────────
