@@ -5,6 +5,9 @@ allowBuilds:
   es5-ext: true
   esbuild: true
 
+minimumReleaseAgeExclude:
+  - shuttle-editor@0.2.0
+
 # linkify-it reaches us only through @tiptap/pm -> prosemirror-markdown ->
 # markdown-it. The DoS fix is a patch release, so pinning the floor here
 # clears the advisory without dragging Tiptap across its 3.x major.
