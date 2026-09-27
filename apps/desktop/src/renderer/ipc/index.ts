@@ -10,7 +10,9 @@ import type {
   Tag, CreateTagInput, NoteTagRow,
   FragmentAnnotationMap, CreateFragmentLinkInput, FragmentLink,
   Attachment, CreateAttachmentInput,
-  User, RegisterInput, LoginInput, AuthSession,
+  RegisterInput, LoginInput,
+  AuthUser, LockScreenState, UnlockPinInput, PinUnlockResult, SetPinInput,
+  ChangePasswordInput, IssueRecoveryKeyInput, RecoveryKeyResult, RecoverInput,
   ConfigFileName,
 } from '@shared/types';
 
@@ -66,11 +68,16 @@ export const api = {
   },
 
   auth: {
-    hasUsers: ()                          => invoke<{ hasUsers: boolean }>('auth_has_users'),
-    register: (data: RegisterInput)       => invoke<User>('auth_register', { data }),
-    login:    (data: LoginInput)          => invoke<User>('auth_login', { data }),
-    logout:   ()                          => invoke<void>('auth_logout'),
-    session:  ()                          => invoke<AuthSession | null>('auth_session'),
+    lockScreen:       ()                            => invoke<LockScreenState>('auth_lock_screen'),
+    current:          ()                            => invoke<AuthUser | null>('auth_current'),
+    register:         (data: RegisterInput)         => invoke<AuthUser>('auth_register', { data }),
+    login:            (data: LoginInput)            => invoke<AuthUser>('auth_login', { data }),
+    unlockPin:        (data: UnlockPinInput)        => invoke<PinUnlockResult>('auth_unlock_pin', { data }),
+    setPin:           (data: SetPinInput)           => invoke<AuthUser>('auth_set_pin', { data }),
+    changePassword:   (data: ChangePasswordInput)   => invoke<{ ok: true }>('auth_change_password', { data }),
+    issueRecoveryKey: (data: IssueRecoveryKeyInput) => invoke<RecoveryKeyResult>('auth_issue_recovery_key', { data }),
+    recover:          (data: RecoverInput)          => invoke<AuthUser>('auth_recover', { data }),
+    lock:             ()                            => invoke<{ ok: true }>('auth_lock'),
   },
 
   settings: {

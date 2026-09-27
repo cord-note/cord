@@ -25,7 +25,9 @@ runMigrations();
 
 // ── Services ──────────────────────────────────────────────────────────────────
 
-const auth      = new AuthService();
+// A new user's settings folder is created empty, so they start from the
+// defaults instead of being seeded from the pre-PIN shared files.
+const auth      = new AuthService({ onRegister: (userId) => settingsFiles.createUserDir(userId) });
 const vaults    = new VaultService();
 const blocks    = new BlockIndexService();
 const links     = new LinkService();
@@ -33,7 +35,7 @@ const notes     = new NoteService(blocks, links);
 const tags      = new TagService();
 const fragments = new FragmentService();
 const attachments = new AttachmentService();
-const settingsFiles = new SettingsFileService();
+const settingsFiles = new SettingsFileService(() => auth.requireSession().userId);
 
 // Existing notes predate the block index; back-fill so search works on first
 // launch after upgrade. Idempotent, and a no-op once every note has rows.
