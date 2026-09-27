@@ -1,9 +1,14 @@
 import { describe, expect, it } from 'bun:test';
+import { SHUTTLE_KEYBINDINGS } from 'shuttle-editor';
 import {
   KEYBINDINGS,
   conflictsFor,
   eventToAccel,
   formatAccel,
+  matchesBinding,
+  parseOverrides,
+  shuttleOverrides,
+  useKeybindingStore,
   IS_MAC,
   type KeybindingId,
   type KeybindingMap,
@@ -15,16 +20,18 @@ import {
 
 interface FakeKeyInit {
   key: string;
+  code?: string;
   ctrlKey?: boolean;
   metaKey?: boolean;
   altKey?: boolean;
   shiftKey?: boolean;
 }
 
-/** Minimal stand-in — eventToAccel only reads these five fields. */
+/** Minimal stand-in — eventToAccel only reads these six fields. */
 function keyEvent(init: FakeKeyInit): KeyboardEvent {
   return {
     key: init.key,
+    code: init.code ?? '',
     ctrlKey: init.ctrlKey ?? false,
     metaKey: init.metaKey ?? false,
     altKey: init.altKey ?? false,
@@ -118,5 +125,48 @@ describe('conflictsFor', () => {
     const unbound = KEYBINDINGS.filter((d) => !bindings[d.id]).map((d) => d.id as KeybindingId);
     expect(unbound.length).toBeGreaterThan(1);
     for (const id of unbound) expect(conflictsFor(bindings, id)).toEqual([]);
+  });
+});
+
+describe('catalogue', () => {
+  it('takes every editor shortcut from Shuttle, with its defaults', () => {
+    for (const d of SHUTTLE_KEYBINDINGS) {
+      const def = KEYBINDINGS.find((k) => k.id === d.id);
+      expect(def).toMatchObject({ scope: 'editor', defaultAccel: d.defaultAccel, label: d.label, group: d.group });
+    }
+    for (const id of ['editor.underline', 'editor.highlight', 'editor.find']) {
+      expect(KEYBINDINGS.some((k) => k.id === id)).toBe(true);
+    }
+  });
+
+  it('keeps the application shortcuts as global ones', () => {
+    const app = KEYBINDINGS.filter((k) => k.id.startsWith('app.'));
+    expect(app.length).toBeGreaterThan(0);
+    expect(app.every((k) => k.scope === 'global')).toBe(true);
+  });
+
+  it('hands Shuttle only its own ids', () => {
+    const passed = shuttleOverrides(useKeybindingStore.getState().bindings);
+    expect(Object.keys(passed).sort()).toEqual(SHUTTLE_KEYBINDINGS.map((d) => d.id).sort());
+  });
+
+  it('drops persisted overrides for ids that no longer exist', () => {
+    expect(parseOverrides(JSON.stringify({ 'editor.bold': 'Mod+J', 'editor.gone': 'Mod+Q', 'app.newNote': 7 })))
+      .toEqual({ 'editor.bold': 'Mod+J' });
+    expect(parseOverrides('{not json')).toEqual({});
+    expect(parseOverrides(null)).toEqual({});
+  });
+});
+
+describe('physical-key fallback', () => {
+  // Ctrl+Shift+8 types '*', which would never match the Mod+Shift+8 default.
+  const star = keyEvent({ key: '*', code: 'Digit8', shiftKey: true, ...primary });
+
+  it('records Shift+digit shortcuts by the digit key', () => {
+    expect(eventToAccel(star)).toBe('Mod+Shift+8');
+  });
+
+  it('matches them against the catalogue', () => {
+    expect(matchesBinding(star, 'editor.bulletList')).toBe(true);
   });
 });
