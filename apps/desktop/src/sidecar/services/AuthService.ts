@@ -2,12 +2,17 @@ import { nanoid } from 'nanoid';
 import { asc, eq } from 'drizzle-orm';
 import { getDb } from '../db/client';
 import { appState, users } from '../db/schema';
+import { generateRecoveryKey, normaliseRecoveryKey } from './recoveryKey';
 import type {
   AuthSession,
   AuthUser,
+  ChangePasswordInput,
+  IssueRecoveryKeyInput,
   LockScreenState,
   LoginInput,
   PinUnlockResult,
+  RecoverInput,
+  RecoveryKeyResult,
   RegisterInput,
   SetPinInput,
 } from '@shared/types';
@@ -119,6 +124,50 @@ export class AuthService {
     const next = { pinHash: await this.hash(input.pin), failedPinAttempts: 0 };
     this.update(row.id, next);
     return toAuthUser({ ...row, ...next });
+  }
+
+  async changePassword(input: ChangePasswordInput): Promise<void> {
+    const row = this.sessionRow();
+    await this.requirePassword(row, input.currentPassword);
+    this.update(row.id, { passwordHash: await this.hash(input.newPassword) });
+  }
+
+  /**
+   * Issues a new recovery key and returns it — the only time it exists in
+   * plain text. The first key is part of setup; replacing one needs the
+   * password, and the old key stops working.
+   */
+  async issueRecoveryKey(input: IssueRecoveryKeyInput): Promise<RecoveryKeyResult> {
+    const row = this.sessionRow();
+    if (row.recoveryKeyHash !== null) await this.requirePassword(row, input.password);
+    const recoveryKey = generateRecoveryKey();
+    this.update(row.id, { recoveryKeyHash: await this.hash(normaliseRecoveryKey(recoveryKey)) });
+    return { recoveryKey };
+  }
+
+  /**
+   * Forgotten password: the recovery key sets a new one and signs in. The key
+   * is spent and the PIN goes with the old password, so setup continues with
+   * a new PIN and a new key.
+   */
+  async recover(input: RecoverInput): Promise<AuthUser> {
+    const row = this.findByUsername(input.username);
+    const matches = row !== undefined
+      && row.recoveryKeyHash !== null
+      && (await Bun.password.verify(normaliseRecoveryKey(input.recoveryKey), row.recoveryKeyHash));
+    if (!row || !matches) {
+      await Bun.sleep(this.recoveryFailureDelayMs);
+      throw new Error("That recovery key doesn't match.");
+    }
+
+    const next = {
+      passwordHash: await this.hash(input.newPassword),
+      pinHash: null,
+      failedPinAttempts: 0,
+      recoveryKeyHash: null,
+    };
+    this.update(row.id, next);
+    return this.startSession({ ...row, ...next });
   }
 
   lock(): void {
