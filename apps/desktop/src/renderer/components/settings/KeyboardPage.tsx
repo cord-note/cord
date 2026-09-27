@@ -10,6 +10,7 @@ import {
   useKeybindingStore,
   type KeybindingId,
 } from '../../store/keybindings';
+import { KeyChord } from '../KeyChord';
 import styles from '../SettingsPage.module.css';
 
 export default function KeyboardPage() {
@@ -82,7 +83,7 @@ export default function KeyboardPage() {
                     onClick={() => setRecording(isRecording ? null : def.id)}
                     title={isRecording ? 'Press a key combination' : 'Click to rebind'}
                   >
-                    {isRecording ? 'Press keys…' : (formatAccel(accel) || 'Unbound')}
+                    {isRecording ? 'Press keys…' : accel ? <KeyChord accel={accel} /> : 'Unbound'}
                   </button>
 
                   <button

@@ -4,6 +4,7 @@ import {
   KEYBINDINGS,
   conflictsFor,
   eventToAccel,
+  accelKeys,
   formatAccel,
   matchesBinding,
   flushKeybindings,
@@ -107,6 +108,23 @@ describe('formatAccel', () => {
     const shown = formatAccel('Alt+ArrowUp');
     expect(shown).toContain('↑');
     expect(shown).toContain(IS_MAC ? '⌥' : 'Alt');
+  });
+});
+
+describe('accelKeys', () => {
+  // Each key is drawn as its own keycap, so the chord must split into keys
+  // exactly as formatAccel spells them — including a literal "+" key.
+  it('splits a chord into display keys', () => {
+    expect(accelKeys('Mod+Shift+X')).toEqual(IS_MAC ? ['⌘', '⇧', 'X'] : ['Ctrl', 'Shift', 'X']);
+    expect(accelKeys('Alt+ArrowUp')).toEqual([IS_MAC ? '⌥' : 'Alt', '↑']);
+  });
+
+  it('keeps a literal plus key', () => {
+    expect(accelKeys('Mod++')).toEqual([IS_MAC ? '⌘' : 'Ctrl', '+']);
+  });
+
+  it('is empty for an unbound action', () => {
+    expect(accelKeys('')).toEqual([]);
   });
 });
 

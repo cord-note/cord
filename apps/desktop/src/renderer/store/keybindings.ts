@@ -130,6 +130,16 @@ export function formatAccel(accel: string): string {
   return shuttleFormatAccel(accel, IS_MAC);
 }
 
+/**
+ * The keys of an accelerator as they are displayed, one entry per key, for
+ * drawing each as its own keycap. Splits the way `formatAccel` does, so a
+ * literal "+" key survives (`Mod++` → Ctrl, +).
+ */
+export function accelKeys(accel: string): string[] {
+  if (!accel) return [];
+  return accel.split(/\+(?=.)/).map((key) => shuttleFormatAccel(key, IS_MAC));
+}
+
 // ── Store ───────────────────────────────────────────────────────────────────
 
 interface KeybindingStore {

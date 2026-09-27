@@ -245,6 +245,12 @@ The command palette dropdown, the new-note menu and the editor context menu.
 | `cord-chip--unlinked` | An unlinked mention |
 | `cord-chip--link` | A block's outgoing link, beside the block |
 
+### Keyboard shortcuts
+
+| Class | Surface |
+|---|---|
+| `cord-kbd` | One key of a shortcut, drawn as a keycap (Settings, command palette) |
+
 ### Settings, trash, sign-in
 
 | Class | Surface |
