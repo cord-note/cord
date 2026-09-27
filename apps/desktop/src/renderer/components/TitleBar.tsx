@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import {
-  Search, FilePlus, Trash2, Settings, LogOut, FileText, Pin,
+  Search, FilePlus, Trash2, Settings, Lock, FileText, Pin,
   Monitor, BookOpen, PinOff, Bold, Italic,
   Heading1, Heading2, Heading3, Code2, CheckSquare, Minus,
   Sun, Moon, Laptop, PanelLeftClose,
@@ -65,7 +65,7 @@ const COMMANDS: Cmd[] = [
   { id: 'blk-del',      label: 'Delete Block',    binding: 'block.delete',       icon: Trash2,    group: 'Blocks', notepadOnly: true },
   { id: 'blk-ref',      label: 'Insert Block Reference', binding: 'block.insertRef', icon: Blocks, group: 'Blocks', notepadOnly: true },
   // Account
-  { id: 'logout',      label: 'Log Out',                                 icon: LogOut,        group: 'Account'    },
+  { id: 'lock',        label: 'Lock',                                    icon: Lock,          group: 'Account'    },
 ];
 
 // ── Main TitleBar ─────────────────────────────────────────────────────────────
@@ -139,7 +139,7 @@ type Row = { kind: 'cmd'; data: Cmd } | { kind: 'note'; data: NoteListItem };
 
 function CommandPill() {
   const { commandsOpen, openCommands, closeCommands, openSettings, setView, view } = useUIStore();
-  const { logout }    = useAuthStore();
+  const lock          = useAuthStore((s) => s.lock);
   const { notes, activeNoteId, createNote, updateNote, setActiveNote, loadLinks,
           convertNote } = useNoteStore();
   const { vaults, activeVaultId, setActiveVault } = useVaultStore();
@@ -295,14 +295,14 @@ function CommandPill() {
       case 'blk-dup':      editorCmd('block:duplicate'); break;
       case 'blk-del':      editorCmd('block:delete');    break;
       case 'blk-ref':      editorCmd('block:insertRef'); break;
-      case 'logout':       if (confirm('Log out?')) await logout(); break;
+      case 'lock':         await lock(); break;
       default:
         if (row.data.id.startsWith('vault:')) {
           setActiveVault(row.data.id.slice(6));
         }
         break;
     }
-  }, [close, activeVaultId, activeNoteId, createNote, updateNote, notes, loadLinks, logout, openSettings, setActiveNote, setView, view, setColorScheme, setActiveVault, convertNote]);
+  }, [close, activeVaultId, activeNoteId, createNote, updateNote, notes, loadLinks, lock, openSettings, setActiveNote, setView, view, setColorScheme, setActiveVault, convertNote]);
 
   // ── Input handlers ────────────────────────────────────────────────────────
 

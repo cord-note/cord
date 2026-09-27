@@ -4,6 +4,7 @@ import LoginScreen from './components/LoginScreen';
 import NotesPage from './pages/NotesPage';
 import { useAuthStore } from './store/auth';
 import { checkForUpdate } from './updater';
+import { useIdleLock } from './hooks/useIdleLock';
 
 // Temporary port of the CordDB shell: TitleBar sits above everything,
 // LoginScreen shows until authenticated, then the notes workspace.
@@ -11,6 +12,7 @@ import { checkForUpdate } from './updater';
 
 export function App() {
   const { check, user, checking } = useAuthStore();
+  useIdleLock();
 
   // Increments each time the user logs out — forces LoginScreen to remount fresh
   const loginKeyRef = useRef(0);
