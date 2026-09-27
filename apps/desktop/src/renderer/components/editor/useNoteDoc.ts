@@ -116,7 +116,6 @@ export function useNoteDoc(note: Note): NoteDoc {
         let linkDeleted = false;
         for (const toId of activeWikiTargets.current) {
           if (!currentTargets.has(toId)) {
-            api.links.delete(noteIdRef.current, toId).catch(() => {});
             linkDeleted = true;
           }
         }

@@ -7,7 +7,6 @@ import { PluginKey } from '@tiptap/pm/state';
 const wikiLinkPluginKey = new PluginKey('wikiLink');
 import type { Note } from '@shared/types';
 import { useNoteStore } from '../../store/notes';
-import { api } from '../../ipc';
 import WikiLinkView from './WikiLinkView';
 import WikiLinkList, { type WikiLinkListRef } from './WikiLinkList';
 
@@ -42,11 +41,8 @@ export const WikiLink = Node.create({
   },
 
   addInputRules() {
-    const persistLink = (fromNoteId: string | null, toNoteId: string) => {
-      if (fromNoteId) {
-        api.links.create(fromNoteId, toNoteId).catch(() => {});
-      }
-    };
+    // Links are derived from the saved document by the sidecar.
+    const persistLink = (_fromNoteId: string | null, _toNoteId: string) => {};
 
     const withDisplay = new InputRule({
       find: /\[\[([^[\]|]+)\|([^[\]]*)\]\]$/,
@@ -147,10 +143,6 @@ export const WikiLink = Node.create({
             .insertContent(' ')
             .run();
 
-          const { activeNoteId: fromId } = useNoteStore.getState();
-          if (fromId && props.id) {
-            api.links.create(fromId, props.id).catch(() => {});
-          }
         },
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

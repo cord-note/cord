@@ -15,7 +15,6 @@ import type {
   CreateNoteInput,
   UpdateNoteInput,
   UnlinkedMention,
-  ConversionImpact,
 } from '@shared/types';
 
 const LIST_COLUMNS = {
@@ -154,14 +153,9 @@ export class NoteService {
       if (!updated) throw new Error(`Note not found after convert: ${id}`);
       const note = toNote(updated);
 
-      this.blockIndex.reproject(id, tx);
       logOp(tx, note.vaultId, 'note', id, 'update', note);
       return note;
     });
-  }
-
-  conversionImpact(id: string): ConversionImpact {
-    return this.blockIndex.conversionImpact(id);
   }
 
   // Soft delete — sets deleted_at. Index rows stay: every query joins `notes`

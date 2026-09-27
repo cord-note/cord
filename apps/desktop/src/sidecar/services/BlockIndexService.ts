@@ -1,8 +1,8 @@
-import { eq, inArray, isNull } from 'drizzle-orm';
+import { eq, isNull } from 'drizzle-orm';
 import { getDb } from '../db/client';
-import { blocks, notes, fragments, fragmentLinks, fragmentTags } from '../db/schema';
+import { blocks, notes } from '../db/schema';
 import { parseDoc, extractBlocks, findBlockContent } from '@shared/blockDoc';
-import type { Block, BlockRefTarget, ConversionImpact } from '@shared/types';
+import type { Block, BlockRefTarget } from '@shared/types';
 
 type Tx = Parameters<Parameters<ReturnType<typeof getDb>['transaction']>[0]>[0];
 
@@ -173,54 +173,5 @@ export class BlockIndexService {
       }
     }
     return indexed;
-  }
-
-  /**
-   * What a notepad → note conversion would cost, counted before it happens.
-   *
-   * Fragment rows are never deleted by conversion, so these tags and links stop
-   * being surfaced rather than being destroyed — converting back restores them.
-   * Inbound refs, by contrast, genuinely break.
-   */
-  conversionImpact(noteId: string): ConversionImpact {
-    const db = getDb();
-
-    const blockIds = db
-      .select({ id: blocks.id })
-      .from(blocks)
-      .where(eq(blocks.noteId, noteId))
-      .all()
-      .map((r) => r.id);
-
-    if (blockIds.length === 0) {
-      return { blockTagCount: 0, blockLinkCount: 0, inboundRefCount: 0 };
-    }
-
-    const owned = db
-      .select({ id: fragments.id })
-      .from(fragments)
-      .where(inArray(fragments.id, blockIds))
-      .all()
-      .map((r) => r.id);
-
-    const blockTagCount = owned.length === 0 ? 0 : db
-      .select({ id: fragmentTags.fragmentId })
-      .from(fragmentTags)
-      .where(inArray(fragmentTags.fragmentId, owned))
-      .all().length;
-
-    const blockLinkCount = owned.length === 0 ? 0 : db
-      .select({ id: fragmentLinks.id })
-      .from(fragmentLinks)
-      .where(inArray(fragmentLinks.fromFragmentId, owned))
-      .all().length;
-
-    const inboundRefCount = db
-      .select({ id: blocks.id })
-      .from(blocks)
-      .where(inArray(blocks.refBlockId, blockIds))
-      .all().length;
-
-    return { blockTagCount, blockLinkCount, inboundRefCount };
   }
 }

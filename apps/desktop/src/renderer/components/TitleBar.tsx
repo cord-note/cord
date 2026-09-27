@@ -140,7 +140,7 @@ function CommandPill() {
   const { commandsOpen, openCommands, closeCommands, openSettings, setView, view } = useUIStore();
   const { logout }    = useAuthStore();
   const { notes, activeNoteId, createNote, updateNote, setActiveNote, loadLinks,
-          convertNote, conversionImpact } = useNoteStore();
+          convertNote } = useNoteStore();
   const { vaults, activeVaultId, setActiveVault } = useVaultStore();
   const { setColorScheme } = useThemeStore();
   const bindings = useKeybindingStore((s) => s.bindings);
@@ -262,35 +262,6 @@ function CommandPill() {
         if (!note) break;
         const to = note.kind === 'notepad' ? 'note' : 'notepad';
 
-        // Going back to a plain note loses block structure, and any reference
-        // pointing into this note breaks. State the cost in specifics before
-        // asking, and skip the prompt entirely when there is nothing to lose.
-        if (to === 'note') {
-          const impact = await conversionImpact(note.id);
-          const losses: string[] = [];
-          if (impact.blockTagCount > 0) {
-            losses.push(`${impact.blockTagCount} block tag${impact.blockTagCount === 1 ? '' : 's'}`);
-          }
-          if (impact.blockLinkCount > 0) {
-            losses.push(`${impact.blockLinkCount} block link${impact.blockLinkCount === 1 ? '' : 's'}`);
-          }
-          if (losses.length > 0 || impact.inboundRefCount > 0) {
-            const lines = ['Convert this notepad to a plain note?', ''];
-            if (losses.length > 0) {
-              lines.push(`${losses.join(' and ')} will stop being shown.`);
-              lines.push('Converting back restores them.');
-            }
-            if (impact.inboundRefCount > 0) {
-              lines.push('');
-              lines.push(
-                `${impact.inboundRefCount} reference${impact.inboundRefCount === 1 ? '' : 's'} ` +
-                'from other notepads will break permanently.',
-              );
-            }
-            if (!confirm(lines.join('\n'))) break;
-          }
-        }
-
         await convertNote(note.id, to);
         // The editor keys its instance off kind, so it rebuilds on this change.
         await setActiveNote(note.id);
@@ -330,7 +301,7 @@ function CommandPill() {
         }
         break;
     }
-  }, [close, activeVaultId, activeNoteId, createNote, updateNote, notes, loadLinks, logout, openSettings, setActiveNote, setView, view, setColorScheme, setActiveVault, convertNote, conversionImpact]);
+  }, [close, activeVaultId, activeNoteId, createNote, updateNote, notes, loadLinks, logout, openSettings, setActiveNote, setView, view, setColorScheme, setActiveVault, convertNote]);
 
   // ── Input handlers ────────────────────────────────────────────────────────
 

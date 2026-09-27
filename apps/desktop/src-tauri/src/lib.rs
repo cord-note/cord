@@ -47,7 +47,6 @@ pub fn run() {
             commands::notes::notes_permanent_delete,
             commands::notes::notes_unlinked_mentions,
             commands::notes::notes_convert,
-            commands::notes::notes_conversion_impact,
             // blocks
             commands::blocks::blocks_list_for_note,
             commands::blocks::blocks_resolve_ref,
@@ -60,9 +59,6 @@ pub fn run() {
             commands::tags::tags_detach,
             commands::tags::tags_get_for_note,
             commands::tags::tags_get_note_map,
-            // links
-            commands::links::links_create,
-            commands::links::links_delete,
             // fragments
             commands::fragments::fragments_get_for_note,
             commands::fragments::fragments_attach_tag,

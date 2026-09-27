@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type {
   Note, NoteListItem, NoteLink, NoteKind,
-  CreateNoteInput, UpdateNoteInput, ConversionImpact,
+  CreateNoteInput, UpdateNoteInput,
   Tag, UnlinkedMention,
 } from '@shared/types';
 import { api } from '@renderer/ipc';
@@ -29,7 +29,6 @@ interface NoteStore {
   createNote:           (input: CreateNoteInput) => Promise<Note>;
   updateNote:           (id: string, input: UpdateNoteInput) => Promise<Note>;
   convertNote:          (id: string, kind: NoteKind) => Promise<Note>;
-  conversionImpact:     (id: string) => Promise<ConversionImpact>;
   deleteNote:           (id: string) => Promise<void>;
   restoreNote:          (id: string) => Promise<Note>;
   permanentDeleteNote:  (id: string) => Promise<void>;
@@ -139,8 +138,6 @@ export const useNoteStore = create<NoteStore>((set, get) => ({
     }));
     return note;
   },
-
-  conversionImpact: (id) => api.notes.conversionImpact(id),
 
   deleteNote: async (id) => {
     await api.notes.delete(id);
