@@ -234,5 +234,16 @@ export function runMigrations(): void {
   addColumnIfMissing(db, 'notes', 'kind', `\`kind\` text DEFAULT 'note' NOT NULL`);
   dropColumnIfPresent(db, 'notes', 'body_markdown');
 
+  // ── PIN unlock — docs/specs/2026-09-27-pin-unlock-design.md ────────────────
+  addColumnIfMissing(db, 'users', 'pin_hash', '`pin_hash` text');
+  addColumnIfMissing(db, 'users', 'failed_pin_attempts', '`failed_pin_attempts` integer DEFAULT 0 NOT NULL');
+  addColumnIfMissing(db, 'users', 'recovery_key_hash', '`recovery_key_hash` text');
+
+  db.run(`CREATE TABLE IF NOT EXISTS \`app_state\` (
+    \`key\` text PRIMARY KEY NOT NULL,
+    \`value\` text NOT NULL,
+    \`updated_at\` integer NOT NULL
+  )`);
+
   console.info('[db] migrations applied');
 }

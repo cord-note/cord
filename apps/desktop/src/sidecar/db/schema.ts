@@ -13,7 +13,25 @@ export const users = sqliteTable('users', {
   id:           text('id').primaryKey(),
   username:     text('username').notNull().unique(),
   passwordHash: text('password_hash').notNull(),
+  /** bcrypt hash of the unlock PIN; null until the user sets one. */
+  pinHash:           text('pin_hash'),
+  /** Wrong PINs in a row. At MAX_PIN_ATTEMPTS the PIN is refused until a password sign-in. */
+  failedPinAttempts: integer('failed_pin_attempts').notNull().default(0),
+  /** bcrypt hash of the recovery key; null until one is issued, and again once it is spent. */
+  recoveryKeyHash:   text('recovery_key_hash'),
   createdAt:    integer('created_at').notNull(),
+});
+
+// ─── App state ────────────────────────────────────────────────────────────────
+
+/**
+ * Machine-local key/value state the lock screen needs before anyone unlocks
+ * (`last_user_id`). Never synced and never written to operation_log.
+ */
+export const appState = sqliteTable('app_state', {
+  key:       text('key').primaryKey(),
+  value:     text('value').notNull(),
+  updatedAt: integer('updated_at').notNull(),
 });
 
 // ─── Vaults ───────────────────────────────────────────────────────────────────
@@ -205,6 +223,7 @@ export const operationLog = sqliteTable(
 
 export const schema = {
   users,
+  appState,
   vaults,
   notes,
   blocks,
