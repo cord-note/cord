@@ -282,9 +282,23 @@
   text-align: center;
 }
 
+.selectRow {
+  position: relative;
+}
+
 .userSelect {
   appearance: none;
   cursor: pointer;
+  padding-right: calc(var(--space-3) + 20px);
+}
+
+.selectChevron {
+  position: absolute;
+  right: var(--space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
 }
 
 .mono {
@@ -322,7 +336,6 @@
   font-family: var(--font-mono, ui-monospace, monospace);
   font-size: var(--text-base);
   line-height: 1.6;
-  word-break: break-all;
   user-select: all;
 }
 
