@@ -1,64 +1,70 @@
-import { describe, it, expect, beforeEach } from 'bun:test';
+import { describe, it, expect, beforeEach, mock } from 'bun:test';
 
-// Augment themes register after startup, so the saved theme can be one that
-// is not available yet. The store must show the default meanwhile, keep the
-// saved choice, and switch as soon as the theme registers — without the saved
-// preference ever being overwritten by the fallback.
+// Theme and colour mode are settings now. The theme store still owns which
+// theme is actually shown: a saved augment theme shows the default until its
+// augment registers, and the saved choice is never overwritten by the fallback.
 
 const attrs = new Map<string, string>();
-const storage = new Map<string, string>();
-
 Object.assign(globalThis, {
-  document: { documentElement: { setAttribute: (k: string, v: string) => attrs.set(k, v) } },
-  localStorage: {
-    getItem: (k: string) => storage.get(k) ?? null,
-    setItem: (k: string, v: string) => storage.set(k, v),
-  },
-  window: { matchMedia: () => ({ matches: true, onchange: null }) },
+  document: { documentElement: { setAttribute: (k: string, v: string) => attrs.set(k, v), style: { setProperty: () => {} } } },
+  localStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} },
+  window: { matchMedia: () => ({ matches: true, onchange: null }), addEventListener: () => {} },
 });
 
+mock.module('@renderer/ipc', () => ({
+  api: { settings: { read: async () => ({ text: null }), write: async () => ({ ok: true }) } },
+}));
+
+const { registerSetting, useSettings, setSetting, getSetting } = await import('../../settings');
 const { useThemeStore } = await import('../theme');
 const { useThemeRegistry, BUILTIN_THEMES } = await import('../../registry/ThemeRegistry');
+
+registerSetting({
+  key: 'appearance.theme', type: 'string', title: '', description: '', section: 'Appearance',
+  default: 'mono', pattern: /^[a-z0-9][a-z0-9-]{0,63}$/,
+});
+registerSetting({
+  key: 'appearance.colorScheme', type: 'enum', title: '', description: '', section: 'Appearance', default: 'dark',
+  options: [{ value: 'dark', label: '' }, { value: 'light', label: '' }, { value: 'system', label: '' }],
+});
 
 const augment = { id: 'dithered', label: 'Dithered', description: '', source: 'augment' as const };
 
 beforeEach(() => {
   attrs.clear();
-  storage.clear();
   useThemeRegistry.setState({ themes: [...BUILTIN_THEMES] });
+  useSettings.setState({ values: { 'appearance.theme': 'mono', 'appearance.colorScheme': 'dark' }, data: {}, text: '', syntaxError: false });
+  useThemeStore.getState().init();
 });
 
 describe('theme store', () => {
-  it('applies a saved built-in theme on init', () => {
-    storage.set('cord-theme', 'olive');
-    useThemeStore.getState().init();
+  it('applies the theme setting', () => {
+    setSetting('appearance.theme', 'olive');
     expect(attrs.get('data-theme')).toBe('olive');
+    expect(useThemeStore.getState().theme).toBe('olive');
   });
 
-  it('shows the default while a saved augment theme has not registered, then switches', () => {
-    storage.set('cord-theme', 'dithered');
-    useThemeStore.getState().init();
+  it('setTheme and setColorScheme write the settings', () => {
+    useThemeStore.getState().setTheme('teal');
+    useThemeStore.getState().setColorScheme('light');
+    expect(getSetting('appearance.theme')).toBe('teal');
+    expect(getSetting('appearance.colorScheme')).toBe('light');
+    expect(attrs.get('data-scheme')).toBe('light');
+  });
+
+  it('shows the default until a saved augment theme registers, then switches', () => {
+    setSetting('appearance.theme', 'dithered');
     expect(attrs.get('data-theme')).toBe('mono');
     expect(useThemeStore.getState().theme).toBe('dithered');
-
     useThemeRegistry.getState().register(augment);
     expect(attrs.get('data-theme')).toBe('dithered');
-    expect(useThemeStore.getState().activeTheme).toBe('dithered');
   });
 
-  it('falls back when the active augment theme is unregistered, keeping the preference', () => {
+  it('falls back when the active augment theme is unregistered, keeping the setting', () => {
     useThemeRegistry.getState().register(augment);
-    useThemeStore.getState().setTheme('dithered');
-    expect(attrs.get('data-theme')).toBe('dithered');
-
+    setSetting('appearance.theme', 'dithered');
     useThemeRegistry.getState().unregister('dithered');
     expect(attrs.get('data-theme')).toBe('mono');
-    expect(storage.get('cord-theme')).toBe('dithered');
-  });
-
-  it('defaults to mono with nothing saved', () => {
-    useThemeStore.getState().init();
-    expect(attrs.get('data-theme')).toBe('mono');
-    expect(attrs.get('data-scheme')).toBe('dark');
+    expect(getSetting('appearance.theme')).toBe('dithered');
   });
 });

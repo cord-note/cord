@@ -1,12 +1,13 @@
 import { create } from 'zustand';
 import { DEFAULT_THEME_ID, resolveThemeId, useThemeRegistry } from '../registry/ThemeRegistry';
+import { getSetting, setSetting, useSettings } from '../settings';
 
 export type ColorScheme = 'dark' | 'light' | 'system';
 
 interface ThemeStore {
-  // The user's choice, persisted as-is even while that theme is unavailable.
+  /** The saved choice (the `appearance.theme` setting), even while unavailable. */
   theme:       string;
-  // What is actually applied: `theme` if registered, otherwise the default.
+  /** What is actually applied: `theme` if registered, otherwise the default. */
   activeTheme: string;
   colorScheme: ColorScheme;
   setTheme:       (id: string)     => void;
@@ -19,59 +20,54 @@ export function resolveScheme(scheme: ColorScheme): 'dark' | 'light' {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
-function apply(themeId: string, scheme: ColorScheme) {
+function apply(themeId: string, scheme: ColorScheme): void {
   const root = document.documentElement;
   root.setAttribute('data-theme', themeId);
   root.setAttribute('data-scheme', resolveScheme(scheme));
 }
 
-function resolve(preferred: string): string {
-  return resolveThemeId(preferred, useThemeRegistry.getState().themes);
+let systemQuery: MediaQueryList | null = null;
+
+function watchSystemScheme(scheme: ColorScheme): void {
+  if (systemQuery) systemQuery.onchange = null;
+  systemQuery = null;
+  if (scheme !== 'system') return;
+  systemQuery = window.matchMedia('(prefers-color-scheme: dark)');
+  systemQuery.onchange = () => apply(useThemeStore.getState().activeTheme, 'system');
 }
 
-export const useThemeStore = create<ThemeStore>((set, get) => ({
+let applied = false;
+
+/** Bring the store and the document in line with the settings and registry. */
+function sync(): void {
+  const theme = getSetting('appearance.theme');
+  const colorScheme = getSetting('appearance.colorScheme');
+  const activeTheme = resolveThemeId(theme, useThemeRegistry.getState().themes);
+  const current = useThemeStore.getState();
+  if (applied && current.theme === theme && current.activeTheme === activeTheme && current.colorScheme === colorScheme) {
+    return;
+  }
+  applied = true;
+  useThemeStore.setState({ theme, activeTheme, colorScheme });
+  apply(activeTheme, colorScheme);
+  watchSystemScheme(colorScheme);
+}
+
+export const useThemeStore = create<ThemeStore>(() => ({
   theme:       DEFAULT_THEME_ID,
   activeTheme: DEFAULT_THEME_ID,
   colorScheme: 'dark',
 
-  setTheme: (theme) => {
-    const activeTheme = resolve(theme);
-    set({ theme, activeTheme });
-    localStorage.setItem('cord-theme', theme);
-    apply(activeTheme, get().colorScheme);
-  },
-
-  setColorScheme: (colorScheme) => {
-    set({ colorScheme });
-    localStorage.setItem('cord-scheme', colorScheme);
-    apply(get().activeTheme, colorScheme);
-
-    if (colorScheme === 'system') {
-      const mq = window.matchMedia('(prefers-color-scheme: dark)');
-      mq.onchange = () => apply(get().activeTheme, get().colorScheme);
-    }
-  },
+  setTheme:       (id) => setSetting('appearance.theme', id),
+  setColorScheme: (scheme) => setSetting('appearance.colorScheme', scheme),
 
   init: () => {
-    const theme       = localStorage.getItem('cord-theme') ?? DEFAULT_THEME_ID;
-    const colorScheme = (localStorage.getItem('cord-scheme') as ColorScheme) ?? 'dark';
-    const activeTheme = resolve(theme);
-    set({ theme, activeTheme, colorScheme });
-    apply(activeTheme, colorScheme);
-
-    if (colorScheme === 'system') {
-      const mq = window.matchMedia('(prefers-color-scheme: dark)');
-      mq.onchange = () => apply(get().activeTheme, get().colorScheme);
-    }
+    applied = false;
+    sync();
   },
 }));
 
-// Augment themes register after init. When the preferred theme arrives, switch
-// to it; when the active one is unregistered, fall back to the default.
-useThemeRegistry.subscribe((registry) => {
-  const { theme, activeTheme, colorScheme } = useThemeStore.getState();
-  const next = resolveThemeId(theme, registry.themes);
-  if (next === activeTheme) return;
-  useThemeStore.setState({ activeTheme: next });
-  apply(next, colorScheme);
-});
+// Settings change when the file loads or the user picks a theme; the registry
+// changes when augments register their themes after startup.
+useSettings.subscribe(sync);
+useThemeRegistry.subscribe(sync);
