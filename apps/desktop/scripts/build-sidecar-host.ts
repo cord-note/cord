@@ -3,8 +3,13 @@
 //
 // `tauri dev` runs that binary rather than the TypeScript source, so without
 // this step a dev session silently runs whatever sidecar was compiled last —
-// new renderer, old backend. It runs before every `tauri dev` (see
-// beforeDevCommand in tauri.conf.json) and takes about a second.
+// new renderer, old backend. `pnpm dev` runs it before `tauri dev` starts and
+// it takes about a second.
+//
+// It first stops sidecars left running from this repo's target folder. Ending
+// a dev session with Ctrl+C skips Tauri's exit hook, so the sidecar outlives
+// it; on Windows it then locks target/debug/cord-sidecar.exe and the next
+// build fails with "access denied" when Tauri copies the new one in.
 import { join } from 'node:path';
 
 const BUN_TARGETS: Record<string, string> = {
@@ -23,6 +28,15 @@ const target = BUN_TARGETS[triple];
 if (!target) throw new Error(`No Bun target for host ${triple}`);
 
 const root = join(import.meta.dir, '..');
+
+if (process.platform === 'win32') {
+  // Only processes started from this checkout's target folder, never an installed Cord.
+  const target = join(root, 'src-tauri', 'target').replaceAll("'", "''");
+  Bun.spawnSync(['powershell', '-NoProfile', '-Command',
+    `Get-Process cord-sidecar -ErrorAction SilentlyContinue | Where-Object { $_.Path -like '${target}\\*' } | Stop-Process -Force`,
+  ]);
+}
+
 const outfile = join(root, 'src-tauri', 'binaries', `cord-sidecar-${triple}${triple.includes('windows') ? '.exe' : ''}`);
 
 const build = Bun.spawnSync(

@@ -10,7 +10,7 @@
   },
   "type": "module",
   "scripts": {
-    "dev": "tauri dev",
+    "dev": "bun run build:sidecar:host && tauri dev",
     "dev:sidecar": "bun --watch src/sidecar/index.ts",
     "build:sidecar:host": "bun scripts/build-sidecar-host.ts",
     "dev:renderer": "vite",
