@@ -1,3 +1,5 @@
+import { FontSizeControl } from '../components/settings/FontSizeControl';
+import { ThemePickerControl } from '../components/settings/ThemePickerControl';
 import { log } from '../lib/log';
 import { useVaultStore } from '../store/vaults';
 import { registerSetting, useSettings } from './index';
@@ -19,6 +21,7 @@ registerSetting({
   key: 'editor.fontSize', type: 'number', section: 'Editor', order: 10,
   title: 'Font size', description: 'Text size in the editor.',
   default: 15, min: 12, max: 20, step: 1, unit: 'px', keywords: ['zoom', 'text size'],
+  control: FontSizeControl,
 });
 
 registerSetting({
@@ -55,6 +58,7 @@ registerSetting({
   key: 'appearance.theme', type: 'string', section: 'Appearance', order: 20,
   title: 'Theme', description: 'Colour palette for the whole app.',
   default: 'mono', pattern: /^[a-z0-9][a-z0-9-]{0,63}$/, maxLength: 64, keywords: ['colors', 'palette'],
+  control: ThemePickerControl,
 });
 
 registerSetting({

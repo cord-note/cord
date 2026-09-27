@@ -256,6 +256,8 @@ The command palette dropdown, the new-note menu and the editor context menu.
 | `cord-settings__section` | A chapter |
 | `cord-settings__section-title` | Chapter heading |
 | `cord-settings__field` | One setting |
+| `cord-settings__field--modified` | A setting changed from its default |
+| `cord-settings__search` | Settings search field |
 | `cord-trash` | Trash view |
 | `cord-trash__item` | A trashed note |
 | `cord-login` | Sign-in screen |
