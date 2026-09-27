@@ -6,6 +6,10 @@ import {
   formatAccel as shuttleFormatAccel,
   type KeybindingId as ShuttleKeybindingId,
 } from 'shuttle-editor';
+import { ConfigFileWriter } from '../settings/configFile';
+import { ipcConfigIO } from '../settings/ipcConfigIO';
+import { parseJsoncObject, setKeyInText } from '../settings/jsonText';
+import { LEGACY_KEYBINDINGS_KEY } from '../settings/migration';
 
 /**
  * Every keyboard shortcut in the app, in one place, editable from Settings.
@@ -27,8 +31,6 @@ import {
 
 export const IS_MAC =
   typeof navigator !== 'undefined' && navigator.platform.toLowerCase().includes('mac');
-
-const STORAGE_KEY = 'cord-keybindings';
 
 type AppKeybindingId =
   | 'app.commandBar'
@@ -132,64 +134,106 @@ export function formatAccel(accel: string): string {
 
 interface KeybindingStore {
   bindings: KeybindingMap;
-  /** Merge persisted overrides over the defaults. */
-  load: () => void;
+  /** Why keybindings.json could not be used, or null. Writes are held while set. */
+  fileError: string | null;
+  /** Merge the overrides in keybindings.json over the defaults. */
+  load: () => Promise<void>;
+  /** Write anything pending, then read the file again. */
+  reload: () => Promise<void>;
   setBinding: (id: KeybindingId, accel: string) => void;
   clearBinding: (id: KeybindingId) => void;
   resetBinding: (id: KeybindingId) => void;
   resetAll: () => void;
 }
 
-function persist(bindings: KeybindingMap): void {
-  // Only overrides are written, so changing a default later reaches users who
-  // never touched that binding.
-  const overrides: Record<string, string> = {};
-  for (const def of KEYBINDINGS) {
-    const current = bindings[def.id];
-    if (current !== def.defaultAccel) overrides[def.id] = current;
+const writer = new ConfigFileWriter('keybindings', ipcConfigIO);
+/** keybindings.json as last read or written; edits are applied to this text. */
+let fileText = '';
+
+/** Overrides from parsed file data. Unknown ids and non-strings are dropped. */
+function overridesFrom(data: Record<string, unknown>): Partial<KeybindingMap> {
+  const out: Partial<KeybindingMap> = {};
+  for (const [id, accel] of Object.entries(data)) {
+    if (typeof accel === 'string' && BY_ID.has(id as KeybindingId)) out[id as KeybindingId] = accel;
   }
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(overrides));
-  } catch {
-    // Storage blocked or full — bindings simply won't survive a restart.
-  }
+  return out;
 }
 
 /**
- * Overrides from their stored JSON. Ids that no longer exist are dropped, as is
- * anything that is not a string, so a corrupt or outdated entry never breaks
- * the shortcuts that are still valid.
+ * Overrides from stored text. Anything unparseable yields none, so a corrupt
+ * or outdated entry never breaks the shortcuts that are still valid.
  */
 export function parseOverrides(raw: string | null): Partial<KeybindingMap> {
   if (!raw) return {};
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    if (typeof parsed !== 'object' || parsed === null) return {};
-    const out: Partial<KeybindingMap> = {};
-    for (const [id, accel] of Object.entries(parsed as Record<string, unknown>)) {
-      if (typeof accel === 'string' && BY_ID.has(id as KeybindingId)) {
-        out[id as KeybindingId] = accel;
-      }
-    }
-    return out;
-  } catch {
-    return {};
-  }
+  const { data } = parseJsoncObject(raw);
+  return data ? overridesFrom(data) : {};
 }
 
-function readOverrides(): Partial<KeybindingMap> {
+function persist(bindings: KeybindingMap): void {
+  // Never overwrite a file the user broke; Settings shows the error.
+  if (useKeybindingStore.getState().fileError) return;
+  // Only overrides are written, so changing a default later reaches users who
+  // never touched that binding. Each key is edited in place, so comments and
+  // ids this version does not know survive.
+  let text = fileText;
+  for (const def of KEYBINDINGS) {
+    const current = bindings[def.id];
+    text = setKeyInText(text, def.id, current !== def.defaultAccel ? current : undefined);
+  }
+  fileText = text;
+  writer.schedule(text);
+}
+
+/** Write any pending keybinding change now. */
+export function flushKeybindings(): Promise<void> {
+  return writer.flush();
+}
+
+function legacyOverrides(): Partial<KeybindingMap> {
   try {
-    return parseOverrides(localStorage.getItem(STORAGE_KEY));
+    return parseOverrides(localStorage.getItem(LEGACY_KEYBINDINGS_KEY));
   } catch {
-    // Storage blocked — fall back to defaults rather than breaking every shortcut.
     return {};
   }
 }
 
 export const useKeybindingStore = create<KeybindingStore>((set, get) => ({
-  bindings: { ...defaultMap(), ...readOverrides() },
+  bindings: defaultMap(),
+  fileError: null,
 
-  load: () => set({ bindings: { ...defaultMap(), ...readOverrides() } }),
+  load: async () => {
+    let text: string | null;
+    try {
+      text = await ipcConfigIO.read('keybindings');
+    } catch (err) {
+      set({ fileError: `Couldn't read keybindings: ${err instanceof Error ? err.message : String(err)}` });
+      return;
+    }
+    if (text === null) {
+      const legacy = legacyOverrides();
+      text = Object.entries(legacy).reduce((t, [id, accel]) => setKeyInText(t, id, accel), '');
+      if (Object.keys(legacy).length > 0) {
+        try {
+          await ipcConfigIO.write('keybindings', text);
+          localStorage.removeItem(LEGACY_KEYBINDINGS_KEY);
+        } catch {
+          // Keep the legacy key; the move is retried next launch.
+        }
+      }
+    }
+    fileText = text;
+    const parsed = parseJsoncObject(text);
+    if (!parsed.data) {
+      set({ fileError: `keybindings.json: ${parsed.problems.map((p) => p.message).join('; ')}` });
+      return;
+    }
+    set({ bindings: { ...defaultMap(), ...overridesFrom(parsed.data) }, fileError: null });
+  },
+
+  reload: async () => {
+    await writer.flush();
+    await get().load();
+  },
 
   setBinding: (id, accel) => {
     const next: KeybindingMap = { ...get().bindings, [id]: accel };
