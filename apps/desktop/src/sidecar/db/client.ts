@@ -1,6 +1,7 @@
 import { Database } from 'bun:sqlite';
 import { drizzle } from 'drizzle-orm/bun-sqlite';
-import { join } from 'path';
+import { dirname, join } from 'path';
+import { tmpdir } from 'os';
 import { mkdirSync } from 'fs';
 import { schema } from './schema';
 
@@ -21,6 +22,17 @@ export function resolveDbPath(): string {
     '.cord',
     'cord.db',
   );
+}
+
+/**
+ * Where attachment files live: an `attachments` folder beside the database.
+ * The Tauri layer derives the same folder from the reported database path.
+ */
+export function resolveAttachmentsDir(): string {
+  const override = process.env['CORD_ATTACHMENTS_DIR'];
+  if (override) return override;
+  const dbPath = resolveDbPath();
+  return join(dbPath === ':memory:' ? tmpdir() : dirname(dbPath), 'attachments');
 }
 
 export function getDb(): ReturnType<typeof drizzle<typeof schema>> {

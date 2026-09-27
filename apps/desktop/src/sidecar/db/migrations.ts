@@ -213,6 +213,18 @@ export function runMigrations(): void {
 
   createBlocksFts(db);
 
+  db.run(`CREATE TABLE IF NOT EXISTS \`attachments\` (
+    \`id\` text PRIMARY KEY NOT NULL,
+    \`vault_id\` text NOT NULL,
+    \`mime\` text NOT NULL,
+    \`size\` integer NOT NULL,
+    \`sha256\` text NOT NULL,
+    \`created_at\` integer NOT NULL,
+    \`deleted_at\` integer,
+    FOREIGN KEY (\`vault_id\`) REFERENCES \`vaults\`(\`id\`) ON UPDATE no action ON DELETE no action
+  )`);
+  db.run(`CREATE INDEX IF NOT EXISTS \`idx_attachments_vault_hash\` ON \`attachments\` (\`vault_id\`, \`sha256\`)`);
+
   // ── Upgrades for databases created before the notepad work ──────────────────
   //
   // `body_markdown` was never actually derived on save, so it held '' for every
