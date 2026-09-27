@@ -35,5 +35,8 @@ export async function flushUserSettings(): Promise<void> {
 
 async function release(): Promise<void> {
   activeUserId = null;
+  // Write everything first, then reset: resetting one store while the other
+  // still waits on a write would show the default theme for that long.
+  await Promise.all([useSettings.getState().flush(), flushKeybindings()]);
   await Promise.all([useSettings.getState().unload(), unloadKeybindings()]);
 }
