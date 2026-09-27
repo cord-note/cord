@@ -4,7 +4,9 @@ import { getDb } from '../db/client';
 import { notes, noteLinks, blocks } from '../db/schema';
 import { logOp } from './oplog';
 import { BlockIndexService } from './BlockIndexService';
-import { EMPTY_DOC_JSON } from '@shared/blockDoc';
+import { LinkService } from './LinkService';
+import { EMPTY_DOC_JSON, parseDoc } from '@shared/blockDoc';
+import { wikiLinkTargets } from 'shuttle-editor/doc';
 import type {
   Note,
   NoteKind,
@@ -29,8 +31,18 @@ const LIST_COLUMNS = {
 
 const MENTION_CONTEXT_CHARS = 40;
 
+type Tx = Parameters<Parameters<ReturnType<typeof getDb>['transaction']>[0]>[0];
+
 export class NoteService {
-  constructor(private readonly blockIndex: BlockIndexService = new BlockIndexService()) {}
+  constructor(
+    private readonly blockIndex: BlockIndexService = new BlockIndexService(),
+    private readonly links: LinkService = new LinkService(),
+  ) {}
+
+  /** Derive the note's outgoing links from its saved document. */
+  private syncLinks(tx: Tx, id: string, vaultId: string, bodyJson: string): void {
+    this.links.syncFromDocument(tx, id, vaultId, wikiLinkTargets(parseDoc(bodyJson)));
+  }
 
   list(vaultId: string): NoteListItem[] {
     const db = getDb();
@@ -85,6 +97,7 @@ export class NoteService {
       const note = toNote(row);
 
       this.blockIndex.reproject(id, tx);
+      this.syncLinks(tx, id, input.vaultId, bodyJson);
       logOp(tx, input.vaultId, 'note', id, 'create', note);
       return note;
     });
@@ -109,8 +122,11 @@ export class NoteService {
       if (!row) throw new Error(`Note not found: ${id}`);
       const note = toNote(row);
 
-      // Only the body changes the index — a pin or rename does not.
-      if (input.bodyJson !== undefined) this.blockIndex.reproject(id, tx);
+      // Only the body changes the index and links — a pin or rename does not.
+      if (input.bodyJson !== undefined) {
+        this.blockIndex.reproject(id, tx);
+        this.syncLinks(tx, id, note.vaultId, input.bodyJson);
+      }
       logOp(tx, note.vaultId, 'note', id, 'update', note);
       return note;
     });
@@ -182,6 +198,7 @@ export class NoteService {
       const note = toNote(row);
 
       this.blockIndex.reproject(id, tx);
+      this.syncLinks(tx, id, note.vaultId, note.bodyJson);
       logOp(tx, note.vaultId, 'note', id, 'update', note);
       return note;
     });

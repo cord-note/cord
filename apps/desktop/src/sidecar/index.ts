@@ -25,8 +25,8 @@ runMigrations();
 const auth      = new AuthService();
 const vaults    = new VaultService();
 const blocks    = new BlockIndexService();
-const notes     = new NoteService(blocks);
 const links     = new LinkService();
+const notes     = new NoteService(blocks, links);
 const tags      = new TagService();
 const fragments = new FragmentService();
 
