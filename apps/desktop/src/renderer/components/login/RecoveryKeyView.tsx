@@ -20,7 +20,8 @@ export function RecoveryKeyView() {
   return (
     <form className={styles.form} onSubmit={onSubmit} noValidate>
       <div className={`${styles.keyBox} cord-login__recovery-key`}>
-        <code>{recoveryKey}</code>
+        {/* Two rows of four groups, so the key never wraps mid-group. */}
+        <code>{recoveryKey.slice(0, 20)}<br />{recoveryKey.slice(20)}</code>
         <button type="button" className={styles.showPwBtn} onClick={() => void copy()} aria-label="Copy recovery key">
           {copied ? <Check size={15} strokeWidth={1.75} /> : <Copy size={15} strokeWidth={1.75} />}
         </button>

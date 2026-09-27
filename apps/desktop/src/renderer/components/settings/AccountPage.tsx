@@ -100,7 +100,7 @@ function NewRecoveryKey() {
         <button type="submit" className={styles.secondaryBtn} disabled={busy || !password}>
           Make a new recovery key
         </button>
-        {key && <code className={own.key}>{key}</code>}
+        {key && <code className={own.key}>{key.slice(0, 20)}<br />{key.slice(20)}</code>}
         {status && <div className={styles.fieldHint} role="status">{status}</div>}
       </div>
     </form>

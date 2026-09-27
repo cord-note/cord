@@ -8,5 +8,4 @@
 .key {
   font-family: var(--font-mono, ui-monospace, monospace);
   user-select: all;
-  word-break: break-all;
 }

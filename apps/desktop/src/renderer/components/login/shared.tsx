@@ -1,5 +1,5 @@
 import { useRef, useState, type FormEvent } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
+import { ChevronDown, Eye, EyeOff } from 'lucide-react';
 import type { LockScreenUser } from '@shared/types';
 import { useAuthStore } from '../../store/auth';
 import styles from '../LoginScreen.module.css';
@@ -138,15 +138,19 @@ export function UserPicker({ disabled }: { disabled?: boolean }) {
   return (
     <div className={styles.fieldGroup}>
       <label className={styles.label} htmlFor="auth-user">User</label>
-      <select
-        id="auth-user"
-        className={`${styles.input} ${styles.userSelect} cord-login__user-picker`}
-        value={selectedUserId ?? ''}
-        onChange={(e) => void selectUser(e.target.value)}
-        disabled={disabled}
-      >
-        {users.map((u) => <option key={u.id} value={u.id}>{u.username}</option>)}
-      </select>
+      <div className={styles.selectRow}>
+        <select
+          id="auth-user"
+          className={`${styles.input} ${styles.userSelect} cord-login__user-picker`}
+          value={selectedUserId ?? ''}
+          onChange={(e) => void selectUser(e.target.value)}
+          disabled={disabled}
+        >
+          {users.map((u) => <option key={u.id} value={u.id}>{u.username}</option>)}
+        </select>
+        {/* The native arrow is hidden to match the fields; this puts one back. */}
+        <ChevronDown size={15} strokeWidth={1.75} className={styles.selectChevron} aria-hidden="true" />
+      </div>
     </div>
   );
 }
