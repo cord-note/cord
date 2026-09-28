@@ -1,11 +1,15 @@
-.form {
+.row {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  max-width: 320px;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
 }
 
-.key {
-  font-family: var(--font-mono, ui-monospace, monospace);
-  user-select: all;
+.text {
+  flex: 1;
+  min-width: 0;
+}
+
+.action {
+  flex-shrink: 0;
 }

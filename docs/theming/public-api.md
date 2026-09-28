@@ -283,4 +283,8 @@ The command palette dropdown, the new-note menu and the editor context menu.
 | `cord-login__pin` | PIN field |
 | `cord-login__user-picker` | User dropdown on the lock screen |
 | `cord-login__links` | Row of secondary actions under a lock-screen form |
-| `cord-login__recovery-key` | The recovery key shown once during setup |
+| `cord-login__recovery-key` | A recovery key shown once (setup, and Settings → Account) |
+| `cord-dialog` | Modal dialog |
+| `cord-dialog__title` | Dialog heading |
+| `cord-dialog__steps` | Step indicator in a guided dialog |
+| `cord-dialog__result` | Success or failure screen at the end of a dialog |
