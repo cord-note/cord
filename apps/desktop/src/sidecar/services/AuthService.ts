@@ -126,6 +126,11 @@ export class AuthService {
     return toAuthUser({ ...row, ...next });
   }
 
+  /** Lets a dialog confirm the password before asking for anything new. Changes nothing. */
+  async verifyPassword(password: string): Promise<void> {
+    await this.requirePassword(this.sessionRow(), password);
+  }
+
   async changePassword(input: ChangePasswordInput): Promise<void> {
     const row = this.sessionRow();
     await this.requirePassword(row, input.currentPassword);

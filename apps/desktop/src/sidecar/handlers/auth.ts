@@ -20,6 +20,12 @@ export function registerAuthHandlers(router: Router, auth: AuthService): void {
 
   router.post('/auth/pin', async (req) => json(await auth.setPin(await req.json())));
 
+  router.post('/auth/verify-password', async (req) => {
+    const { password } = (await req.json()) as { password: string };
+    await auth.verifyPassword(password);
+    return ok();
+  });
+
   router.post('/auth/password', async (req) => {
     await auth.changePassword(await req.json());
     return ok();
