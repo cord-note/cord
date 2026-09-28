@@ -84,6 +84,7 @@ pub fn run() {
             commands::auth::auth_login,
             commands::auth::auth_unlock_pin,
             commands::auth::auth_set_pin,
+            commands::auth::auth_verify_password,
             commands::auth::auth_change_password,
             commands::auth::auth_issue_recovery_key,
             commands::auth::auth_recover,

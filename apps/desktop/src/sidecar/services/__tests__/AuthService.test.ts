@@ -188,3 +188,16 @@ describe('AuthService — password and recovery key', () => {
     expect(auth.getSession()).toBeNull();
   });
 });
+
+describe('AuthService — verifyPassword', () => {
+  it('accepts the signed-in user’s password and rejects anything else', async () => {
+    await auth.register({ username: 'alice', password: 'correct horse' });
+    await expect(auth.verifyPassword('correct horse')).resolves.toBeUndefined();
+    await expect(auth.verifyPassword('nope')).rejects.toThrow('Wrong password');
+    await expect(auth.verifyPassword('')).rejects.toThrow('Wrong password');
+  });
+
+  it('refuses when nobody is signed in', async () => {
+    await expect(auth.verifyPassword('anything')).rejects.toThrow('Not authenticated');
+  });
+});

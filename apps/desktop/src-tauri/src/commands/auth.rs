@@ -36,6 +36,11 @@ pub async fn auth_set_pin(state: State<'_, AppState>, data: Value) -> Result<Val
 }
 
 #[tauri::command]
+pub async fn auth_verify_password(state: State<'_, AppState>, data: Value) -> Result<Value, String> {
+    fwd_post(&state, "/auth/verify-password", data).await
+}
+
+#[tauri::command]
 pub async fn auth_change_password(state: State<'_, AppState>, data: Value) -> Result<Value, String> {
     fwd_post(&state, "/auth/password", data).await
 }

@@ -74,6 +74,7 @@ export const api = {
     login:            (data: LoginInput)            => invoke<AuthUser>('auth_login', { data }),
     unlockPin:        (data: UnlockPinInput)        => invoke<PinUnlockResult>('auth_unlock_pin', { data }),
     setPin:           (data: SetPinInput)           => invoke<AuthUser>('auth_set_pin', { data }),
+    verifyPassword:   (data: { password: string })  => invoke<{ ok: true }>('auth_verify_password', { data }),
     changePassword:   (data: ChangePasswordInput)   => invoke<{ ok: true }>('auth_change_password', { data }),
     issueRecoveryKey: (data: IssueRecoveryKeyInput) => invoke<RecoveryKeyResult>('auth_issue_recovery_key', { data }),
     recover:          (data: RecoverInput)          => invoke<AuthUser>('auth_recover', { data }),
