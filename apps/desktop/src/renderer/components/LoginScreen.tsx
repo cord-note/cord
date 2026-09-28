@@ -1,5 +1,4 @@
 import type { ComponentType } from 'react';
-import AppIcon from './icons/AppIcon';
 import Dither from './Dither';
 import { useAuthStore, type AuthView } from '../store/auth';
 import { PinView } from './login/PinView';
@@ -48,10 +47,6 @@ export default function LoginScreen() {
       </div>
 
       <header className={styles.topBar}>
-        <div className={styles.logoRow}>
-          <AppIcon size={18} className={styles.logoIcon} />
-          <span className={styles.logoName}>Cord</span>
-        </div>
         {PICKS_USER.has(view) && <UserPicker />}
       </header>
 

@@ -1,12 +1,17 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuthStore } from '../../store/auth';
 import { ErrorPanel, LinkRow, PinField, isPin, useSubmit } from './shared';
+import { useSetting } from '../../settings';
+import { knownPinLength } from '../../lib/pinLength';
 import styles from '../LoginScreen.module.css';
 
 export function PinView() {
   const unlockWithPin = useAuthStore((s) => s.unlockWithPin);
   const setView = useAuthStore((s) => s.setView);
+  const selectedUserId = useAuthStore((s) => s.selectedUserId);
+  const autoUnlock = useSetting('security.autoUnlock');
   const [pin, setPin] = useState('');
+  const formRef = useRef<HTMLFormElement>(null);
 
   const { loading, error, setError, onSubmit } = useSubmit(async () => {
     const result = await unlockWithPin(pin);
@@ -18,8 +23,14 @@ export function PinView() {
     }
   });
 
+  // Unlock without Enter: submit the moment the PIN reaches its known length.
+  const autoLength = autoUnlock ? knownPinLength(selectedUserId) : null;
+  useEffect(() => {
+    if (autoLength !== null && pin.length === autoLength && !loading) formRef.current?.requestSubmit();
+  }, [pin, autoLength, loading]);
+
   return (
-    <form className={styles.form} onSubmit={onSubmit} noValidate>
+    <form ref={formRef} className={styles.form} onSubmit={onSubmit} noValidate>
       <PinField id="auth-pin" label="PIN" value={pin} onChange={setPin} disabled={loading} autoFocus hero invalid={!!error} />
       <ErrorPanel error={error} />
       <button type="submit" className={styles.submitBtn} disabled={loading || !isPin(pin)}>

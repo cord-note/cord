@@ -1,5 +1,5 @@
-import { useRef, useState, type FormEvent } from 'react';
-import { ChevronDown, Eye, EyeOff } from 'lucide-react';
+import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
+import { Check, ChevronDown, Eye, EyeOff } from 'lucide-react';
 import type { LockScreenUser } from '@shared/types';
 import { useAuthStore } from '../../store/auth';
 import styles from '../LoginScreen.module.css';
@@ -175,32 +175,108 @@ export function TextField(props: FieldProps & { autoComplete: string; placeholde
   );
 }
 
+function UserAvatar({ name }: { name: string }) {
+  return <span className={styles.userAvatar} aria-hidden="true">{name.slice(0, 1).toUpperCase()}</span>;
+}
+
 /**
  * Which user is unlocking, as a pill in the lock screen's top-right corner.
- * A native select under the styling: keyboard and screen-reader friendly for free.
+ * Opening it grows the pill downward into the list, the same width, so the
+ * two read as one control. Focus stays on the button; the highlighted option
+ * is announced through aria-activedescendant.
  */
 export function UserPicker() {
   const users = useAuthStore((s) => s.lockScreen.users);
   const selectedUserId = useAuthStore((s) => s.selectedUserId);
   const selectUser = useAuthStore((s) => s.selectUser);
-  const selected = users.find((u) => u.id === selectedUserId);
+  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState(0);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onPointerDown(e: PointerEvent): void {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => document.removeEventListener('pointerdown', onPointerDown);
+  }, [open]);
+
   if (users.length === 0) return null;
+  const selected = users.find((u) => u.id === selectedUserId);
+  const name = selected?.username ?? 'Choose user';
+
+  function show(): void {
+    setActive(Math.max(0, users.findIndex((u) => u.id === selectedUserId)));
+    setOpen(true);
+  }
+
+  function choose(userId: string): void {
+    setOpen(false);
+    if (userId !== selectedUserId) void selectUser(userId);
+  }
+
+  function onKeyDown(e: KeyboardEvent<HTMLButtonElement>): void {
+    if (!open) {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        show();
+      }
+      return;
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setActive((i) => (i + 1) % users.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActive((i) => (i - 1 + users.length) % users.length);
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      const user = users[active];
+      if (user) choose(user.id);
+    } else if (e.key === 'Escape' || e.key === 'Tab') {
+      setOpen(false);
+    }
+  }
+
+  const activeUser = users[active];
   return (
-    <div className={styles.userPill}>
-      <span className={styles.userAvatar} aria-hidden="true">
-        {(selected?.username ?? '?').slice(0, 1).toUpperCase()}
-      </span>
-      <select
+    <div ref={rootRef} className={`${styles.userPill} ${open ? styles.userPillOpen : ''}`}>
+      <button
+        type="button"
         id="auth-user"
-        aria-label="User"
-        className={`${styles.userSelect} cord-login__user-picker`}
-        value={selectedUserId ?? ''}
-        onChange={(e) => void selectUser(e.target.value)}
+        className={`${styles.userButton} cord-login__user-picker`}
+        aria-label={`User: ${name}`}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls="auth-user-list"
+        aria-activedescendant={open && activeUser ? `auth-user-${activeUser.id}` : undefined}
+        onClick={() => (open ? setOpen(false) : show())}
+        onKeyDown={onKeyDown}
       >
-        {users.map((u) => <option key={u.id} value={u.id}>{u.username}</option>)}
-      </select>
-      {/* The native arrow is hidden to match the pill; this puts one back. */}
-      <ChevronDown size={14} strokeWidth={1.75} className={styles.selectChevron} aria-hidden="true" />
+        <UserAvatar name={name} />
+        <span className={styles.userName}>{name}</span>
+        <ChevronDown size={14} strokeWidth={1.75} className={styles.userChevron} aria-hidden="true" />
+      </button>
+      {open && (
+        <ul id="auth-user-list" role="listbox" aria-label="Users" className={styles.userMenu}>
+          {users.map((u, i) => (
+            <li
+              key={u.id}
+              id={`auth-user-${u.id}`}
+              role="option"
+              aria-selected={u.id === selectedUserId}
+              className={`${styles.userOption} ${i === active ? styles.userOptionActive : ''}`}
+              onPointerEnter={() => setActive(i)}
+              onClick={() => choose(u.id)}
+            >
+              <UserAvatar name={u.username} />
+              <span className={styles.userName}>{u.username}</span>
+              {u.id === selectedUserId && <Check size={14} strokeWidth={2} className={styles.userCheck} aria-hidden="true" />}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { AuthUser, LockScreenState, PinUnlockResult } from '@shared/types';
 import { api } from '@renderer/ipc';
 import { log } from '../lib/log';
+import { rememberPinLength } from '../lib/pinLength';
 import { flushUserSettings, loadUserSettings, previewUserSettings } from '../settings/session';
 import { useVaultStore } from './vaults';
 import { useNoteStore } from './notes';
@@ -106,6 +107,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
       if (!userId) throw new Error('Choose a user first');
       const result = await api.auth.unlockPin({ userId, pin });
       if (result.ok) {
+        rememberPinLength(userId, pin.length);
         await signedIn(result.user);
       } else if (result.triesLeft === 0) {
         set({
@@ -123,7 +125,9 @@ export const useAuthStore = create<AuthState>((set, get) => {
 
     forgotPin: async (username, password, pin) => {
       await api.auth.login({ username, password });
-      await signedIn(await api.auth.setPin({ pin, password }));
+      const user = await api.auth.setPin({ pin, password });
+      rememberPinLength(user.id, pin.length);
+      await signedIn(user);
     },
 
     register: async (username, password) => {
@@ -135,7 +139,9 @@ export const useAuthStore = create<AuthState>((set, get) => {
     },
 
     setPin: async (pin) => {
-      await signedIn(await api.auth.setPin({ pin }));
+      const user = await api.auth.setPin({ pin });
+      rememberPinLength(user.id, pin.length);
+      await signedIn(user);
     },
 
     finishSetup: async () => {

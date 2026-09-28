@@ -26,6 +26,7 @@ declare module './schema' {
     'notes.listDateFormat': ListDateFormat;
     'general.holdToConfirm': HoldSpeed;
     'security.idleLockMinutes': number;
+    'security.autoUnlock': boolean;
   }
 }
 
@@ -185,6 +186,13 @@ registerSetting({
   title: 'Lock when idle',
   description: 'Return to the PIN screen after this many minutes without keyboard or mouse input. 0 turns it off.',
   default: 0, min: 0, max: 120, step: 5, unit: 'min', keywords: ['pin', 'lock', 'timeout', 'away'],
+});
+
+registerSetting({
+  key: 'security.autoUnlock', type: 'boolean', section: 'Security', order: 20,
+  title: 'Unlock without Enter',
+  description: 'Unlock as soon as the last digit of your PIN is typed. Takes effect after your next unlock, when this device learns how many digits your PIN has.',
+  default: false, keywords: ['pin', 'lock', 'enter', 'automatic', 'auto unlock'],
 });
 
 // ── Effects ──────────────────────────────────────────────────────────────────
