@@ -145,15 +145,36 @@ jobs:
           # dispatch these stay empty, so the action just builds.
           tagName: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || '' }}
           releaseName: ${{ startsWith(github.ref, 'refs/tags/v') && format('Cord {0}', github.ref_name) || '' }}
+          # Boilerplate every release needs. Anything specific to a version is
+          # worth adding to the draft by hand before publishing it.
           releaseBody: |
-            Unsigned builds. Installing them will show a warning:
+            | Platform | File |
+            |---|---|
+            | Windows | `Cord_<version>_x64-setup.exe` |
+            | macOS (Apple Silicon) | `Cord_<version>_aarch64.dmg` |
+            | Debian, Ubuntu | `Cord_<version>_amd64.deb` |
+            | Fedora | `Cord-<version>-1.x86_64.rpm` |
+            | Arch Linux | `cord-bin-<version>-1-x86_64.pkg.tar.zst` |
+            | Linux (anything else) | `Cord_<version>_amd64.AppImage` |
+
+            The Arch package is attached a few minutes after this release is
+            published, by the Arch package workflow. Cord is not on the AUR yet;
+            Arch has closed new account registration.
+
+            ### Updates
+
+            The `.deb`, `.rpm` and Arch package leave updates to your package
+            manager and will never prompt you. The AppImage still updates itself.
+
+            ### Unsigned builds
+
+            Neither the Windows nor the macOS build is code-signed yet, so both
+            warn on first run. Nothing is wrong; there is simply no certificate
+            behind the binary.
 
             - **Windows** — SmartScreen reports an unrecognised app. Choose *More info* then *Run anyway*.
             - **macOS** — Gatekeeper refuses to open it. Right-click the app and choose *Open*, then confirm.
-            - **Linux** — no warning. Install the `.deb` (Debian, Ubuntu) or the
-              `.rpm` (Fedora), or `chmod +x` the AppImage if your file manager has
-              not already. The `.deb` and `.rpm` leave updates to your package
-              manager and will not prompt you; the AppImage updates itself.
+            - **Linux** — no warning. `chmod +x` the AppImage if your file manager has not already.
 
             Cord keeps your notes in a local SQLite database — under
             `~/.local/share/cord/` on Linux, `~/.cord/` on macOS and Windows.
