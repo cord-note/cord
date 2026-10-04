@@ -30,6 +30,11 @@ on:
         description: 'Release tag to publish (e.g. v2.0.0)'
         required: true
 
+# The repository's default workflow token is read-only, so attaching the built
+# package to the release needs this spelled out.
+permissions:
+  contents: write
+
 concurrency:
   group: aur
   cancel-in-progress: false
@@ -88,10 +93,13 @@ jobs:
           sed -i "s/^pkgrel=.*/pkgrel=1/" PKGBUILD
           sed -i "s/^sha256sums=.*/sha256sums=('${SHA}')/" PKGBUILD
 
-          # A real checksum is the whole point of the fetch above. SKIP here
-          # would publish a package with no integrity check at all.
-          grep -q "sha256sums=('${SHA}')" PKGBUILD
-          ! grep -q "SKIP" PKGBUILD
+          # A real checksum is the whole point of the fetch above; publishing
+          # the placeholder would mean a package with no integrity check.
+          # Both greps are anchored to the line: the comment above
+          # sha256sums in the PKGBUILD explains the placeholder and so
+          # contains the word, which an unanchored search matches.
+          grep -q "^sha256sums=('${SHA}')" PKGBUILD
+          ! grep -q "^sha256sums=('SKIP')" PKGBUILD
 
       - name: Build it before publishing it
         working-directory: packaging/aur
