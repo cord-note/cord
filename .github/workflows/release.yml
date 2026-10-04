@@ -202,7 +202,8 @@ jobs:
           dnf install -y \
             git tar gzip xz unzip which findutils curl \
             gcc gcc-c++ make openssl-devel \
-            webkit2gtk4.1-devel gtk3-devel libappindicator-gtk3-devel librsvg2-devel
+            webkit2gtk4.1-devel gtk3-devel libappindicator-gtk3-devel librsvg2-devel \
+            appstream desktop-file-utils rpmlint
 
       - uses: actions/checkout@v4
 
@@ -324,7 +325,12 @@ jobs:
     container: archlinux:base-devel
     steps:
       - name: Install tooling
-        run: pacman -Syu --noconfirm --needed git namcap appstream desktop-file-utils
+        run: |
+          pacman -Syu --noconfirm --needed git namcap appstream desktop-file-utils
+          # Cord's actual runtime dependencies. Without them namcap cannot map a
+          # linked library back to a package and reports every one as missing,
+          # and pacman has nothing to resolve the package's depends against.
+          pacman -S --noconfirm --needed webkit2gtk-4.1 gtk3 hicolor-icon-theme
 
       - uses: actions/checkout@v4
 
@@ -357,20 +363,27 @@ jobs:
         run: |
           chown -R builder packaging/aur
           cd packaging/aur
-          sudo -u builder makepkg --noconfirm --nodeps --skipchecksums
+          sudo -u builder makepkg --noconfirm --skipchecksums
 
+      # namcap exits 0 whatever it finds, so a bare call proves nothing. Error
+      # lines gate; warnings are printed and tolerated - the Bun sidecar is
+      # unstripped and lacks PIE on purpose, and neither is fixable here.
       - name: namcap
         run: |
           cd packaging/aur
-          namcap PKGBUILD
-          namcap ./*.pkg.tar.zst
+          namcap PKGBUILD ./*.pkg.tar.zst | tee namcap.txt
+          if grep -q ' E: ' namcap.txt; then
+            echo '::error::namcap reported errors'
+            grep ' E: ' namcap.txt
+            exit 1
+          fi
 
       # Proves pacman accepts the package and that the files land where the
       # desktop entry and the icon theme expect them.
       - name: Install it and check the layout
         run: |
           cd packaging/aur
-          pacman -U --noconfirm --nodeps ./*.pkg.tar.zst
+          pacman -U --noconfirm ./*.pkg.tar.zst
           set -x
           test -x /usr/bin/cord
           test -x /usr/bin/cord-sidecar

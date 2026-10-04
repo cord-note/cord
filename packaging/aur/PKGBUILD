@@ -12,7 +12,22 @@ pkgdesc="Local-first note-taking as a knowledge graph"
 arch=('x86_64')
 url="https://github.com/cord-note/cord"
 license=('AGPL-3.0-or-later')
-depends=('webkit2gtk-4.1' 'gtk3')
+# Every library /usr/bin/cord links directly, which is what namcap checks, plus
+# hicolor-icon-theme for the icon hierarchy the package installs into. Most are
+# pulled in by gtk3 anyway, but a direct link belongs in depends.
+depends=(
+  'webkit2gtk-4.1'
+  'gtk3'
+  'glib2'
+  'cairo'
+  'gdk-pixbuf2'
+  'libsoup3'
+  'openssl'
+  'dbus'
+  'gcc-libs'
+  'glibc'
+  'hicolor-icon-theme'
+)
 provides=('cord')
 conflicts=('cord')
 # The Bun sidecar is a compiled binary with its bundle embedded, and the Rust
