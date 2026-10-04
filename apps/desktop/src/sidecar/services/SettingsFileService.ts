@@ -4,9 +4,10 @@ import { resolveDbPath } from '../db/client';
 
 /**
  * Stores each user's settings files as opaque text in
- * `<config dir>/users/<userId>/` (config dir = `~/.cord`, beside the
- * database). The renderer owns the schema and does all parsing, so a
- * hand-edited file — comments and all — round-trips exactly.
+ * `<config dir>/users/<userId>/` (config dir = the directory holding the
+ * database — see resolveDataDir, which is XDG-compliant on Linux). The
+ * renderer owns the schema and does all parsing, so a hand-edited file —
+ * comments and all — round-trips exactly.
  */
 
 export const CONFIG_FILES = ['settings', 'keybindings'] as const;

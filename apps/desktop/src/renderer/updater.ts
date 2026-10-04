@@ -1,10 +1,15 @@
 import { check } from '@tauri-apps/plugin-updater';
+import { api } from './ipc';
 
 /**
  * Ask GitHub whether a newer release exists, and offer to install it.
  *
  * Tauri v2 has no automatic polling — the check is explicit, which is why this
  * is called once on mount rather than configured in tauri.conf.json.
+ *
+ * Installs that do not own their own files sit this out entirely: on a .deb,
+ * .rpm or AUR install, apt, dnf and pacman are the only things that should be
+ * replacing anything under /usr. The shell decides — see app_updater_supported.
  *
  * Every failure path is swallowed on purpose. Being offline, hitting GitHub's
  * rate limit, or running a version newer than any published release are all
@@ -18,6 +23,8 @@ import { check } from '@tauri-apps/plugin-updater';
  */
 export async function checkForUpdate(): Promise<void> {
   try {
+    if (!(await api.app.updaterSupported())) return;
+
     const update = await check();
     if (!update) return;
 

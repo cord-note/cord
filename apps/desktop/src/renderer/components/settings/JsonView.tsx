@@ -60,7 +60,7 @@ export function JsonView() {
     <div className={`${styles.problemsColumn} ${styles.jsonView} cord-settings__json`}>
       <div className={styles.jsonBar}>
         <span className={styles.fieldHint}>
-          ~/.cord/settings.json — only values that differ from their default. Comments are allowed.
+          settings.json — only values that differ from their default. Comments are allowed.
         </span>
         <div className={styles.settingActions}>
           <button

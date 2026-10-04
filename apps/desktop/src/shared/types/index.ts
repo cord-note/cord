@@ -305,5 +305,5 @@ export interface CordModule {
   requires?: string[];
 }
 
-/** The user's hand-editable config files in ~/.cord. */
+/** The user's hand-editable config files in Cord's config directory. */
 export type ConfigFileName = 'settings' | 'keybindings';

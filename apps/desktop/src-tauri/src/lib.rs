@@ -94,6 +94,8 @@ pub fn run() {
             // settings
             commands::settings::settings_read,
             commands::settings::settings_write,
+            // app
+            commands::app::app_updater_supported,
         ])
         .build(tauri::generate_context!())
         .expect("error building Cord");

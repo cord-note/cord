@@ -45,7 +45,8 @@ pnpm test
 pnpm typecheck
 ```
 
-Cord keeps its database at `~/.cord/cord.db`. To work against a throwaway one,
+Cord keeps its database in its data directory — `~/.local/share/cord/cord.db` on
+Linux, `~/.cord/cord.db` on macOS and Windows. To work against a throwaway one,
 set `CORD_DB_PATH`:
 
 ```bash

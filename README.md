@@ -54,8 +54,19 @@ little today. Build from source meanwhile — see [Develop](#develop).
 
 ### Your notes
 
-Cord keeps everything in a local SQLite database at `~/.cord/cord.db`, and images
-you paste into notes in `~/.cord/attachments/`. Nothing is uploaded anywhere: there is no account, no telemetry and no sync yet.
+Cord keeps everything in a local SQLite database, with images you paste into
+notes as files beside it. Nothing is uploaded anywhere: there is no account, no
+telemetry and no sync yet.
+
+| Platform | Location |
+|---|---|
+| Linux | `$XDG_DATA_HOME/cord/`, or `~/.local/share/cord/` |
+| macOS, Windows | `~/.cord/` |
+
+Linux follows the XDG base directory specification so that a package installed
+by apt, dnf or pacman behaves the way its distribution expects. An existing
+`~/.cord` is moved there once, on the first launch of a version that looks for
+it — nothing is deleted.
 
 ## Updating
 
@@ -145,8 +156,8 @@ handles navigation over Cord's stores and IPC. The sidecar reads saved documents
 through `shuttle-editor/doc`, a React-free entry, so the block index and the
 derived links see exactly what the editor wrote.
 
-Pasted and dropped images are stored as files in `~/.cord/attachments/` and
-referenced from the document as `attachment:<id>`; the Tauri shell serves them
+Pasted and dropped images are stored as files in `attachments/` beside the
+database and referenced from the document as `attachment:<id>`; the Tauri shell serves them
 to the editor through a `cord-attachment` URI scheme.
 
 ## Develop

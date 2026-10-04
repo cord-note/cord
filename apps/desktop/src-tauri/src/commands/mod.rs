@@ -1,4 +1,5 @@
 pub mod http;
+pub mod app;
 pub mod attachments;
 pub mod auth;
 pub mod blocks;

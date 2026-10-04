@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  AppStream metadata. Without this file Cord installs from the .deb or .rpm as
+  a nameless entry in GNOME Software and KDE Discover: no summary, no
+  description, no developer. Tauri does not generate one, so it is shipped as a
+  plain asset and placed by bundle.linux.{deb,rpm}.files in tauri.conf.json.
+
+  <launchable> must name the .desktop file Tauri writes, which is
+  "<productName>.desktop" — Cord.desktop. Renaming productName renames that
+  file, so this value has to follow it or the metadata is orphaned from the
+  launcher.
+
+  Validate with:  appstreamcli validate app.cord.desktop.metainfo.xml
+-->
+<component type="desktop-application">
+  <id>app.cord.desktop</id>
+  <launchable type="desktop-id">Cord.desktop</launchable>
+
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>AGPL-3.0-or-later</project_license>
+
+  <name>Cord</name>
+  <summary>Local-first note-taking as a knowledge graph</summary>
+
+  <developer id="app.cord">
+    <name>Aleksander Sprengel</name>
+  </developer>
+
+  <description>
+    <p>
+      Cord is a local-first desktop note-taking app. Vaults, notes, links and
+      tags form a knowledge graph rather than a filing cabinet.
+    </p>
+    <p>
+      Your notes live in a SQLite database on your own machine. Nothing is sent
+      anywhere, and there is no account to create.
+    </p>
+    <p>Features:</p>
+    <ul>
+      <li>Wiki-style links between notes, with backlinks and unlinked mentions</li>
+      <li>Notepads — pages of individually addressable, taggable blocks</li>
+      <li>Read-only transclusion: show a block from one note inside another</li>
+      <li>Full-text search across every note as you type</li>
+      <li>A markdown-style editor where the syntax disappears as you type</li>
+      <li>Tags, per-block annotations, and image attachments</li>
+    </ul>
+  </description>
+
+  <categories>
+    <category>Office</category>
+    <category>Utility</category>
+  </categories>
+
+  <keywords>
+    <keyword>notes</keyword>
+    <keyword>notetaking</keyword>
+    <keyword>markdown</keyword>
+    <keyword>wiki</keyword>
+    <keyword>knowledge</keyword>
+    <keyword>zettelkasten</keyword>
+  </keywords>
+
+  <url type="homepage">https://github.com/cord-note/cord</url>
+  <url type="bugtracker">https://github.com/cord-note/cord/issues</url>
+  <url type="vcs-browser">https://github.com/cord-note/cord</url>
+
+  <provides>
+    <binary>cord</binary>
+  </provides>
+
+  <!--
+    Screenshots are optional for a .deb or .rpm but mandatory for Flathub, and
+    they need stable public URLs. Add them when there is somewhere to host them:
+
+    <screenshots>
+      <screenshot type="default">
+        <image>https://.../notes.png</image>
+        <caption>A vault of linked notes</caption>
+      </screenshot>
+    </screenshots>
+  -->
+
+  <content_rating type="oars-1.1" />
+
+  <releases>
+    <release version="2.0.0" date="2026-09-28">
+      <description>
+        <p>
+          Tauri and Bun replace Electron and Node, full-text search runs
+          natively, notes are locked behind a PIN, and the editor moves to the
+          standalone Shuttle package.
+        </p>
+      </description>
+    </release>
+  </releases>
+</component>

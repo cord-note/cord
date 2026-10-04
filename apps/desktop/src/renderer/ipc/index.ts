@@ -85,4 +85,9 @@ export const api = {
     read:  (file: ConfigFileName)               => invoke<{ text: string | null }>('settings_read', { file }),
     write: (file: ConfigFileName, text: string) => invoke<{ ok: true }>('settings_write', { file, text }),
   },
+
+  app: {
+    /** False on a .deb, .rpm or AUR install, where the package manager owns updates. */
+    updaterSupported: () => invoke<boolean>('app_updater_supported'),
+  },
 } as const;
