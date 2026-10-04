@@ -4,6 +4,8 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+packageExtensionsChecksum: sha256-ubeKvkNje69VK3WdR22Z0VHjoOSQI3dqy90fgxsUya4=
+
 importers:
 
   .: {}
@@ -3217,6 +3219,7 @@ snapshots:
       lib0: 0.2.118
       prosemirror-model: 1.25.12
       prosemirror-state: 1.4.4
+      prosemirror-transform: 1.12.2
       prosemirror-view: 1.42.3
       y-protocols: 1.0.7(yjs@13.6.33)
       yjs: 13.6.33

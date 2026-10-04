@@ -7,3 +7,18 @@ allowBuilds:
 
 minimumReleaseAgeExclude:
   - shuttle-editor@0.3.0
+
+# @tiptap/y-tiptap imports prosemirror-transform but declares it in neither its
+# dependencies nor its peerDependencies, so under pnpm's strict layout it has
+# nothing to resolve and the renderer build fails outright. Cord does not use
+# collaborative editing at all — the package arrives transitively through
+# shuttle-editor's drag-handle and collaboration extensions — so the real fix
+# belongs upstream. Until then, declare the dependency the package is missing.
+#
+# ^1.12.0 is what @tiptap/pm already asks for, so this resolves to the same
+# single instance rather than adding a second copy: two prosemirror-transform
+# builds in one bundle would break instanceof across the editor.
+packageExtensions:
+  '@tiptap/y-tiptap':
+    dependencies:
+      prosemirror-transform: ^1.12.0
