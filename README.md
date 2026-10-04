@@ -24,6 +24,8 @@ Download from the [latest release](https://github.com/cord-note/cord/releases/la
 | Windows | `Cord_<version>_x64-setup.exe` |
 | macOS (Apple Silicon) | `Cord_<version>_aarch64.dmg` |
 | Linux (Debian/Ubuntu) | `Cord_<version>_amd64.deb` |
+| Linux (Fedora) | `Cord_<version>-1.x86_64.rpm` |
+| Arch Linux | [`cord-bin`](https://aur.archlinux.org/packages/cord-bin) on the AUR |
 | Linux (anything else) | `Cord_<version>_amd64.AppImage` |
 
 Cord is **not code-signed yet**, so Windows and macOS will both object the first
@@ -34,6 +36,25 @@ time. Nothing is wrong; there is simply no certificate behind the binary.
 - **macOS** — Gatekeeper refuses to open it. Right-click the app, choose *Open*,
   then confirm. Double-clicking will not offer that option.
 - **Linux** — no warning.
+
+### Arch Linux
+
+```bash
+paru -S cord-bin      # or yay, or any other AUR helper
+```
+
+`cord-bin` repackages the `.deb`, so it installs in seconds rather than building
+Cord from source. Updates come from the AUR like any other package.
+
+### Debian, Ubuntu, Fedora
+
+```bash
+sudo apt install ./Cord_<version>_amd64.deb      # Debian, Ubuntu
+sudo dnf install ./Cord_<version>-1.x86_64.rpm   # Fedora
+```
+
+There is no apt or dnf repository yet, so these do not auto-update — download a
+newer file and install it over the top.
 
 ### AppImage
 
@@ -73,6 +94,11 @@ it — nothing is deleted.
 Cord checks for a newer release on startup and offers to install it. Update
 artifacts are signed with a key the app carries, so a build that was not signed
 by that key is refused rather than installed.
+
+This applies to the Windows installer, the macOS app and the AppImage. A `.deb`,
+`.rpm` or AUR install is owned by your package manager, which is the only thing
+that should be replacing files under `/usr` — those builds never check for
+updates and never prompt. Use `apt`, `dnf` or your AUR helper instead.
 
 The update check reads
 [`latest.json`](https://github.com/cord-note/cord/releases/latest/download/latest.json)

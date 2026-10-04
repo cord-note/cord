@@ -1,0 +1,140 @@
+name: Publish to the AUR
+
+# Triggered by publishing a release, not by the tag.
+#
+# release.yml leaves a DRAFT. A draft release's assets are not publicly
+# downloadable, so a PKGBUILD pointing at them would 404 for every user until
+# the draft went live. Waiting for the published event means the asset the
+# PKGBUILD names is fetchable at the moment the AUR learns about it.
+#
+# Prereleases are skipped. The AUR carries stable versions; someone who wants a
+# beta can take the .deb or the AppImage from the release page.
+on:
+  release:
+    types: [published]
+  # Lets you re-push the AUR package without cutting a release — for a PKGBUILD
+  # fix, or after the first manual upload. Takes the tag to publish.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to publish (e.g. v2.0.0)'
+        required: true
+
+concurrency:
+  group: aur
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: cord-bin
+    if: github.event_name == 'workflow_dispatch' || github.event.release.prerelease == false
+    runs-on: ubuntu-latest
+    container: archlinux:base-devel
+
+    steps:
+      - name: Install tooling
+        run: pacman -Syu --noconfirm --needed git openssh namcap
+
+      - uses: actions/checkout@v4
+
+      - run: git config --global --add safe.directory '*'
+
+      - name: Work out the version
+        id: v
+        env:
+          TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.event.release.tag_name }}
+        run: |
+          # The AUR gets stable versions only, so pkgver is the tag without its
+          # leading v. A hyphen is not legal in a pkgver and marks a prerelease
+          # anyway, so refuse rather than mangle it into something installable.
+          version="${TAG#v}"
+          case "$version" in
+            *-*) echo "::error::$TAG is a prerelease; the AUR carries stable versions only"; exit 1 ;;
+          esac
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Fetch the published .deb and hash it
+        id: deb
+        env:
+          TAG: ${{ steps.v.outputs.tag }}
+          VERSION: ${{ steps.v.outputs.version }}
+        run: |
+          deb="Cord_${VERSION}_amd64.deb"
+          url="https://github.com/${{ github.repository }}/releases/download/${TAG}/${deb}"
+          # --fail so a missing or still-draft asset stops the run instead of
+          # hashing an HTML error page and publishing a package nobody can install.
+          curl -fsSL --retry 3 -o "$deb" "$url"
+          echo "sha256=$(sha256sum "$deb" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+          echo "deb=$deb" >> "$GITHUB_OUTPUT"
+
+      - name: Bump the PKGBUILD
+        working-directory: packaging/aur
+        env:
+          VERSION: ${{ steps.v.outputs.version }}
+          SHA: ${{ steps.deb.outputs.sha256 }}
+        run: |
+          sed -i "s/^pkgver=.*/pkgver=${VERSION}/" PKGBUILD
+          sed -i "s/^pkgrel=.*/pkgrel=1/" PKGBUILD
+          sed -i "s/^sha256sums=.*/sha256sums=('${SHA}')/" PKGBUILD
+
+          # A real checksum is the whole point of the fetch above. SKIP here
+          # would publish a package with no integrity check at all.
+          grep -q "sha256sums=('${SHA}')" PKGBUILD
+          ! grep -q "SKIP" PKGBUILD
+
+      - name: Build it before publishing it
+        working-directory: packaging/aur
+        run: |
+          # Publishing a PKGBUILD that does not build is worse than publishing
+          # nothing: it is the AUR copy users get, and it fails on their machine.
+          useradd -m builder
+          cp -r . /home/builder/aur
+          chown -R builder /home/builder/aur
+          sudo -u builder bash -c 'cd /home/builder/aur && makepkg --noconfirm --nodeps'
+          sudo -u builder bash -c 'cd /home/builder/aur && makepkg --printsrcinfo' > .SRCINFO
+          namcap PKGBUILD
+          cat .SRCINFO
+
+      - name: Push to the AUR
+        env:
+          AUR_SSH_KEY: ${{ secrets.AUR_SSH_KEY }}
+          VERSION: ${{ steps.v.outputs.version }}
+        run: |
+          if [ -z "$AUR_SSH_KEY" ]; then
+            echo "::error::AUR_SSH_KEY is not set — see packaging/aur/README.md"
+            exit 1
+          fi
+
+          mkdir -p ~/.ssh
+          printf '%s\n' "$AUR_SSH_KEY" > ~/.ssh/aur
+          chmod 600 ~/.ssh/aur
+          ssh-keyscan aur.archlinux.org >> ~/.ssh/known_hosts
+          cat > ~/.ssh/config <<'EOF'
+          Host aur.archlinux.org
+            User aur
+            IdentityFile ~/.ssh/aur
+            IdentitiesOnly yes
+          EOF
+
+          git clone ssh://aur@aur.archlinux.org/cord-bin.git aur-repo
+          cp packaging/aur/PKGBUILD packaging/aur/.SRCINFO aur-repo/
+
+          cd aur-repo
+          git config user.name 'Aleksander Sprengel'
+          git config user.email '120117986+Alexander-288@users.noreply.github.com'
+          # The AUR hands out an empty repo for a package that does not exist
+          # yet, and a fresh clone of one lands on whatever init.defaultBranch
+          # happens to be. The AUR only accepts master.
+          git checkout -B master
+
+          # Nothing to do when the release did not change the package. Checked
+          # with status, not diff: on the first push both files are untracked
+          # and a diff would report no change at all.
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "cord-bin is already at ${VERSION}"
+            exit 0
+          fi
+          git add PKGBUILD .SRCINFO
+          git commit -m "Update to ${VERSION}"
+          git push origin master

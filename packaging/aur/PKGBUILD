@@ -1,0 +1,39 @@
+# Maintainer: Aleksander Sprengel <120117986+Alexander-288@users.noreply.github.com>
+
+# Repackages the .deb from Cord's GitHub release. Tauri already lays that out
+# the way a Linux package should be - /usr/bin, the .desktop file, hicolor
+# icons and the AppStream metainfo - so package() unpacks data.tar.gz whole
+# rather than naming paths that would rot the next time the bundle changes.
+
+pkgname=cord-bin
+pkgver=2.0.0
+pkgrel=1
+pkgdesc="Local-first note-taking as a knowledge graph"
+arch=('x86_64')
+url="https://github.com/cord-note/cord"
+license=('AGPL-3.0-or-later')
+depends=('webkit2gtk-4.1' 'gtk3')
+provides=('cord')
+conflicts=('cord')
+# The Bun sidecar is a compiled binary with its bundle embedded, and the Rust
+# binary is already stripped by the release profile. Nothing to strip, and no
+# source to build a debug package from.
+options=('!strip' '!debug')
+
+_deb="Cord_${pkgver}_amd64.deb"
+source=("${_deb}::${url}/releases/download/v${pkgver}/${_deb}")
+noextract=("${_deb}")
+# Substituted by the aur.yml publish job from the asset it actually downloads.
+# SKIP is fine in this copy, where no v2.0.0 asset exists yet to hash, but the
+# publish job refuses to push a PKGBUILD that still says SKIP.
+sha256sums=('SKIP')
+
+package() {
+  # A .deb is an ar archive; bsdtar reads it and picks the member out. The
+  # inner archive is gzipped today, so the glob and the auto-detecting second
+  # bsdtar keep this working if Tauri ever switches compression.
+  bsdtar -O -xf "${srcdir}/${_deb}" 'data.tar.*' | bsdtar -C "${pkgdir}" -xf -
+
+  # AGPL-3.0-or-later is SPDX-listed, so Arch does not need a copy installed.
+  # The deb carries none anyway.
+}

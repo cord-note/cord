@@ -261,6 +261,45 @@ jobs:
           # lists nothing the updater can install.
           includeUpdaterJson: false
 
+      # Nothing downstream looks at the rpm's metadata, so assert it here. The
+      # dependency names, the License tag and the icon sizes have all been wrong
+      # at some point and none of them fail the build when they are.
+      - name: Check the rpm
+        run: |
+          rpm=$(find apps/desktop/src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/rpm                   -name '*.rpm' -print -quit)
+          [ -n "$rpm" ] || { echo "::error::no rpm was produced"; exit 1; }
+          rpm -qpi "$rpm"
+          echo '--- requires ---'; rpm -qpR "$rpm"
+          echo '--- files ---';    rpm -qpl "$rpm"
+
+          rpm -qpR "$rpm" | grep -qx webkit2gtk4.1
+          rpm -qpR "$rpm" | grep -qx gtk3
+          rpm -qp --qf '%{LICENSE}' "$rpm" | grep -q 'AGPL-3.0-or-later'
+          rpm -qpl "$rpm" | grep -qx /usr/bin/cord
+          rpm -qpl "$rpm" | grep -qx /usr/bin/cord-sidecar
+          rpm -qpl "$rpm" | grep -qx /usr/share/applications/Cord.desktop
+          rpm -qpl "$rpm" | grep -qx /usr/share/metainfo/app.cord.desktop.metainfo.xml
+          for size in 32x32 64x64 128x128 256x256 512x512; do
+            rpm -qpl "$rpm" | grep -qx "/usr/share/icons/hicolor/$size/apps/cord.png"
+          done
+
+      # Proves dnf resolves the dependencies the rpm declares, then checks the
+      # two files no other job validates.
+      - name: Install it and validate the metadata
+        run: |
+          rpm=$(find apps/desktop/src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/rpm                   -name '*.rpm' -print -quit)
+          dnf install -y "$rpm"
+          desktop-file-validate /usr/share/applications/Cord.desktop
+          appstreamcli validate --no-net /usr/share/metainfo/app.cord.desktop.metainfo.xml
+
+      # Informational. rpmlint is what a Fedora reviewer would run, but it is
+      # strict about things a bundled app cannot help, so it does not gate.
+      - name: rpmlint
+        continue-on-error: true
+        run: |
+          rpm=$(find apps/desktop/src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/rpm                   -name '*.rpm' -print -quit)
+          rpmlint "$rpm"
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -269,3 +308,83 @@ jobs:
             apps/desktop/src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/rpm/**/*
           if-no-files-found: warn
           retention-days: 14
+
+  # Builds the AUR PKGBUILD against the .deb this run just produced, in a real
+  # Arch container. Nothing else checks it: the PKGBUILD is only exercised when
+  # someone installs cord-bin, so without this a broken one ships and the first
+  # report comes from a user.
+  #
+  # It points makepkg at the local artifact rather than the release URL, so it
+  # works on branch rehearsals and prereleases, where no stable tag exists for
+  # the PKGBUILD's own source line to resolve.
+  verify_aur:
+    name: AUR PKGBUILD
+    needs: build
+    runs-on: ubuntu-latest
+    container: archlinux:base-devel
+    steps:
+      - name: Install tooling
+        run: pacman -Syu --noconfirm --needed git namcap appstream desktop-file-utils
+
+      - uses: actions/checkout@v4
+
+      - run: git config --global --add safe.directory '*'
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: cord-x86_64-unknown-linux-gnu
+          path: artifact
+
+      # makepkg refuses to run as root, and the container has no other user.
+      - name: Create a build user
+        run: |
+          useradd -m builder
+          echo 'builder ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
+
+      - name: Point the PKGBUILD at this run's .deb
+        run: |
+          deb=$(find artifact -name '*.deb' -print -quit)
+          [ -n "$deb" ] || { echo "::error::no .deb in the build artifact"; exit 1; }
+          cp "$deb" "packaging/aur/$(basename "$deb")"
+          cd packaging/aur
+          # A local source file, so makepkg neither downloads nor needs the
+          # stable tag that only exists for a real release.
+          sed -i "s|^source=.*|source=(\"\${_deb}\")|" PKGBUILD
+          echo "--- PKGBUILD under test ---"
+          cat PKGBUILD
+
+      - name: makepkg
+        run: |
+          chown -R builder packaging/aur
+          cd packaging/aur
+          sudo -u builder makepkg --noconfirm --nodeps --skipchecksums
+
+      - name: namcap
+        run: |
+          cd packaging/aur
+          namcap PKGBUILD
+          namcap ./*.pkg.tar.zst
+
+      # Proves pacman accepts the package and that the files land where the
+      # desktop entry and the icon theme expect them.
+      - name: Install it and check the layout
+        run: |
+          cd packaging/aur
+          pacman -U --noconfirm --nodeps ./*.pkg.tar.zst
+          set -x
+          test -x /usr/bin/cord
+          test -x /usr/bin/cord-sidecar
+          test -f /usr/share/applications/Cord.desktop
+          test -f /usr/share/metainfo/app.cord.desktop.metainfo.xml
+          for size in 32x32 64x64 128x128 256x256 512x512; do
+            test -f "/usr/share/icons/hicolor/$size/apps/cord.png"
+          done
+          pacman -Ql cord-bin | head -40
+
+      # The only check these two files get. appstreamcli is strict about the
+      # metainfo, and a .desktop file that fails validation is one GNOME and
+      # KDE may quietly refuse to show.
+      - name: Validate the desktop entry and AppStream metadata
+        run: |
+          desktop-file-validate /usr/share/applications/Cord.desktop
+          appstreamcli validate --no-net /usr/share/metainfo/app.cord.desktop.metainfo.xml

@@ -1,0 +1,18 @@
+pkgbase = cord-bin
+	pkgdesc = Local-first note-taking as a knowledge graph
+	pkgver = 2.0.0
+	pkgrel = 1
+	url = https://github.com/cord-note/cord
+	arch = x86_64
+	license = AGPL-3.0-or-later
+	depends = webkit2gtk-4.1
+	depends = gtk3
+	provides = cord
+	conflicts = cord
+	options = !strip
+	options = !debug
+	source = Cord_2.0.0_amd64.deb::https://github.com/cord-note/cord/releases/download/v2.0.0/Cord_2.0.0_amd64.deb
+	noextract = Cord_2.0.0_amd64.deb
+	sha256sums = SKIP
+
+pkgname = cord-bin

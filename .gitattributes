@@ -1,0 +1,6 @@
+# Cord is developed on Windows with core.autocrlf=true. These files are read by
+# bash or by Linux packaging tools, where a CRLF is a syntax error, so they stay
+# LF on checkout no matter the platform.
+packaging/aur/PKGBUILD text eol=lf
+packaging/aur/.SRCINFO text eol=lf
+*.sh text eol=lf
