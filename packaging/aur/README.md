@@ -1,9 +1,25 @@
-# Arch Linux (AUR)
+# Arch Linux
 
-Cord is on the AUR as [`cord-bin`](https://aur.archlinux.org/packages/cord-bin),
-which repackages the `.deb` from the GitHub release. `cord-bin` installs in
+`cord-bin` repackages the `.deb` from the GitHub release. It installs in
 seconds; building Cord from source would need Rust, Bun, pnpm and Node on the
 user's machine for a ten-minute build.
+
+## Not on the AUR yet
+
+Arch Linux has closed new account registration, so there is no AUR account to
+publish from. Nothing here is blocked on code — the PKGBUILD is written and
+every release builds it, installs it and runs namcap against it in an Arch
+container.
+
+In the meantime each published release carries
+`cord-bin-<version>-1-x86_64.pkg.tar.zst`, the same package, installed with
+`pacman -U`. Branch runs of `release.yml` upload it as a `cord-arch-package`
+artifact too, so it can be tried without a release at all.
+
+When registration reopens: create the account, add the `AUR_SSH_KEY` secret
+(below), and the push starts happening by itself. No workflow or PKGBUILD
+changes. The one thing worth doing by hand is the very first upload, so you can
+watch it — see *The first upload*.
 
 This directory is the source of truth. The AUR repo is a copy, pushed by
 `.github/workflows/aur.yml`. Edit the PKGBUILD here, never there.
@@ -15,8 +31,9 @@ This directory is the source of truth. The AUR repo is a copy, pushed by
 2. You review the draft and publish it.
 3. Publishing fires `aur.yml`, which downloads the `.deb` from the now-public
    release, hashes it, bumps `pkgver` and `sha256sums`, builds the package in an
-   Arch container to prove it works, regenerates `.SRCINFO` and pushes to the
-   AUR.
+   Arch container to prove it works, regenerates `.SRCINFO`, attaches the built
+   package to the release, and pushes to the AUR **if `AUR_SSH_KEY` is set**.
+   Without the secret it skips the push with a notice rather than failing.
 
 The order matters. A draft release's assets are not publicly downloadable, so a
 PKGBUILD published at tag time would 404 for every user until you published the
@@ -31,12 +48,13 @@ release rather than by the first user who tries it.
 
 ## One-time setup
 
-Two things only you can do.
+Blocked on Arch reopening registration. Nothing to do until then.
 
 ### 1. An AUR account
 
-Register at https://aur.archlinux.org/register. The name `cord-bin` is
-unclaimed; the first push creates the package and makes you its maintainer.
+**Currently not possible** — registration is closed. `cord-bin` was unclaimed
+when last checked; the first push creates the package and makes you its
+maintainer. Check https://aur.archlinux.org/register periodically.
 
 ### 2. An SSH key for CI
 
@@ -52,12 +70,13 @@ ssh-keygen -t ed25519 -f ~/.ssh/aur_cord -C "aur-cord-ci" -N ""
   named `AUR_SSH_KEY`, under Settings → Secrets and variables → Actions. Paste
   the whole file, `-----BEGIN` line included.
 
-Without the secret, `aur.yml` stops with a clear error rather than half-pushing.
+Without the secret, `aur.yml` skips the push and says so. It does not fail, and
+the release still gets its `.pkg.tar.zst`.
 
 ### 3. The first upload
 
 The workflow can do it, but for the first one it is worth watching. Either run
-the **Publish to the AUR** workflow by hand with a stable tag, or do it locally:
+the **Arch package** workflow by hand with a stable tag, or do it locally:
 
 ```bash
 git clone ssh://aur@aur.archlinux.org/cord-bin.git

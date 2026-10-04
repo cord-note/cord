@@ -25,7 +25,7 @@ Download from the [latest release](https://github.com/cord-note/cord/releases/la
 | macOS (Apple Silicon) | `Cord_<version>_aarch64.dmg` |
 | Linux (Debian/Ubuntu) | `Cord_<version>_amd64.deb` |
 | Linux (Fedora) | `Cord_<version>-1.x86_64.rpm` |
-| Arch Linux | [`cord-bin`](https://aur.archlinux.org/packages/cord-bin) on the AUR |
+| Arch Linux | `cord-bin-<version>-1-x86_64.pkg.tar.zst` |
 | Linux (anything else) | `Cord_<version>_amd64.AppImage` |
 
 Cord is **not code-signed yet**, so Windows and macOS will both object the first
@@ -40,11 +40,25 @@ time. Nothing is wrong; there is simply no certificate behind the binary.
 ### Arch Linux
 
 ```bash
-paru -S cord-bin      # or yay, or any other AUR helper
+sudo pacman -U ./cord-bin-<version>-1-x86_64.pkg.tar.zst
 ```
 
 `cord-bin` repackages the `.deb`, so it installs in seconds rather than building
-Cord from source. Updates come from the AUR like any other package.
+Cord from source.
+
+Cord is **not on the AUR yet** — Arch has closed new account registration, so
+there is no account to publish it from. The PKGBUILD and the workflow that
+publishes it are both ready and tested; the moment registration reopens,
+`cord-bin` goes up and `paru -S cord-bin` starts working. Until then the
+`.pkg.tar.zst` on each release is the same package, just installed by hand.
+
+To build it yourself instead:
+
+```bash
+git clone https://github.com/cord-note/cord.git
+cd cord/packaging/aur
+makepkg -si
+```
 
 ### Debian, Ubuntu, Fedora
 

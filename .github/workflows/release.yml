@@ -401,3 +401,13 @@ jobs:
         run: |
           desktop-file-validate /usr/share/applications/Cord.desktop
           appstreamcli validate --no-net /usr/share/metainfo/app.cord.desktop.metainfo.xml
+
+      # Downloadable from the run. Until there is an AUR account this is the
+      # only way to try cord-bin without waiting for a release.
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cord-arch-package
+          path: packaging/aur/*.pkg.tar.zst
+          if-no-files-found: warn
+          retention-days: 14
