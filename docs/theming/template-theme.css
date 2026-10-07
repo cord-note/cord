@@ -1,0 +1,146 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   CORD THEME TEMPLATE
+
+   Copy this file, rename it, and replace "my-theme" everywhere with your own
+   id: lowercase letters, digits and dashes, starting with a letter or digit,
+   64 characters at most (ThemeRegistry enforces this). It must not clash with
+   a built-in id: mono, blue, olive, teal, midnight, rosewood, parchment.
+
+   Only the public API in docs/theming/public-api.md is used here: design
+   tokens, public cord-* classes, and plain elements inside .cord-editor__body.
+   Anything else (CSS-module classes, sh-*, ProseMirror, DOM structure) is
+   internal and will be dropped by the augment loader.
+
+   How it cascades: the app sets data-theme="<id>" and data-scheme="dark|light"
+   on <html>. The base tokens in global.css are mono-dark, and
+   [data-scheme="light"] swaps in mono-light text, borders and backgrounds. A
+   theme only needs to override what it changes — but a light block should set
+   every colour token, or mono's greys show through.
+
+   No @import and no remote url(): both will be stripped / blocked by CSP.
+   Fonts and images must ship beside this file.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+
+/* ── Dark scheme ─────────────────────────────────────────────────────────── */
+
+[data-theme="my-theme"] {
+  /* Accent */
+  --accent:       #7aa2f7;
+  --accent-hover: #6690e8;
+  --accent-fg:    #11131a;   /* text drawn on top of --accent */
+
+  /* Backgrounds, darkest to lightest */
+  --bg:          #11131a;    /* app background, editor surface */
+  --bg-sidebar:  #151822;
+  --bg-panel:    #191c28;    /* note list, cards, menus */
+  --bg-hover:    #20242f;
+  --bg-active:   #292e3c;
+  --bg-input:    #1d2130;
+  --bg-elevated: #252a38;
+
+  /* Borders */
+  --border:        #20242f;
+  --border-strong: #353b4d;
+  --border-muted:  #1c202b;
+
+  /* Text — check contrast against --bg (4.5:1 body, 3:1 muted) */
+  --text-primary:   #e0e3ee;
+  --text-secondary: #8a90a6;
+  --text-muted:     #5d6378;
+
+  /* Semantic */
+  --link-color:      #7dcfff;
+  --link-underline:  rgba(125, 207, 255, 0.3);
+  --danger:          #f7768e;
+  --danger-hover-bg: rgba(247, 118, 142, 0.12);
+  --danger-border:   rgba(247, 118, 142, 0.3);
+  --close-hover-bg:  #c25b6f;
+  --close-hover-fg:  #fdf3f5;
+
+  /* Optional — the canvas dither textures. They default to text/accent
+     colours, so delete these unless you want something different. */
+  /* --dither-ink:        var(--text-secondary); */
+  /* --dither-ink-strong: var(--text-primary);   */
+  /* --dither-accent:     var(--accent);         */
+}
+
+
+/* ── Light scheme ────────────────────────────────────────────────────────── */
+
+[data-theme="my-theme"][data-scheme="light"] {
+  --accent:       #3760c4;
+  --accent-hover: #2b4fa8;
+  --accent-fg:    #ffffff;
+
+  /* Cord keeps light surfaces in the mid-tones, not near-white. */
+  --bg:          #e3e6ef;
+  --bg-sidebar:  #d8dce8;
+  --bg-panel:    #d8dce8;
+  --bg-hover:    #cbd0df;
+  --bg-active:   #bdc3d6;
+  --bg-input:    #d2d6e4;
+  --bg-elevated: #dde0eb;
+
+  --border:        #b9bfd2;
+  --border-strong: #9ca4bd;
+  --border-muted:  #c9cedd;
+
+  --text-primary:   #141826;
+  --text-secondary: #3c4460;
+  --text-muted:     #6c7493;
+
+  --link-color:      #1f6fb8;
+  --link-underline:  rgba(31, 111, 184, 0.3);
+  --danger:          #c9304c;
+  --danger-hover-bg: rgba(201, 48, 76, 0.10);
+  --danger-border:   rgba(201, 48, 76, 0.3);
+  --close-hover-bg:  #c04a5e;
+  --close-hover-fg:  #fdf3f5;
+}
+
+
+/* ── Optional: non-colour tokens ─────────────────────────────────────────────
+   Uncomment to change shape, type or motion for this theme only. Leave
+   --editor-font-size, --editor-line-width and the *-scale tokens alone — they
+   carry the user's own Settings choices. */
+
+/*
+[data-theme="my-theme"] {
+  --font-ui:   'Inter', -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --radius-xs: 2px;
+  --radius-sm: 3px;
+  --radius-md: 4px;
+  --radius:    6px;
+  --radius-lg: 8px;
+}
+*/
+
+
+/* ── Optional: public classes ────────────────────────────────────────────────
+   Prefer tokens; reach for classes only for things tokens can't express.
+   Always scope to [data-theme="my-theme"] so nothing leaks into other themes. */
+
+/*
+[data-theme="my-theme"] .cord-note-list__item--active {
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+[data-theme="my-theme"] .cord-chip--tag {
+  border-radius: var(--radius-xs);
+}
+
+[data-theme="my-theme"] .cord-editor__body h1,
+[data-theme="my-theme"] .cord-editor__body h2 {
+  letter-spacing: -0.01em;
+}
+
+[data-theme="my-theme"] .cord-editor__body blockquote {
+  border-left-color: var(--accent);
+}
+
+[data-theme="my-theme"] .cord-dither {
+  opacity: 0.6;
+}
+*/
