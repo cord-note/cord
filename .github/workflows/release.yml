@@ -130,7 +130,7 @@ jobs:
           bun build --compile --target=${{ matrix.bun-target }} src/sidecar/index.ts \
             --outfile src-tauri/binaries/cord-sidecar-${{ matrix.rust-target }}
 
-      - uses: tauri-apps/tauri-action@v0
+      - uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Signs the update artifacts. Without these the build still produces
@@ -262,7 +262,7 @@ jobs:
           bun build --compile --target=bun-linux-x64 src/sidecar/index.ts \
             --outfile src-tauri/binaries/cord-sidecar-x86_64-unknown-linux-gnu
 
-      - uses: tauri-apps/tauri-action@v0
+      - uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
