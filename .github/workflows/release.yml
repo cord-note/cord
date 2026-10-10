@@ -191,7 +191,7 @@ jobs:
 
       # A second copy, independent of the release, so a manual dispatch still
       # produces something inspectable and a failed publish is not a lost build.
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: cord-${{ matrix.rust-target }}
@@ -322,7 +322,7 @@ jobs:
           rpm=$(find apps/desktop/src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/rpm                   -name '*.rpm' -print -quit)
           rpmlint "$rpm"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: cord-fedora-rpm
@@ -425,7 +425,7 @@ jobs:
 
       # Downloadable from the run. Until there is an AUR account this is the
       # only way to try cord-bin without waiting for a release.
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: cord-arch-package
