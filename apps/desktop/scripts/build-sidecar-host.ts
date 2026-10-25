@@ -39,8 +39,23 @@ if (process.platform === 'win32') {
 
 const outfile = join(root, 'src-tauri', 'binaries', `cord-sidecar-${triple}${triple.includes('windows') ? '.exe' : ''}`);
 
+// On Windows, Task Manager shows the exe's description and icon, not its file
+// name, so brand the sidecar as Cord. Values come from tauri.conf.json.
+const windowsFlags: string[] = [];
+if (target.startsWith('bun-windows')) {
+  const conf = await Bun.file(join(root, 'src-tauri', 'tauri.conf.json')).json();
+  windowsFlags.push(
+    `--windows-title=${conf.productName}`,
+    `--windows-description=${conf.productName}`,
+    `--windows-publisher=${conf.bundle.publisher}`,
+    `--windows-copyright=${conf.bundle.copyright}`,
+    `--windows-version=${conf.version}.0`,
+    `--windows-icon=${join(root, 'src-tauri', 'icons', 'icon.ico')}`,
+  );
+}
+
 const build = Bun.spawnSync(
-  ['bun', 'build', '--compile', `--target=${target}`, 'src/sidecar/index.ts', '--outfile', outfile],
+  ['bun', 'build', '--compile', `--target=${target}`, ...windowsFlags, 'src/sidecar/index.ts', '--outfile', outfile],
   { cwd: root, stdout: 'inherit', stderr: 'inherit' },
 );
 if (build.exitCode !== 0) process.exit(build.exitCode ?? 1);

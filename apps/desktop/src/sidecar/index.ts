@@ -77,7 +77,19 @@ const server = Bun.serve({
 process.stdout.write(`SIDECAR_DB=${resolveDbPath()}\n`);
 process.stdout.write(`SIDECAR_PORT=${server.port}\n`);
 
-process.on('SIGTERM', () => {
+function shutdown(): void {
   server.stop();
   process.exit(0);
-});
+}
+
+process.on('SIGTERM', shutdown);
+
+// Cord holds our stdin open for as long as it runs. If Cord dies without
+// killing us (a crash, Ctrl+C in dev, Task Manager), the OS closes that pipe
+// and we see EOF. Opt-in, so a sidecar run by hand or under `concurrently`
+// is not stopped by a stdin that is closed from the start.
+if (process.argv.includes('--exit-with-parent')) {
+  process.stdin.on('end', shutdown);
+  process.stdin.on('close', shutdown);
+  process.stdin.resume();
+}

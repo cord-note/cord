@@ -127,7 +127,9 @@ fn shutdown_sidecar(app: &AppHandle) {
 fn start_sidecar(
     app: &tauri::App,
 ) -> Result<(u16, Option<String>, CommandChild), Box<dyn std::error::Error>> {
-    let sidecar_cmd = app.shell().sidecar("cord-sidecar")?;
+    // Makes the sidecar exit when the stdin pipe we hold closes, so it cannot
+    // outlive a crashed Cord.
+    let sidecar_cmd = app.shell().sidecar("cord-sidecar")?.arg("--exit-with-parent");
     let (mut rx, child) = sidecar_cmd.spawn()?;
 
     // SIDECAR_DB is printed first, so it has always arrived by the time the

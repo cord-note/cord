@@ -120,15 +120,12 @@ jobs:
       # already is the platform it ships, so the other two are wasted minutes.
       # tauri-build resolves externalBin at build-script time and fails if the
       # binary for the host triple is missing, so this must precede the build.
+      # The same script as `pnpm dev`, so the Windows sidecar gets its Cord
+      # name and icon. It builds for the host triple, which is this runner's.
       - name: Build the sidecar for this platform
         working-directory: apps/desktop
-        # Explicitly bash: windows-latest defaults to PowerShell, which reads a
-        # trailing backslash continuation as a dangling unary operator and dies
-        # with "Missing expression after unary operator '--'".
         shell: bash
-        run: |
-          bun build --compile --target=${{ matrix.bun-target }} src/sidecar/index.ts \
-            --outfile src-tauri/binaries/cord-sidecar-${{ matrix.rust-target }}
+        run: bun scripts/build-sidecar-host.ts
 
       - uses: tauri-apps/tauri-action@v0
         env:
