@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Database, Trash2, Settings, Lock, Plus, Link2, GripVertical } from 'lucide-react';
+import { Database, Trash2, Settings, Lock, Plus, Link2, GripVertical, FolderOpen, Archive } from 'lucide-react';
 import { useVaultStore } from '../store/vaults';
 import { useNoteStore } from '../store/notes';
 import { useTagStore } from '../store/tags';
@@ -7,6 +7,7 @@ import { useAuthStore } from '../store/auth';
 import { useUIStore } from '../store/ui';
 import { useSetting } from '../settings';
 import { randomVaultColor } from '@shared/constants/vaultColors';
+import { openContextMenu, type MenuEntry } from '../store/contextMenu';
 import styles from './VaultSidebar.module.css';
 
 interface Props {
@@ -34,7 +35,7 @@ export default function VaultSidebar({ activeView, onOpenTrash }: Props) {
   const sidebarRef = useRef<HTMLElement>(null);
   const scrollRef  = useRef<HTMLDivElement>(null);
 
-  const { vaults, activeVaultId, setActiveVault, createVault, reorderVaults } = useVaultStore();
+  const { vaults, activeVaultId, setActiveVault, createVault, reorderVaults, archiveVault } = useVaultStore();
   const { loadNotes } = useNoteStore();
   const { loadTags }  = useTagStore();
   const user = useAuthStore((s) => s.user);
@@ -99,6 +100,17 @@ export default function VaultSidebar({ activeView, onOpenTrash }: Props) {
     } catch (err) {
       console.error('Failed to load vault data:', err);
     }
+  }
+
+  function vaultMenu(id: string): MenuEntry[] {
+    return [
+      { label: 'Open', icon: FolderOpen, onSelect: () => handleSelectVault(id) },
+      { label: 'Vault settings', icon: Settings,
+        onSelect: async () => { await handleSelectVault(id); openSettings('vault'); } },
+      'divider',
+      { label: 'Archive vault', icon: Archive, danger: true,
+        onSelect: async () => { await archiveVault(id); setView('notes'); } },
+    ];
   }
 
   async function handleCreateVault() {
@@ -226,6 +238,7 @@ export default function VaultSidebar({ activeView, onOpenTrash }: Props) {
                 <button
                   className={`${styles.navBtn} cord-sidebar__item ${v.id === activeVaultId ? `${styles.navActive} cord-sidebar__item--active` : ''}`}
                   onClick={() => handleSelectVault(v.id)}
+                  onContextMenu={(e) => openContextMenu(e, vaultMenu(v.id))}
                   title={v.name}
                 >
                   <span className={styles.vaultDot} style={{ background: v.color ?? 'var(--text-muted)' }} />

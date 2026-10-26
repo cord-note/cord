@@ -13,7 +13,7 @@ import { TagPicker } from './TagPicker';
 import { useVaultStore } from '../store/vaults';
 import { setSetting, snapToSetting, useSetting } from '../settings';
 import { useUIStore } from '../store/ui';
-import { useThemeStore, resolveScheme } from '../store/theme';
+import { useResolvedScheme } from '../hooks/useResolvedScheme';
 import { useKeybindingStore, shuttleOverrides } from '../store/keybindings';
 import { api } from '../ipc';
 import { log } from '../lib/log';
@@ -46,20 +46,6 @@ function parseStoredDoc(bodyJson: string): JSONContent | null {
   return null;
 }
 
-/** Cord's light/dark scheme, following the system when set to `system`. */
-function useResolvedScheme(): 'light' | 'dark' {
-  const colorScheme = useThemeStore((s) => s.colorScheme);
-  const [resolved, setResolved] = useState(() => resolveScheme(colorScheme));
-  useEffect(() => {
-    setResolved(resolveScheme(colorScheme));
-    if (colorScheme !== 'system') return;
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const onChange = (): void => setResolved(resolveScheme('system'));
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
-  }, [colorScheme]);
-  return resolved;
-}
 
 export default function Editor({ note }: Props) {
   const { updateNote, backlinks, notes, setActiveNote, loadLinks,

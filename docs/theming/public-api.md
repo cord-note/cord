@@ -298,6 +298,7 @@ The command palette dropdown, the new-note menu and the editor context menu.
 |---|---|
 | `cord-settings` | Settings page |
 | `cord-settings__nav` | Chapter navigation |
+| `cord-settings__nav-group` | Group heading in the navigation (App, This vault, Account) |
 | `cord-settings__nav-item` | Chapter link |
 | `cord-settings__nav-item--active` | Current chapter |
 | `cord-settings__section` | A chapter |

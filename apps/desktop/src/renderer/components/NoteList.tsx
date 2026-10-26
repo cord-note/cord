@@ -10,6 +10,7 @@ import { useTagStore } from '../store/tags';
 import { useUIStore } from '../store/ui';
 import { matchesBinding } from '../store/keybindings';
 import { HoldButton } from './HoldButton';
+import { openContextMenu, type MenuEntry } from '../store/contextMenu';
 import { HOLD_NOTE_DELETE_MS } from '@shared/constants';
 import { useSetting } from '../settings';
 import { formatListDate, holdDuration } from '../settings/derived';
@@ -40,7 +41,7 @@ export default function NoteList() {
   const activeVault = vaults.find((v) => v.id === activeVaultId);
   const {
     notes, activeNoteId, setActiveNote, createNote, deleteNote, loadLinks,
-    searchQuery, searchResults, searchNotes, clearSearch, updateNote,
+    searchQuery, searchResults, searchNotes, clearSearch, updateNote, convertNote,
   } = useNoteStore();
   const { tags, activeTagId, noteTagMap, setActiveTag } = useTagStore();
   const { setView } = useUIStore();
@@ -101,6 +102,19 @@ export default function NoteList() {
     } catch (err) {
       console.error('Failed to update note:', err);
     }
+  }
+
+  function noteMenu(note: { id: string; isPinned: boolean; kind: NoteKind }): MenuEntry[] {
+    const other: NoteKind = note.kind === 'notepad' ? 'note' : 'notepad';
+    return [
+      { label: 'Open', icon: FileText, onSelect: () => handleSelectNote(note.id) },
+      { label: note.isPinned ? 'Unpin' : 'Pin to top', icon: note.isPinned ? PinOff : Pin,
+        onSelect: () => updateNote(note.id, { isPinned: !note.isPinned }) },
+      { label: other === 'notepad' ? 'Convert to notepad' : 'Convert to note', icon: other === 'notepad' ? LayoutList : FileText,
+        onSelect: () => convertNote(note.id, other) },
+      'divider',
+      { label: 'Move to trash', icon: Trash2, danger: true, onSelect: () => handleDeleteNote(note.id) },
+    ];
   }
 
   function handleSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -273,6 +287,7 @@ export default function NoteList() {
                 key={note.id}
                 className={`${styles.item} cord-note-list__item ${note.id === activeNoteId ? `${styles.active} cord-note-list__item--active` : ''} ${note.isPinned ? 'cord-note-list__item--pinned' : ''} ${note.kind === 'notepad' ? 'cord-note-list__item--notepad' : ''}`}
                 onClick={() => handleSelectNote(note.id)}
+                onContextMenu={(e) => openContextMenu(e, noteMenu(note))}
               >
                 <div className={styles.itemContent}>
                   <div className={styles.itemTitleRow}>

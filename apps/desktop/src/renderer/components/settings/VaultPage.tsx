@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../ipc';
 import { log } from '../../lib/log';
-import { useSetting } from '../../settings';
+import { useSetting, useSettingsRegistry } from '../../settings';
 import { holdDuration } from '../../settings/derived';
 import { useUIStore } from '../../store/ui';
 import { useVaultStore } from '../../store/vaults';
@@ -14,6 +14,7 @@ import {
   DEFAULT_VAULT_COLOR,
 } from '@shared/constants/vaultColors';
 import { ColorSwatch } from './ColorSwatch';
+import { SettingRow } from './SettingRow';
 import styles from '../SettingsPage.module.css';
 
 /** Debounce before a typed vault name is written back to the sidecar. */
@@ -24,6 +25,8 @@ export default function VaultPage() {
   const { setView } = useUIStore();
   const distinctVaultColors = useSetting('vaults.distinctColors');
   const holdSpeed = useSetting('general.holdToConfirm');
+  // Lives in the "Vaults" section, which this page draws beside the colour picker.
+  const distinctDef = useSettingsRegistry((s) => s.definitions.find((d) => d.key === 'vaults.distinctColors'));
   const vault = vaults.find((v) => v.id === activeVaultId);
 
   const [name, setName] = useState(vault?.name ?? '');
@@ -125,6 +128,8 @@ export default function VaultPage() {
           </div>
         )}
       </div>
+
+      {distinctDef && <SettingRow definition={distinctDef} />}
 
       <div className={`${styles.field} cord-settings__field`}>
         <div className={styles.dangerLabel}>Danger zone</div>

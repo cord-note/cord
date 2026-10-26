@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import TitleBar from './components/TitleBar';
 import LoginScreen from './components/LoginScreen';
 import NotesPage from './pages/NotesPage';
+import { ContextMenu } from './components/ContextMenu';
 import { useAuthStore } from './store/auth';
 import { checkForUpdate } from './updater';
 import { useIdleLock } from './hooks/useIdleLock';
@@ -36,6 +37,8 @@ export function App() {
       ) : (
         <NotesPage />
       )}
+
+      <ContextMenu />
     </div>
   );
 }

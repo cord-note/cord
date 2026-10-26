@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useRef, useState, type ComponentType } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Braces, Search, X } from 'lucide-react';
 import { registry } from '../registry';
 import { useSettings, useSettingsRegistry } from '../settings';
 import { filterSettings, modifiedKeys } from '../settings/search';
-import type { SettingDefinition } from '../settings/schema';
+import { buildSettingsNav, chapterAnchor } from '../settings/layout';
 import { useUIStore, type SettingsTab } from '../store/ui';
 import { SettingRow } from './settings/SettingRow';
 import { JsonView } from './settings/JsonView';
@@ -11,31 +11,12 @@ import { ProblemsBanner } from './settings/ProblemsBanner';
 import './settings/pages';
 import styles from './SettingsPage.module.css';
 
-/** Sections with a fixed place; any other section follows alphabetically. */
-const SECTION_ORDER = ['Editor', 'Appearance', 'Notes', 'Vaults', 'General'];
-
-/**
- * The command palette opens Settings at a named place. Old tab names survive
- * as anchors so "Appearance" and "Vault settings" still land correctly.
- */
 const TAB_TO_ANCHOR: Record<SettingsTab, string> = {
-  appearance: 'section:Appearance',
-  app:        'section:Editor',
-  vault:      'page:vault',
-  tags:       'page:tags',
+  appearance: chapterAnchor('appearance'),
+  app:        chapterAnchor('editor'),
+  vault:      chapterAnchor('vault'),
+  tags:       chapterAnchor('tags'),
 };
-
-interface Chapter {
-  anchor: string;
-  label: string;
-  settings?: SettingDefinition[];
-  page?: ComponentType;
-}
-
-function sectionRank(section: string): number {
-  const i = SECTION_ORDER.indexOf(section);
-  return i === -1 ? SECTION_ORDER.length : i;
-}
 
 export default function SettingsPage() {
   const settingsTab = useUIStore((s) => s.settingsTab);
@@ -50,30 +31,13 @@ export default function SettingsPage() {
   // Re-read the files when Settings opens, in case they were edited elsewhere.
   useEffect(() => { void useSettings.getState().reload(); }, []);
 
-  const chapters = useMemo<Chapter[]>(() => {
+  const groups = useMemo(() => {
     const modified = modifiedKeys(definitions, values);
     const matching = filterSettings(definitions, query, modified);
-    const bySection = new Map<string, SettingDefinition[]>();
-    for (const def of matching) {
-      bySection.set(def.section, [...(bySection.get(def.section) ?? []), def]);
-    }
-    const sections: Chapter[] = [...bySection.entries()]
-      .sort(([a], [b]) => sectionRank(a) - sectionRank(b) || a.localeCompare(b))
-      .map(([section, defs]) => ({
-        anchor: `section:${section}`,
-        label: section,
-        settings: [...defs].sort((a, b) => (a.order ?? 99) - (b.order ?? 99)),
-      }));
-
-    const q = query.trim().toLowerCase();
-    const words = q.split(/\s+/).filter((w) => w && w !== '@modified');
-    const pages: Chapter[] = q.includes('@modified')
-      ? []
-      : registry.getPages('settings')
-        .filter((p) => words.every((w) => p.label.toLowerCase().includes(w)))
-        .map((p) => ({ anchor: `page:${p.id}`, label: p.label, page: p.component }));
-    return [...sections, ...pages];
+    const pages = registry.getPages('settings').map((p) => ({ id: p.id, label: p.label, component: p.component }));
+    return buildSettingsNav(definitions, matching, pages, query);
   }, [definitions, values, query]);
+  const chapters = groups.flatMap((g) => g.chapters);
 
   function scrollTo(anchor: string) {
     chapterRefs.current[anchor]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -114,14 +78,19 @@ export default function SettingsPage() {
       <div className={styles.sidebar}>
         <div className={styles.sidebarLabel}>Settings</div>
         <nav className={`${styles.sidebarNav} cord-settings__nav`}>
-          {chapters.map((c) => (
-            <button
-              key={c.anchor}
-              className={`${styles.navItem} cord-settings__nav-item ${activeAnchor === c.anchor ? `${styles.navActive} cord-settings__nav-item--active` : ''}`}
-              onClick={() => { setJsonOpen(false); requestAnimationFrame(() => scrollTo(c.anchor)); }}
-            >
-              {c.label}
-            </button>
+          {groups.map((g) => (
+            <div key={g.label} className={styles.navGroup}>
+              <div className={`${styles.navGroupLabel} cord-settings__nav-group`}>{g.label}</div>
+              {g.chapters.map((c) => (
+                <button
+                  key={c.anchor}
+                  className={`${styles.navItem} cord-settings__nav-item ${activeAnchor === c.anchor && !jsonOpen ? `${styles.navActive} cord-settings__nav-item--active` : ''}`}
+                  onClick={() => { setJsonOpen(false); requestAnimationFrame(() => scrollTo(c.anchor)); }}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
           ))}
         </nav>
         <div className={styles.autosaveNote}>Changes save automatically.</div>
@@ -170,8 +139,8 @@ export default function SettingsPage() {
                 ref={(el) => { chapterRefs.current[c.anchor] = el; }}
               >
                 <h2 className={`${styles.chapterTitle} cord-settings__section-title`}>{c.label}</h2>
-                {c.settings?.map((def) => <SettingRow key={def.key} definition={def} />)}
                 {Page && <Page />}
+                {c.settings.map((def) => <SettingRow key={def.key} definition={def} />)}
               </section>
             );
           })
