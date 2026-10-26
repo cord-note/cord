@@ -1,5 +1,6 @@
 import { FontSizeControl } from '../components/settings/FontSizeControl';
 import { ThemePickerControl } from '../components/settings/ThemePickerControl';
+import { ThemeLibraryControl } from '../components/settings/ThemeLibraryControl';
 import { log } from '../lib/log';
 import { useVaultStore } from '../store/vaults';
 import { registerSetting, useSettings } from './index';
@@ -15,6 +16,7 @@ declare module './schema' {
     'editor.unlinkedMentions': boolean;
     'vaults.distinctColors': boolean;
     'appearance.theme': string;
+    'appearance.themeLibrary': string;
     'appearance.colorScheme': 'dark' | 'light' | 'system';
     'appearance.textScale': number;
     'appearance.density': Density;
@@ -72,6 +74,14 @@ registerSetting({
   title: 'Theme', description: 'Colour palette for the whole app.',
   default: 'mono', pattern: /^[a-z0-9][a-z0-9-]{0,63}$/, maxLength: 64, keywords: ['colors', 'palette'],
   control: ThemePickerControl,
+});
+
+registerSetting({
+  key: 'appearance.themeLibrary', type: 'string', section: 'Appearance', order: 25,
+  title: 'Theme folder',
+  description: 'Where Cord looks for extra themes: a folder of theme folders or .css files. Empty uses the default folder.',
+  default: '', maxLength: 1024, keywords: ['themes', 'library', 'import', 'directory', 'path'],
+  control: ThemeLibraryControl,
 });
 
 registerSetting({

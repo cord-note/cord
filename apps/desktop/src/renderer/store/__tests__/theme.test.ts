@@ -31,7 +31,7 @@ registerSetting({
   options: [{ value: 'dark', label: '' }, { value: 'light', label: '' }, { value: 'system', label: '' }],
 });
 
-const augment = { id: 'dithered', label: 'Dithered', description: '', source: 'augment' as const };
+const augment = { id: 'dithered', label: 'Dithered', description: '', source: 'library' as const };
 
 beforeEach(() => {
   attrs.clear();

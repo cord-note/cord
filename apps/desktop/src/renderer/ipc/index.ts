@@ -13,7 +13,7 @@ import type {
   RegisterInput, LoginInput,
   AuthUser, LockScreenState, UnlockPinInput, PinUnlockResult, SetPinInput,
   ChangePasswordInput, IssueRecoveryKeyInput, RecoveryKeyResult, RecoverInput,
-  ConfigFileName,
+  ConfigFileName, ThemeLibraryScan, ThemeImportResult,
 } from '@shared/types';
 
 export const api = {
@@ -85,6 +85,15 @@ export const api = {
   settings: {
     read:  (file: ConfigFileName)               => invoke<{ text: string | null }>('settings_read', { file }),
     write: (file: ConfigFileName, text: string) => invoke<{ ok: true }>('settings_write', { file, text }),
+  },
+
+  themes: {
+    defaultDir: ()                             => invoke<{ dir: string }>('themes_default_dir'),
+    /** `dir` is the library folder; '' means the default one. */
+    scan:       (dir: string)                  => invoke<ThemeLibraryScan>('themes_scan', { dir }),
+    import:     (source: string, dir: string)  => invoke<ThemeImportResult>('themes_import', { source, dir }),
+    /** A GitHub, GitLab or Codeberg repo link, or an https .zip link. */
+    importUrl:  (url: string, dir: string)     => invoke<ThemeImportResult>('themes_import_url', { url, dir }),
   },
 
   app: {

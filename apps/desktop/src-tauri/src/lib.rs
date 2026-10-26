@@ -23,6 +23,7 @@ struct SidecarProcess(Mutex<Option<CommandChild>>);
 pub fn run() {
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         // Images in notes: `cord-attachment://<id>` reads `attachments/<id>.<ext>`
         // beside the database. Reads happen off the main thread.
@@ -95,6 +96,10 @@ pub fn run() {
             // settings
             commands::settings::settings_read,
             commands::settings::settings_write,
+            commands::themes::themes_default_dir,
+            commands::themes::themes_scan,
+            commands::themes::themes_import,
+            commands::themes::themes_import_url,
             // app
             commands::app::app_updater_supported,
         ])

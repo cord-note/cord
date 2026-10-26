@@ -1,5 +1,6 @@
 import { useKeybindingStore } from '../store/keybindings';
 import { useThemeStore } from '../store/theme';
+import { restoreCachedLibraryTheme, useThemeLibrary } from '../store/themeLibrary';
 import { lastCacheUser, setSettingsCacheUser, useSettings } from './index';
 import { hasActiveSettingsUser } from './session';
 
@@ -14,11 +15,14 @@ import { hasActiveSettingsUser } from './session';
 export function bootSettings(): void {
   setSettingsCacheUser(lastCacheUser());
   useSettings.getState().applyBootCache();
+  restoreCachedLibraryTheme();
   useThemeStore.getState().init();
 
   window.addEventListener('focus', () => {
     if (!hasActiveSettingsUser()) return;
     void useSettings.getState().reload();
     void useKeybindingStore.getState().reload();
+    // Theme files may have been edited or added outside Cord.
+    void useThemeLibrary.getState().scan();
   });
 }

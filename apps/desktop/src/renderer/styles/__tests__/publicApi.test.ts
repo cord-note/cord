@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'bun:test';
 import { readFileSync, readdirSync, statSync } from 'fs';
 import { join } from 'path';
+import { PUBLIC_CLASSES } from '@shared/theming/publicApi';
 
 // Augments may only use the classes and tokens listed in
 // docs/theming/public-api.md. Nothing else ties that page to the code, so a
@@ -78,5 +79,9 @@ describe('theming public API', () => {
     const undocumented = [...tokensInGlobalCss(), ...tokensSetAtRuntime()]
       .filter((t) => !documented.has(t));
     expect([...new Set(undocumented)]).toEqual([]);
+  });
+
+  it('the theme loader allows exactly the documented classes', () => {
+    expect([...PUBLIC_CLASSES].sort()).toEqual([...documentedClasses()].sort());
   });
 });

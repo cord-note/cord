@@ -1,29 +1,9 @@
 import { create } from 'zustand';
 
-// Where a theme came from. Built-in themes ship in global.css; augment themes
-// arrive at runtime with their own [data-theme="<id>"] stylesheet.
-export type ThemeSource = 'builtin' | 'augment';
+import { BUILTIN_THEMES, DEFAULT_THEME_ID, type ThemeRegistration } from '@shared/theming/builtinThemes';
 
-export interface ThemeRegistration {
-  // Written into data-theme and matched by [data-theme="<id>"] selectors.
-  id: string;
-  label: string;
-  description: string;
-  source: ThemeSource;
-}
-
-export const DEFAULT_THEME_ID = 'mono';
-
-// Colours for every built-in theme live in styles/global.css, keyed by id.
-export const BUILTIN_THEMES: readonly ThemeRegistration[] = [
-  { id: 'mono',      label: 'Monochrome', description: 'Classic black & white',   source: 'builtin' },
-  { id: 'blue',      label: 'Blue',       description: 'Deep navy + sky blue',    source: 'builtin' },
-  { id: 'olive',     label: 'Olive',      description: 'Forest green + amber',    source: 'builtin' },
-  { id: 'teal',      label: 'Teal',       description: 'Deep sea + coral',        source: 'builtin' },
-  { id: 'midnight',  label: 'Midnight',   description: 'Dark navy + rose',        source: 'builtin' },
-  { id: 'rosewood',  label: 'Rosewood',   description: 'Warm brown + dusty rose', source: 'builtin' },
-  { id: 'parchment', label: 'Parchment',  description: 'Warm paper + caramel',    source: 'builtin' },
-];
+export { BUILTIN_THEMES, DEFAULT_THEME_ID };
+export type { ThemeRegistration, ThemeSource } from '@shared/theming/builtinThemes';
 
 // Lowercase slug: safe inside an attribute selector without escaping.
 const THEME_ID = /^[a-z0-9][a-z0-9-]{0,63}$/;
@@ -37,7 +17,7 @@ interface ThemeRegistryStore {
 export const useThemeRegistry = create<ThemeRegistryStore>((set, get) => ({
   themes: [...BUILTIN_THEMES],
 
-  // Re-registering an augment theme replaces it, so reloading an augment is
+  // Re-registering an library theme replaces it, so reloading a library is
   // idempotent. Built-in themes can never be replaced.
   register: (reg) => {
     if (!THEME_ID.test(reg.id)) {
@@ -64,8 +44,8 @@ export const useThemeRegistry = create<ThemeRegistryStore>((set, get) => ({
   },
 }));
 
-// The theme to actually show for a stored preference. An augment theme can be
-// preferred before its augment has loaded — or after it was removed — so an
+// The theme to actually show for a stored preference. An library theme can be
+// preferred before the library has loaded — or after it was removed — so an
 // unknown id falls back to the default rather than leaving the app unstyled.
 export function resolveThemeId(preferred: string, themes: readonly ThemeRegistration[]): string {
   return themes.some((t) => t.id === preferred) ? preferred : DEFAULT_THEME_ID;

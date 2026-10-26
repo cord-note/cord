@@ -312,3 +312,37 @@ export interface CordModule {
 
 /** The user's hand-editable config files in Cord's config directory. */
 export type ConfigFileName = 'settings' | 'keybindings';
+
+// ─── Theme library ────────────────────────────────────────────────────────────
+
+/** A theme read from the theme library folder, its CSS already filtered. */
+export interface LibraryTheme {
+  id: string;
+  label: string;
+  description: string;
+  author: string | null;
+  /** The repo or .zip link it was imported from, for updating; null otherwise. */
+  source: string | null;
+  /** Its folder, or the loose .css file. */
+  path: string;
+  css: string;
+  /** What the filter left out, and why. */
+  dropped: string[];
+}
+
+export interface ThemeFileProblem {
+  path: string;
+  message: string;
+}
+
+export interface ThemeLibraryScan {
+  /** The folder that was read. */
+  dir: string;
+  themes: LibraryTheme[];
+  problems: ThemeFileProblem[];
+}
+
+export interface ThemeImportResult {
+  imported: { id: string; label: string }[];
+  problems: ThemeFileProblem[];
+}

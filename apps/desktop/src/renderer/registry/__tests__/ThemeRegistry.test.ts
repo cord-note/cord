@@ -14,7 +14,7 @@ import {
 // (or no longer) registered must fall back instead of leaving the app unstyled.
 
 const augment = (id: string, label = id): ThemeRegistration =>
-  ({ id, label, description: '', source: 'augment' });
+  ({ id, label, description: '', source: 'library' });
 
 const ids = (): string[] => useThemeRegistry.getState().themes.map((t) => t.id);
 

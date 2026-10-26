@@ -1,6 +1,9 @@
 /* ════════════════════════════════════════════════════════════════════════════
    CORD THEME TEMPLATE
 
+   To use it, put it in your theme folder (Settings, Appearance, Theme folder)
+   or import it from the theme gallery.
+
    Copy this file, rename it, and replace "my-theme" everywhere with your own
    id: lowercase letters, digits and dashes, starting with a letter or digit,
    64 characters at most (ThemeRegistry enforces this). It must not clash with
@@ -9,7 +12,7 @@
    Only the public API in docs/theming/public-api.md is used here: design
    tokens, public cord-* classes, and plain elements inside .cord-editor__body.
    Anything else (CSS-module classes, sh-*, ProseMirror, DOM structure) is
-   internal and will be dropped by the augment loader.
+   internal and is dropped by the theme loader.
 
    How it cascades: the app sets data-theme="<id>" and data-scheme="dark|light"
    on <html>. The base tokens in global.css are mono-dark, and
@@ -17,7 +20,7 @@
    theme only needs to override what it changes — but a light block should set
    every colour token, or mono's greys show through.
 
-   No @import and no remote url(): both will be stripped / blocked by CSP.
+   No @import and no remote url(): the theme loader drops both.
    Fonts and images must ship beside this file.
    ════════════════════════════════════════════════════════════════════════════ */
 

@@ -36,10 +36,39 @@ An augment may not rely on:
   freely as long as the public classes stay on the same surfaces.
 - `data-*` attributes other than `data-theme` and `data-scheme`.
 
-The augment loader (not built yet) will enforce these: rules whose selectors
-reach outside this API are dropped, `@import` is stripped, and the content
-security policy blocks remote `url()` loads, so fonts and images must ship
-beside the CSS file.
+## Theme library
+
+Cord reads extra themes from the theme folder (Settings, Appearance, Theme
+folder). It defaults to `themes/` in the data directory and can point at any
+folder. A theme in it is either:
+
+- a folder holding `theme.css`, an optional `theme.json`
+  (`{ "name": "...", "description": "...", "author": "..." }`) and any fonts or
+  images the CSS uses, or
+- a single loose `.css` file, named after its file.
+
+The theme's id is the value of its first `[data-theme="..."]` selector. It must
+not be a built-in id. Import (in the theme gallery) copies the themes found in
+a folder or `.zip` into the theme folder, looking up to three levels deep.
+
+Import can also take a link to a public GitHub, GitLab or Codeberg repo, or any
+https link to a `.zip`. Link to a branch or folder (`.../tree/<branch>/<folder>`)
+to import just that part. The link is saved in each imported theme's
+`theme.json` as `source`, and right-clicking the theme in the gallery offers
+"Update from source", which downloads it again.
+
+The loader only loads what this page allows. Everything else is left out and
+listed under the theme folder setting:
+
+- Every selector must start with `[data-theme="<this theme's id>"]`, because
+  all library themes are loaded at once for the gallery previews.
+- Classes must be public `cord-*` classes, attributes only `data-theme` and
+  `data-scheme`, and elements only note content inside `.cord-editor__body`.
+  No ids, `*`, or nesting.
+- Only `@media`, `@supports`, `@font-face` and `@keyframes` are kept;
+  `@import` and every other at-rule are dropped.
+- `url()` may only name a font or image beside the CSS file (2 MB at most);
+  it is inlined. Remote and absolute URLs drop the declaration.
 
 ## Stability
 
