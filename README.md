@@ -6,14 +6,13 @@
 
 Local-first desktop note-taking app. Vaults → Notes → Links → Tags — a knowledge graph, not a filing cabinet.
 
-**Status:** v2.0.0-beta.1 — notes are now written in
+**Status:** v2.4.0. Notes are written in
 [Shuttle](https://github.com/cord-note/shuttle), Cord's Tiptap 3 editor, and
 local accounts unlock with a PIN. Cord runs on a Tauri shell with a Bun sidecar,
-and full-text search runs natively in Rust against SQLite FTS5. 2.0.0 proper
-ships once Linux has native packages.
-
-Beta because the installers are young, not because the app is half-built. Every
-platform is built and signed by CI, but only Windows has had much real use.
+and full-text search runs natively in Rust against SQLite FTS5. Themes can be
+imported from a folder, a zip or a Git repo; see
+[cord-themes](https://github.com/cord-note/cord-themes) for nine to start with.
+What changed in each version is in [CHANGELOG.md](CHANGELOG.md).
 
 ## Install
 

@@ -83,6 +83,16 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="2.4.0" date="2026-10-26">
+      <description>
+        <p>
+          Themes can be imported from a folder, a zip or a Git repository and
+          are kept in a theme folder of your choice. The theme gallery is
+          redesigned, tags get one place to rename and recolour them, and
+          right-click menus replace the browser's own.
+        </p>
+      </description>
+    </release>
     <release version="2.0.0" date="2026-10-04">
       <description>
         <p>
