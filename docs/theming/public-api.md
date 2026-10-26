@@ -146,6 +146,17 @@ The suffix is the step in 4px units.
 
 Shadows have lighter values under `[data-scheme="light"]`.
 
+### Controls
+
+| Token | Value |
+|---|---|
+| `--control-h-xs` | 24px - inline chips and tiny icon buttons |
+| `--control-h-sm` | 32px - compact buttons, fields and nav rows |
+| `--control-h` | 36px - standard buttons and fields |
+| `--disabled-opacity` | 0.5 |
+| `--ring` | Focus ring colour (follows `--text-muted`) |
+| `--focus-ring` | The full 3px focus halo, as a `box-shadow` value |
+
 ### Motion
 
 | Token | Value |

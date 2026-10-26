@@ -122,6 +122,15 @@
   --shadow-lg: 0 14px 44px rgb(0 0 0 / 0.55);
   --shadow-xl: 0 24px 80px rgb(0 0 0 / 0.5);
 
+  /* Control heights — xs: inline chips · sm: compact buttons and fields ·
+     md: standard buttons and fields */
+  --control-h-xs: calc(24px * var(--space-scale));
+  --control-h-sm: calc(32px * var(--space-scale));
+  --control-h:    calc(36px * var(--space-scale));
+
+  /* Disabled controls fade rather than change colour */
+  --disabled-opacity: 0.5;
+
   /* Stacking — app-wide layers only; component-local z-index stays literal */
   --z-raised:   10;
   --z-popover:  60;
@@ -138,6 +147,10 @@
   --dither-ink:        var(--text-secondary);
   --dither-ink-strong: var(--text-primary);
   --dither-accent:     var(--accent);
+
+  /* Focus ring — a soft 3px halo hugging the control's edge */
+  --ring:       var(--text-muted);
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--ring) 50%, transparent);
 }
 
 /* Dark-tuned shadows read as smudges on light surfaces. */
@@ -521,8 +534,13 @@ html, body, #root {
    and loses to this pseudo-class on specificity, so text fields were getting a
    detached grey rectangle on top of whatever focus style they already had. */
 :focus-visible {
-  outline: 2px solid var(--border-strong);
-  outline-offset: 2px;
+  outline: 3px solid color-mix(in srgb, var(--ring) 50%, transparent);
+  outline-offset: 0;
+}
+
+button:disabled {
+  opacity: var(--disabled-opacity);
+  cursor: default;
 }
 
 /* Text fields opt out: the caret already says where focus is, and a second

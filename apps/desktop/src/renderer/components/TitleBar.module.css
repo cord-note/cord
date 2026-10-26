@@ -52,7 +52,7 @@
   gap: var(--space-2);
   padding: 0 var(--space-2-5);
   width: 420px;
-  height: 26px;
+  height: 28px;
   background: var(--bg-input);
   border: none;
   border-radius: var(--radius-md);
@@ -119,23 +119,21 @@
 }
 
 .dropSection {
-  padding: var(--space-2) var(--space-2-5) var(--space-1);
-  font-size: var(--text-2xs);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+  padding: var(--space-1-5) var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: 500;
   color: var(--text-muted);
 }
 
 .dropRow {
   display: flex;
   align-items: center;
-  gap: var(--space-2-5);
+  gap: var(--space-2);
   width: 100%;
-  padding: var(--space-2) var(--space-2-5);
+  padding: var(--space-1-5) var(--space-2);
   border-radius: var(--radius-sm);
   font-size: var(--text-md);
-  color: var(--text-secondary);
+  color: var(--text-primary);
   text-align: left;
   transition: background var(--duration-fast), color var(--duration-fast);
   font-family: inherit;
@@ -150,7 +148,6 @@
 .dropRowActive {
   background: var(--bg-active);
   color: var(--text-primary);
-  border-color: var(--border-strong);
 }
 
 .dropRowIcon {
@@ -163,9 +160,9 @@
 }
 
 .dropRowActive .dropRowIcon,
-.dropRow:hover .dropRowIcon { color: var(--text-secondary); }
+.dropRow:hover .dropRowIcon { color: var(--text-primary); }
 
-.dropRowDimmed { opacity: 0.4; cursor: default; }
+.dropRowDimmed { opacity: var(--disabled-opacity); cursor: default; }
 
 .dropRowLabel {
   flex: 1;
@@ -177,6 +174,7 @@
 /* Keyboard shortcut — simple monospace text, no fancy pill */
 .dropRowKbd {
   display: inline-flex;
+  margin-left: auto;
   flex-shrink: 0;
   opacity: 0.8;
 }
