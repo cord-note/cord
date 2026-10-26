@@ -1,5 +1,5 @@
 use crate::state::AppState;
-use super::http::{fwd_delete, fwd_get, fwd_post};
+use super::http::{fwd_delete, fwd_get, fwd_patch, fwd_post};
 use serde_json::Value;
 use tauri::State;
 
@@ -11,6 +11,15 @@ pub async fn tags_list(state: State<'_, AppState>, vault_id: String) -> Result<V
 #[tauri::command]
 pub async fn tags_create(state: State<'_, AppState>, data: Value) -> Result<Value, String> {
     fwd_post(&state, "/tags", data).await
+}
+
+#[tauri::command]
+pub async fn tags_update(
+    state: State<'_, AppState>,
+    tag_id: String,
+    data: Value,
+) -> Result<Value, String> {
+    fwd_patch(&state, &format!("/tags/{tag_id}"), data).await
 }
 
 #[tauri::command]

@@ -239,6 +239,9 @@ export function runMigrations(): void {
   addColumnIfMissing(db, 'users', 'failed_pin_attempts', '`failed_pin_attempts` integer DEFAULT 0 NOT NULL');
   addColumnIfMissing(db, 'users', 'recovery_key_hash', '`recovery_key_hash` text');
 
+  // ── Tag management: soft delete ─────────────────────────────────────────────
+  addColumnIfMissing(db, 'tags', 'deleted_at', '`deleted_at` integer');
+
   db.run(`CREATE TABLE IF NOT EXISTS \`app_state\` (
     \`key\` text PRIMARY KEY NOT NULL,
     \`value\` text NOT NULL,

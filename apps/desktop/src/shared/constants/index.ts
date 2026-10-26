@@ -51,6 +51,7 @@ export const CMD = {
   TAGS: {
     LIST:          'tags_list',
     CREATE:        'tags_create',
+    UPDATE:        'tags_update',
     DELETE:        'tags_delete',
     ATTACH:        'tags_attach',
     DETACH:        'tags_detach',

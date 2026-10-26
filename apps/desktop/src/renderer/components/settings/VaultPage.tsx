@@ -13,6 +13,7 @@ import {
   DISTINCT_VAULT_COLORS,
   DEFAULT_VAULT_COLOR,
 } from '@shared/constants/vaultColors';
+import { ColorSwatch } from './ColorSwatch';
 import styles from '../SettingsPage.module.css';
 
 /** Debounce before a typed vault name is written back to the sidecar. */
@@ -142,25 +143,5 @@ export default function VaultPage() {
         </HoldButton>
       </div>
     </>
-  );
-}
-
-interface ColorSwatchProps {
-  color: string;
-  selected: boolean;
-  onPick: (color: string) => void;
-  title?: string;
-}
-
-function ColorSwatch({ color, selected, onPick, title }: ColorSwatchProps) {
-  return (
-    <button
-      className={`${styles.colorSwatch} ${selected ? styles.colorSelected : ''}`}
-      style={{ background: color }}
-      onClick={() => onPick(color)}
-      title={title ?? color}
-      aria-label={title ?? color}
-      aria-pressed={selected}
-    />
   );
 }

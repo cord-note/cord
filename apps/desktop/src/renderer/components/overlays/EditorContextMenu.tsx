@@ -1,10 +1,10 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import type { Editor, ShuttleControls } from 'shuttle-editor';
-import { ArrowLeft, Tag as TagIcon, Link2, Plus, Copy, Scissors, Clipboard, FileText } from 'lucide-react';
+import { ArrowLeft, Tag as TagIcon, Link2, Copy, Scissors, Clipboard, FileText } from 'lucide-react';
 import { useFragmentStore } from '../../store/fragments';
-import { useTagStore } from '../../store/tags';
 import { useVaultStore } from '../../store/vaults';
 import { log } from '../../lib/log';
+import { TagPicker } from '../TagPicker';
 import { blockElement, topLevelBlockId } from './blockDom';
 import styles from './EditorContextMenu.module.css';
 
@@ -27,20 +27,15 @@ interface Props {
 
 export function EditorContextMenu({ editor, noteId, controls }: Props) {
   const { annotations, attachTag, createLink } = useFragmentStore();
-  const { tags, createTag } = useTagStore();
   const { activeVaultId } = useVaultStore();
 
   const [menu, setMenu]         = useState<MenuState | null>(null);
   const [sub, setSub]           = useState<SubView>(null);
-  const [query, setQuery]       = useState('');
-  const [listIndex, setListIndex] = useState(0);
-  const inputRef = useRef<HTMLInputElement>(null);
   const menuRef  = useRef<HTMLDivElement>(null);
 
   const close = useCallback(() => {
     setMenu(null);
     setSub(null);
-    setQuery('');
   }, []);
 
   /** Link a block to a note, chosen in Shuttle's picker. */
@@ -85,7 +80,6 @@ export function EditorContextMenu({ editor, noteId, controls }: Props) {
       e.preventDefault();
       setMenu({ x: e.clientX, y: e.clientY, blockId: topLevelBlockId(pm, e.target) });
       setSub(null);
-      setQuery('');
     };
 
     pm.addEventListener('contextmenu', handleContextMenu);
@@ -106,13 +100,6 @@ export function EditorContextMenu({ editor, noteId, controls }: Props) {
     };
   }, [menu, close]);
 
-  useEffect(() => {
-    setListIndex(0);
-    if (sub) setTimeout(() => inputRef.current?.focus(), 30);
-  }, [sub]);
-
-  useEffect(() => { setListIndex(0); }, [query]);
-
   // Block actions from Shuttle's slash menu and block menu. Links open the
   // picker directly; tagging opens this menu's tag view under the block.
   useEffect(() => {
@@ -124,7 +111,6 @@ export function EditorContextMenu({ editor, noteId, controls }: Props) {
       const rect = (pm ? blockElement(pm, blockId) : null)?.getBoundingClientRect();
       setMenu({ x: rect ? rect.left : 200, y: rect ? rect.bottom + 4 : 200, blockId });
       setSub({ kind: 'tag' });
-      setQuery('');
     };
     window.addEventListener('corddb:fragment-action', handler);
     return () => window.removeEventListener('corddb:fragment-action', handler);
@@ -151,16 +137,7 @@ export function EditorContextMenu({ editor, noteId, controls }: Props) {
     close();
   }
 
-  async function doCreateTag() {
-    if (!query.trim() || !activeVaultId) return;
-    const tag = await createTag({ vaultId: activeVaultId, name: query.trim() });
-    await doAttachTag(tag.id);
-  }
-
-  const q = query.toLowerCase();
   const attachedTagIds = new Set(annotation.tags.map((t) => t.id));
-  const filteredTags = tags.filter((t) => !attachedTagIds.has(t.id) && t.name.toLowerCase().includes(q));
-  const tagExists = tags.some((t) => t.name.toLowerCase() === query.trim().toLowerCase());
 
   if (!menu) return null;
 
@@ -193,7 +170,7 @@ export function EditorContextMenu({ editor, noteId, controls }: Props) {
           {blockId && (
             <>
               <div className={`${styles.divider} cord-menu__divider`} />
-              <button className={`${styles.item} cord-menu__item`} onClick={() => { setSub({ kind: 'tag' }); setQuery(''); }}>
+              <button className={`${styles.item} cord-menu__item`} onClick={() => setSub({ kind: 'tag' })}>
                 <TagIcon size={13} strokeWidth={1.75} className={styles.itemIcon} />
                 <span className={styles.itemLabel}>Add tag to block</span>
               </button>
@@ -212,36 +189,8 @@ export function EditorContextMenu({ editor, noteId, controls }: Props) {
 
       {sub?.kind === 'tag' && (
         <>
-          <SubHeader label="Add tag" onBack={() => { setSub(null); setQuery(''); }} />
-          <input
-            ref={inputRef}
-            className={styles.input}
-            placeholder="Search or create tag…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'ArrowDown') { e.preventDefault(); setListIndex((i) => Math.min(i + 1, filteredTags.length - 1)); }
-              else if (e.key === 'ArrowUp') { e.preventDefault(); setListIndex((i) => Math.max(i - 1, 0)); }
-              else if (e.key === 'Enter') { if (filteredTags[listIndex]) doAttachTag(filteredTags[listIndex].id); else doCreateTag(); }
-              else if (e.key === 'Escape') close();
-            }}
-          />
-          <div className={styles.list}>
-            {filteredTags.map((tag, i) => (
-              <button key={tag.id} className={`${styles.item} cord-menu__item ${i === listIndex ? `${styles.itemActive} cord-menu__item--active` : ''}`} onClick={() => doAttachTag(tag.id)} onMouseEnter={() => setListIndex(i)}>
-                <span className={styles.dot} style={{ background: tag.color ?? 'var(--text-muted)' }} />
-                {tag.name}
-              </button>
-            ))}
-            {query.trim() && !tagExists && (
-              <button className={styles.itemAccent} onClick={doCreateTag}>
-                <Plus size={11} strokeWidth={2} /> Create &quot;{query.trim()}&quot;
-              </button>
-            )}
-            {filteredTags.length === 0 && !query.trim() && (
-              <div className={styles.empty}>No tags yet</div>
-            )}
-          </div>
+          <SubHeader label="Add tag" onBack={() => setSub(null)} />
+          <TagPicker excludeIds={attachedTagIds} onPick={doAttachTag} onClose={close} />
         </>
       )}
     </div>

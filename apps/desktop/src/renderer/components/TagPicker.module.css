@@ -1,0 +1,85 @@
+/* Search-or-create tag list. Sits inside a menu or popover surface. */
+
+.picker {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.input {
+  display: block;
+  width: 100%;
+  height: 32px;
+  padding: 0 var(--space-2);
+  margin-bottom: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  outline: none;
+  transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
+}
+
+.input::placeholder { color: var(--text-muted); }
+
+.input:focus {
+  border-color: var(--border-strong);
+  box-shadow: var(--focus-ring);
+}
+
+.list {
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-1-5) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-md);
+  color: var(--text-primary);
+  text-align: left;
+  transition: background var(--duration-fast), color var(--duration-fast);
+}
+
+.item:focus-visible { outline: none; background: var(--bg-hover); }
+
+.itemActive { background: var(--bg-active); }
+
+.label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  margin: 0 4px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.create { color: var(--accent); }
+
+.manage { color: var(--text-secondary); font-size: var(--text-sm); }
+.manage svg { color: var(--text-muted); }
+
+.empty {
+  padding: var(--space-3) var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: var(--space-1) calc(-1 * var(--space-1));
+}

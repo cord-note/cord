@@ -107,51 +107,36 @@
   background: var(--bg-hover);
 }
 
-.tagPickerInline {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-1) var(--space-2-5);
-  background: var(--bg-input);
-  border: none;
-  border-radius: var(--radius-sm);
-}
-
-.tagPickerItem {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-1) var(--space-2-5);
-  border-radius: var(--radius-full);
-  font-size: var(--text-xs);
+.addTagBtnOpen {
+  border-color: var(--text-muted);
   color: var(--text-secondary);
-  background: var(--bg-active);
-  border: 1px solid var(--border);
-  transition: background var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast);
-}
-
-.tagPickerItem:hover {
   background: var(--bg-hover);
-  color: var(--text-primary);
-  border-color: var(--border-strong);
 }
 
-.tagPickerDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
+/* Anchors the tag popover under the tag button. */
+.tagAnchor {
+  position: relative;
   flex-shrink: 0;
+  margin-top: 6px;
 }
 
-.tagPickerInput {
-  font-size: var(--text-sm);
-  padding: var(--space-1) 0;
-  background: none;
-  color: var(--text-primary);
-  outline: none;
-  min-width: 80px;
-  border: none;
+.tagPopover {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  right: 0;
+  z-index: var(--z-menu);
+  width: 240px;
+  padding: var(--space-1);
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  animation: tagPopoverIn var(--duration-fast) var(--ease-out);
+}
+
+@keyframes tagPopoverIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .content {

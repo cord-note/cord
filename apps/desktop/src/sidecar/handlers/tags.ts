@@ -15,6 +15,12 @@ export function registerTagHandlers(router: Router, tags: TagService, auth: Auth
     return json(tags.create(data), 201);
   });
 
+  router.patch('/tags/:tagId', async (req, { tagId }) => {
+    auth.requireSession();
+    const data = await req.json();
+    return json(tags.update(tagId!, data));
+  });
+
   router.delete('/tags/:tagId', async (_req, { tagId }) => {
     auth.requireSession();
     tags.delete(tagId!);

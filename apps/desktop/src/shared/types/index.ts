@@ -239,6 +239,11 @@ export interface CreateTagInput {
   color?: string;
 }
 
+export interface UpdateTagInput {
+  name?: string;
+  color?: string | null;
+}
+
 export interface NoteTagRow {
   noteId: string;
   tagId: string;

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Tag, CreateTagInput, NoteTagRow } from '@shared/types';
+import type { Tag, CreateTagInput, UpdateTagInput, NoteTagRow } from '@shared/types';
 import { api } from '@renderer/ipc';
 
 interface TagStore {
@@ -10,6 +10,7 @@ interface TagStore {
   reset:            () => void;
   loadTags:         (vaultId: string) => Promise<void>;
   createTag:        (input: CreateTagInput) => Promise<Tag>;
+  updateTag:        (tagId: string, data: UpdateTagInput) => Promise<Tag>;
   deleteTag:        (tagId: string) => Promise<void>;
   setActiveTag:     (id: string | null) => void;
   reloadNoteTagMap: (vaultId: string) => Promise<void>;
@@ -32,7 +33,14 @@ export const useTagStore = create<TagStore>((set) => ({
 
   createTag: async (input) => {
     const tag = await api.tags.create(input);
-    set((s) => ({ tags: [...s.tags, tag] }));
+    // Create may return an existing or restored tag, so replace rather than append.
+    set((s) => ({ tags: [...s.tags.filter((t) => t.id !== tag.id), tag] }));
+    return tag;
+  },
+
+  updateTag: async (tagId, data) => {
+    const tag = await api.tags.update(tagId, data);
+    set((s) => ({ tags: s.tags.map((t) => (t.id === tagId ? tag : t)) }));
     return tag;
   },
 

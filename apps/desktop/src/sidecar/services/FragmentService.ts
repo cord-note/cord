@@ -1,5 +1,5 @@
 import { nanoid } from 'nanoid';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { getDb } from '../db/client';
 import { fragments, fragmentTags, fragmentLinks, tags } from '../db/schema';
 import { logOp } from './oplog';
@@ -25,7 +25,7 @@ export class FragmentService {
         .select({ tag: tags })
         .from(fragmentTags)
         .innerJoin(tags, eq(fragmentTags.tagId, tags.id))
-        .where(eq(fragmentTags.fragmentId, frag.id))
+        .where(and(eq(fragmentTags.fragmentId, frag.id), isNull(tags.deletedAt)))
         .all()
         .map((r) => r.tag);
 

@@ -22,6 +22,7 @@ const TAB_TO_ANCHOR: Record<SettingsTab, string> = {
   appearance: 'section:Appearance',
   app:        'section:Editor',
   vault:      'page:vault',
+  tags:       'page:tags',
 };
 
 interface Chapter {

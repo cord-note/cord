@@ -3,6 +3,7 @@ import type { Editor } from 'shuttle-editor';
 import { X } from 'lucide-react';
 import { useFragmentStore } from '../../store/fragments';
 import { useNoteStore } from '../../store/notes';
+import { useTagStore } from '../../store/tags';
 import { blockElement } from './blockDom';
 import styles from './FragmentOverlay.module.css';
 
@@ -15,6 +16,9 @@ interface Props {
 export function FragmentOverlay({ editor, noteId: _noteId, contentEl }: Props) {
   const { annotations, detachTag, deleteLink } = useFragmentStore();
   const notes = useNoteStore((s) => s.notes);
+  const tags = useTagStore((s) => s.tags);
+  // Read through the tag store so renames, recolours and deletes show at once.
+  const tagById = new Map(tags.map((t) => [t.id, t]));
 
   const removeLinkFromEditor = useCallback((linkId: string) => {
     const { state, view } = editor;
@@ -110,7 +114,7 @@ export function FragmentOverlay({ editor, noteId: _noteId, contentEl }: Props) {
               );
             })}
 
-            {annotation.tags.map((tag) => (
+            {annotation.tags.flatMap((t) => tagById.get(t.id) ?? []).map((tag) => (
               <span
                 key={tag.id}
                 className={`${styles.tagChip} cord-chip cord-chip--tag`}

@@ -370,37 +370,115 @@
 
 /* ── Tags ────────────────────────────────────────────────────────────────── */
 
-.tagList { list-style: none; display: flex; flex-direction: column; gap: var(--space-0-5); }
+.tagSearch {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 480px;
+}
+
+.tagSearch .textInput { padding-left: var(--space-8); }
+
+.tagSearchIcon {
+  position: absolute;
+  left: var(--space-3);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.tagAddBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+  max-width: 180px;
+  height: var(--control-h);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--accent-fg);
+  background: var(--accent);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: opacity var(--duration-fast);
+}
+
+.tagAddBtn:hover { opacity: 0.9; }
+
+.tagList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  max-width: 480px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.tagItem + .tagItem { border-top: 1px solid var(--border); }
+.tagItemOpen { background: var(--bg-panel); }
 
 .tagRow {
   display: flex;
   align-items: center;
-  gap: var(--space-2-5);
-  padding: var(--space-2-5) var(--space-3);
-  border-radius: var(--radius-md);
-  transition: background var(--duration-fast);
+  gap: var(--space-2);
+  padding: var(--space-1-5) var(--space-2) var(--space-1-5) var(--space-3);
 }
 
-.tagRow:hover { background: var(--bg-panel); }
+.tagColorBtn {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px var(--bg-base), 0 0 0 3px var(--border-strong);
+  transition: transform var(--duration-fast);
+}
 
-.tagDot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.tagColorBtn:hover { transform: scale(1.15); }
 
-.tagName { flex: 1; font-size: var(--text-md); color: var(--text-primary); }
-
-.tagDeleteBtn {
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* Reads as plain text until hovered or focused. */
+.tagNameInput {
+  flex: 1;
+  min-width: 0;
+  height: 28px;
+  padding: 0 var(--space-2);
+  font-size: var(--text-md);
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
   border-radius: var(--radius-sm);
-  color: var(--text-muted);
-  opacity: 0;
-  transition: opacity var(--duration-fast), background var(--duration-fast), color var(--duration-fast);
+  outline: none;
+  transition: background var(--duration-fast), box-shadow var(--duration-fast);
 }
 
-.tagRow:hover .tagDeleteBtn { opacity: 1; }
-.tagDeleteBtn:hover { background: var(--danger-hover-bg); color: var(--danger); }
+.tagNameInput:hover { background: var(--bg-hover); }
+.tagNameInput:focus { background: var(--bg-input); box-shadow: inset 0 0 0 1px var(--ring), var(--focus-ring); }
+
+.tagCount {
+  flex-shrink: 0;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.tagDeleteBtn { color: var(--text-muted); opacity: 0.6; transition: opacity var(--duration-fast); }
+.tagItem:hover .tagDeleteBtn,
+.tagDeleteBtn:focus-visible { opacity: 1; }
+
+.tagPalette {
+  display: grid;
+  grid-template-columns: repeat(10, 22px);
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3) var(--space-3) calc(var(--space-3) + 14px + var(--space-2));
+}
+
+.tagError {
+  padding: 0 var(--space-3) var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--danger);
+}
 
 /* ── Empty ───────────────────────────────────────────────────────────────── */
 

@@ -9,6 +9,7 @@ import { blockElement } from './overlays/blockDom';
 import { useFragmentStore } from '../store/fragments';
 import { useNoteStore } from '../store/notes';
 import { useTagStore } from '../store/tags';
+import { TagPicker } from './TagPicker';
 import { useVaultStore } from '../store/vaults';
 import { setSetting, snapToSetting, useSetting } from '../settings';
 import { useUIStore } from '../store/ui';
@@ -68,13 +69,12 @@ export default function Editor({ note }: Props) {
   const spellCheck = useSetting('editor.spellCheck');
   const editorLineWidth = useSetting('editor.lineWidth');
   const saveDelay = useSetting('editor.autosaveDelay');
-  const { tags, createTag } = useTagStore();
+  const tags = useTagStore((s) => s.tags);
   const { activeVaultId } = useVaultStore();
   const { setView } = useUIStore();
   const bindings = useKeybindingStore((s) => s.bindings);
   const colorScheme = useResolvedScheme();
   const [showTagPicker, setShowTagPicker] = useState(false);
-  const [newTagName, setNewTagName] = useState('');
 
   const [editor, setEditor] = useState<ShuttleEditorInstance | null>(null);
   const [controls, setControls] = useState<ShuttleControls | null>(null);
@@ -152,14 +152,12 @@ export default function Editor({ note }: Props) {
     setOutboundMentions(doc ? findOutboundMentions(doc, useNoteStore.getState().notes, note.id) : []);
   }, [note.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Clicking away is a dismissal, same as Escape. Without this the picker
-  // stayed open — and kept its half-typed draft — until Enter or Escape.
+  // Clicking away is a dismissal, same as Escape.
   useEffect(() => {
     if (!showTagPicker) return;
     function onPointerDown(e: PointerEvent) {
       if (tagPickerRef.current?.contains(e.target as Node)) return;
       setShowTagPicker(false);
-      setNewTagName('');
     }
     // Capture, so the picker closes even when the click lands on something
     // that stops propagation (the editor surface does).
@@ -232,6 +230,11 @@ export default function Editor({ note }: Props) {
     [editor],
   );
 
+  // Read through the tag store so a rename or recolour shows up at once.
+  const tagById = new Map(tags.map((t) => [t.id, t]));
+  const noteTags = activeNoteTags.flatMap((t) => tagById.get(t.id) ?? []);
+  const attachedTagIds = new Set(activeNoteTags.map((t) => t.id));
+
   const backlinkNotes = backlinks
     .map((l) => notes.find((n) => n.id === l.fromNoteId))
     .filter(Boolean);
@@ -246,18 +249,32 @@ export default function Editor({ note }: Props) {
           onKeyDown={handleTitleKeyDown}
           placeholder="Untitled"
         />
-        <button
-          className={styles.addTagBtn}
-          onClick={() => setShowTagPicker(true)}
-          title="Add tag"
-          style={{ marginTop: 6, flexShrink: 0 }}
-        >
-          <Tag size={10} strokeWidth={2} /> tag
-        </button>
+        <div className={styles.tagAnchor} ref={tagPickerRef}>
+          <button
+            className={`${styles.addTagBtn} ${showTagPicker ? styles.addTagBtnOpen : ''}`}
+            onClick={() => setShowTagPicker((v) => !v)}
+            title="Add tag"
+            aria-expanded={showTagPicker}
+          >
+            <Tag size={10} strokeWidth={2} /> tag
+          </button>
+          {showTagPicker && (
+            <div className={`${styles.tagPopover} cord-menu`}>
+              <TagPicker
+                excludeIds={attachedTagIds}
+                onPick={async (tagId) => {
+                  await attachTag(note.id, tagId);
+                  setShowTagPicker(false);
+                }}
+                onClose={() => setShowTagPicker(false)}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       <div className={`${styles.tagPanel} cord-editor__tags`}>
-        {activeNoteTags.map((tag) => (
+        {noteTags.map((tag) => (
           <span
             key={tag.id}
             className={`${styles.tagChip} cord-chip cord-chip--tag`}
@@ -275,43 +292,6 @@ export default function Editor({ note }: Props) {
             ><X size={11} strokeWidth={2} /></button>
           </span>
         ))}
-
-        {showTagPicker ? (
-          <div className={styles.tagPickerInline} ref={tagPickerRef}>
-            {tags
-              .filter((t) => !activeNoteTags.some((at) => at.id === t.id))
-              .map((t) => (
-                <button
-                  key={t.id}
-                  className={styles.tagPickerItem}
-                  onClick={async () => {
-                    await attachTag(note.id, t.id);
-                    setShowTagPicker(false);
-                  }}
-                >
-                  <span style={{ background: t.color ?? 'var(--text-muted)' }} className={styles.tagPickerDot} />
-                  {t.name}
-                </button>
-              ))
-            }
-            <input
-              autoFocus
-              className={styles.tagPickerInput}
-              placeholder="New tag name…"
-              value={newTagName}
-              onChange={(e) => setNewTagName(e.target.value)}
-              onKeyDown={async (e) => {
-                if (e.key === 'Enter' && newTagName.trim() && activeVaultId) {
-                  const tag = await createTag({ vaultId: activeVaultId, name: newTagName.trim() });
-                  await attachTag(note.id, tag.id);
-                  setNewTagName('');
-                  setShowTagPicker(false);
-                }
-                if (e.key === 'Escape') { setShowTagPicker(false); setNewTagName(''); }
-              }}
-            />
-          </div>
-        ) : null}
       </div>
 
       <div className={`${styles.content} cord-editor__body`} ref={contentRef}>

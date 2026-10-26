@@ -7,7 +7,7 @@ import type {
   Vault, CreateVaultInput, UpdateVaultInput,
   Note, NoteListItem, NoteKind, CreateNoteInput, UpdateNoteInput, NoteLinks, UnlinkedMention,
   Block, BlockRefTarget,
-  Tag, CreateTagInput, NoteTagRow,
+  Tag, CreateTagInput, UpdateTagInput, NoteTagRow,
   FragmentAnnotationMap, CreateFragmentLinkInput, FragmentLink,
   Attachment, CreateAttachmentInput,
   RegisterInput, LoginInput,
@@ -48,6 +48,7 @@ export const api = {
   tags: {
     list:        (vaultId: string)                => invoke<Tag[]>('tags_list', { vaultId }),
     create:      (data: CreateTagInput)           => invoke<Tag>('tags_create', { data }),
+    update:      (tagId: string, data: UpdateTagInput) => invoke<Tag>('tags_update', { tagId, data }),
     delete:      (tagId: string)                  => invoke<void>('tags_delete', { tagId }),
     attach:      (noteId: string, tagId: string)  => invoke<void>('tags_attach', { noteId, tagId }),
     detach:      (noteId: string, tagId: string)  => invoke<void>('tags_detach', { noteId, tagId }),

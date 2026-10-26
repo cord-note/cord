@@ -66,6 +66,7 @@ pub fn run() {
             // tags
             commands::tags::tags_list,
             commands::tags::tags_create,
+            commands::tags::tags_update,
             commands::tags::tags_delete,
             commands::tags::tags_attach,
             commands::tags::tags_detach,

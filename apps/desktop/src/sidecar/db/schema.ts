@@ -128,6 +128,7 @@ export const tags = sqliteTable(
     name:      text('name').notNull(),
     color:     text('color'),
     createdAt: integer('created_at').notNull(),
+    deletedAt: integer('deleted_at'),
   },
   (t) => ({
     vaultIdx: index('idx_tags_vault').on(t.vaultId),
