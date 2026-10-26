@@ -26,6 +26,7 @@ export default function SettingsPage() {
   const [jsonOpen, setJsonOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const chapterRefs = useRef<Record<string, HTMLElement | null>>({});
+  const clickedRef = useRef(false);
   const [activeAnchor, setActiveAnchor] = useState(TAB_TO_ANCHOR[settingsTab]);
 
   // Re-read the files when Settings opens, in case they were edited elsewhere.
@@ -53,24 +54,41 @@ export default function SettingsPage() {
     return () => cancelAnimationFrame(raf);
   }, [settingsTab]);
 
-  // Highlight the chapter currently in view.
+  // Highlight the chapter being read: the last one whose top has passed a line
+  // a little below the header. The observer this replaces only saw sections
+  // that crossed its edge, so a short section above could keep the highlight.
   useEffect(() => {
     const root = scrollRef.current;
     if (!root || jsonOpen) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
-        const anchor = visible?.target.getAttribute('data-chapter');
-        if (anchor) setActiveAnchor(anchor);
-      },
-      { root, rootMargin: '0px 0px -70% 0px', threshold: 0 },
-    );
-    for (const el of Object.values(chapterRefs.current)) {
-      if (el) observer.observe(el);
-    }
-    return () => observer.disconnect();
+    let frame = 0;
+    const update = (): void => {
+      frame = 0;
+      if (clickedRef.current) return;
+      const line = root.getBoundingClientRect().top + 140;
+      const atEnd = root.scrollTop + root.clientHeight >= root.scrollHeight - 4;
+      let current: string | null = null;
+      for (const c of chapters) {
+        const el = chapterRefs.current[c.anchor];
+        if (el && el.getBoundingClientRect().top <= line) current = c.anchor;
+      }
+      if (atEnd) current = chapters[chapters.length - 1]?.anchor ?? current;
+      if (current) setActiveAnchor(current);
+    };
+    const onScroll = (): void => { if (!frame) frame = requestAnimationFrame(update); };
+    // A chapter picked in the nav keeps the highlight until the user scrolls themself.
+    const release = (): void => { clickedRef.current = false; };
+    root.addEventListener('scroll', onScroll, { passive: true });
+    root.addEventListener('wheel', release, { passive: true });
+    root.addEventListener('pointerdown', release);
+    root.addEventListener('keydown', release);
+    update();
+    return () => {
+      root.removeEventListener('scroll', onScroll);
+      root.removeEventListener('wheel', release);
+      root.removeEventListener('pointerdown', release);
+      root.removeEventListener('keydown', release);
+      if (frame) cancelAnimationFrame(frame);
+    };
   }, [chapters, jsonOpen]);
 
   return (
@@ -85,7 +103,7 @@ export default function SettingsPage() {
                 <button
                   key={c.anchor}
                   className={`${styles.navItem} cord-settings__nav-item ${activeAnchor === c.anchor && !jsonOpen ? `${styles.navActive} cord-settings__nav-item--active` : ''}`}
-                  onClick={() => { setJsonOpen(false); requestAnimationFrame(() => scrollTo(c.anchor)); }}
+                  onClick={() => { setJsonOpen(false); clickedRef.current = true; setActiveAnchor(c.anchor); requestAnimationFrame(() => scrollTo(c.anchor)); }}
                 >
                   {c.label}
                 </button>

@@ -46,7 +46,7 @@ export function ThemePickerControl({ onChange }: SettingControlProps<string>) {
       !q || [t.label, t.description, t.author ?? ''].some((s) => s.toLowerCase().includes(q));
     return [
       { label: 'Built-in', themes: themes.filter((t) => t.source === 'builtin' && match(t)) },
-      { label: 'Library',  themes: themes.filter((t) => t.source === 'library' && match(t)) },
+      { label: 'Library',  themes: themes.filter((t) => t.source === 'library' && match(t)).sort((a, b) => a.label.localeCompare(b.label)) },
     ];
   }, [filter, themes]);
   const total = groups.reduce((n, g) => n + g.themes.length, 0);
