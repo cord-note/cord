@@ -147,10 +147,22 @@
   --dither-ink:        var(--text-secondary);
   --dither-ink-strong: var(--text-primary);
   --dither-accent:     var(--accent);
+  /* Lock-screen clouds: sunlit tops, half-lit body, shadowed side */
+  --dither-cloud-light: var(--dither-ink-strong);
+  --dither-cloud-mid:   var(--dither-ink);
+  --dither-cloud-shade: color-mix(in srgb, var(--dither-ink) 55%, var(--bg));
 
   /* Focus ring — a soft 3px halo hugging the control's edge */
   --ring:       var(--text-muted);
   --focus-ring: 0 0 0 3px color-mix(in srgb, var(--ring) 50%, transparent);
+}
+
+/* On a light page the full-strength ink is too heavy for a whole cloud bank:
+   soften it toward the page. */
+[data-scheme="light"] {
+  --dither-cloud-light: color-mix(in srgb, var(--dither-ink-strong) 60%, var(--bg));
+  --dither-cloud-mid:   color-mix(in srgb, var(--dither-ink) 60%, var(--bg));
+  --dither-cloud-shade: color-mix(in srgb, var(--dither-ink) 35%, var(--bg));
 }
 
 /* Dark-tuned shadows read as smudges on light surfaces. */

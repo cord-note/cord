@@ -1,0 +1,12 @@
+.box {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Sized in JS to whole device pixels per cell. */
+.canvas {
+  display: block;
+}

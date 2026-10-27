@@ -118,8 +118,14 @@ matching dither without defining them.
 | Token | Used for |
 |---|---|
 | `--dither-ink` | Mid-tone marks |
-| `--dither-ink-strong` | Dense, bright marks — cloud tops, the thick of a field |
+| `--dither-ink-strong` | Dense, bright marks — the thick of a field |
 | `--dither-accent` | Occasional patches of accent colour |
+| `--dither-cloud-light` | Sunlit tops of the lock-screen clouds |
+| `--dither-cloud-mid` | Half-lit body of the clouds |
+| `--dither-cloud-shade` | Shadowed side and undersides of the clouds |
+
+The cloud tones default to the dither inks, softened toward the page on a light
+scheme.
 
 ### Type
 
