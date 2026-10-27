@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react';
-import Dither from './Dither';
+import Clouds from './Clouds';
 import { useAuthStore, type AuthView } from '../store/auth';
 import { PinView } from './login/PinView';
 import { PasswordView } from './login/PasswordView';
@@ -43,7 +43,7 @@ export default function LoginScreen() {
   return (
     <div className={`${styles.screen} cord-login`}>
       <div className={styles.art}>
-        <Dither seed={7} cell={4} shape="square" field="cumulus" from="right" reach={0.6} />
+        <Clouds seed={7} cell={4} />
       </div>
 
       <header className={styles.topBar}>

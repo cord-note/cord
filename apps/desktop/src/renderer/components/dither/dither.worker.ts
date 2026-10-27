@@ -1,5 +1,5 @@
 /// <reference lib="webworker" />
-import { paint, prepare, type CloudField, type DitherOptions, type Inks } from './render';
+import { paint, type DitherOptions, type Inks } from './render';
 
 /**
  * Paints a dither onto a canvas handed over with transferControlToOffscreen,
@@ -17,14 +17,13 @@ let canvas: OffscreenCanvas | null = null;
 let ctx: OffscreenCanvasRenderingContext2D | null = null;
 let options: DitherOptions | null = null;
 let inks: Inks | null = null;
-let clouds: CloudField | null = null;
 let width = 0;
 let height = 0;
 let dpr = 1;
 let time = 0;
 
 function draw(): void {
-  if (ctx && options && inks) paint(ctx, options, width, height, dpr, time, inks, clouds);
+  if (ctx && options && inks) paint(ctx, options, width, height, dpr, time, inks);
 }
 
 self.onmessage = (e: MessageEvent<DitherMessage>) => {
@@ -44,7 +43,6 @@ self.onmessage = (e: MessageEvent<DitherMessage>) => {
         canvas.width = Math.round(width * dpr);
         canvas.height = Math.round(height * dpr);
       }
-      if (options) clouds = prepare(options, width, height);
       break;
     case 'inks':
       inks = msg.inks;
