@@ -4,6 +4,7 @@ pub mod error;
 pub mod layout;
 pub mod hlc;
 pub mod store;
+pub mod clock;
 
 pub use error::{Error, Result};
 
