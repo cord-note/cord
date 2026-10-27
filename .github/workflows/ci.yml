@@ -84,3 +84,25 @@ jobs:
       - name: Test Rust shell
         working-directory: apps/desktop/src-tauri
         run: cargo test
+
+  # cord-core builds SQLCipher and OpenSSL from source, which is the part most
+  # likely to break per platform, so it is tested on all three.
+  core:
+    name: cord-core · ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-26.04, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: crates/cord-core
+
+      - name: Test cord-core
+        working-directory: crates/cord-core
+        run: cargo test
