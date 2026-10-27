@@ -66,9 +66,10 @@
   /* --dither-ink:        var(--text-secondary); */
   /* --dither-ink-strong: var(--text-primary);   */
   /* --dither-accent:     var(--accent);         */
-  /* --dither-cloud-light: var(--dither-ink-strong); */
-  /* --dither-cloud-mid:   var(--dither-ink);        */
-  /* --dither-cloud-shade: color-mix(in srgb, var(--dither-ink) 55%, var(--bg)); */
+  /* --dither-scene-light: var(--dither-ink-strong); */
+  /* --dither-scene-mid:   var(--dither-ink);        */
+  /* --dither-scene-shade: color-mix(in srgb, var(--dither-ink) 55%, var(--bg)); */
+  /* --dither-scene-invert: 0; */
 }
 
 

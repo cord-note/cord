@@ -7,7 +7,7 @@ export type { DitherFrom, DitherShape } from './dither/render';
 
 /**
  * A generated, ordered-dither texture for large empty surfaces: empty states,
- * blank panes, and the lock screen when WebGL is missing (see `Clouds`).
+ * blank panes, and the lock screen when WebGL is missing (see `LoginScene`).
  * Drawn on a canvas from a seeded noise field and a
  * Bayer threshold matrix, so it costs no image assets and follows the theme:
  * the ink colours are read from the `--dither-*` tokens and re-read whenever the

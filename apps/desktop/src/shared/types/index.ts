@@ -328,6 +328,27 @@ export interface LibraryTheme {
   css: string;
   /** What the filter left out, and why. */
   dropped: string[];
+  /** Lock-screen scenes the theme adds to the random pick. */
+  scenes: LoginScene[];
+}
+
+/**
+ * A lock-screen scene: GLSL that works out a brightness per dither cell. The
+ * app supplies the canvas, timing and the dither marks; see
+ * docs/theming/login-scenes.md.
+ */
+export interface LoginScene {
+  /** Unique; a theme's scenes are `<theme id>/<file name>`. */
+  id: string;
+  name: string;
+  /** GLSL defining `float scene(vec2 p, vec2 span)`. */
+  source: string;
+  /** Square halftone marks, or digits. */
+  marks: 'square' | 'glyph';
+  /** Redraws per second while animating, 1 to 8. */
+  fps: number;
+  /** Dither cell size in CSS pixels, 3 to 12. */
+  cell: number;
 }
 
 export interface ThemeFileProblem {

@@ -120,12 +120,13 @@ matching dither without defining them.
 | `--dither-ink` | Mid-tone marks |
 | `--dither-ink-strong` | Dense, bright marks — the thick of a field |
 | `--dither-accent` | Occasional patches of accent colour |
-| `--dither-cloud-light` | Sunlit tops of the lock-screen clouds |
-| `--dither-cloud-mid` | Half-lit body of the clouds |
-| `--dither-cloud-shade` | Shadowed side and undersides of the clouds |
+| `--dither-scene-light` | Densest marks of the lock-screen scenes |
+| `--dither-scene-mid` | Middle marks of the scenes |
+| `--dither-scene-shade` | Sparsest, dimmest marks of the scenes |
+| `--dither-scene-invert` | `1` to draw scenes as ink on paper: dense marks for dark parts |
 
-The cloud tones default to the dither inks, softened toward the page on a light
-scheme.
+The scene tones default to the dither inks, softened toward the page on a light
+scheme, where scenes are also inverted. See [login-scenes.md](login-scenes.md).
 
 ### Type
 
