@@ -118,7 +118,7 @@ mod tests {
 
     #[test]
     fn string_order_matches_struct_order() {
-        let mut stamps = vec![h(9, 0, "b"), h(10, 0, "a"), h(9, 1, "a"), h(9, 0, "a")];
+        let mut stamps = [h(9, 0, "b"), h(10, 0, "a"), h(9, 1, "a"), h(9, 0, "a")];
         let mut texts: Vec<String> = stamps.iter().map(Hlc::encode).collect();
         stamps.sort();
         texts.sort();
