@@ -6,6 +6,7 @@ pub mod hlc;
 pub mod store;
 pub mod clock;
 pub mod changes;
+pub mod device;
 
 pub use error::{Error, Result};
 

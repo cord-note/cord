@@ -168,7 +168,7 @@ mod tests {
         connect(&conn, "v1", "c-b", "push");
         connect(&conn, "v1", "c-pull", "pull");
         let id = record(&conn, &title_change(&stamp(1), b"x"), 1).unwrap().unwrap();
-        assert_eq!(pending_for(&conn, "c-a").unwrap(), [id.clone()]);
+        assert_eq!(pending_for(&conn, "c-a").unwrap(), std::slice::from_ref(&id));
         assert_eq!(pending_for(&conn, "c-b").unwrap(), [id]);
         assert!(pending_for(&conn, "c-pull").unwrap().is_empty());
     }
