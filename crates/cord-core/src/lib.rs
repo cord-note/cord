@@ -1,6 +1,7 @@
 //! Cord's domain core: storage, clocks and the sync outbox. No Tauri here.
 
 pub mod error;
+pub mod layout;
 
 pub use error::{Error, Result};
 
