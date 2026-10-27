@@ -3,6 +3,7 @@
 pub mod error;
 pub mod layout;
 pub mod hlc;
+pub mod store;
 
 pub use error::{Error, Result};
 
