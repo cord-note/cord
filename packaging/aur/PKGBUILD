@@ -6,7 +6,7 @@
 # rather than naming paths that would rot the next time the bundle changes.
 
 pkgname=cord-bin
-pkgver=2.0.0
+pkgver=2.4.0
 pkgrel=1
 pkgdesc="Local-first note-taking as a knowledge graph"
 arch=('x86_64')
@@ -39,7 +39,7 @@ _deb="Cord_${pkgver}_amd64.deb"
 source=("${_deb}::${url}/releases/download/v${pkgver}/${_deb}")
 noextract=("${_deb}")
 # Substituted by the aur.yml publish job from the asset it actually downloads.
-# SKIP is fine in this copy, where no v2.0.0 asset exists yet to hash, but the
+# SKIP is fine in this copy, where no v2.4.0 asset exists yet to hash, but the
 # publish job refuses to push a PKGBUILD that still says SKIP.
 sha256sums=('SKIP')
 

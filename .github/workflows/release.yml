@@ -94,7 +94,9 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          # Pinned, not latest: Bun 1.4.4's compiled sidecar crashes linuxdeploy
+          # while it builds the AppImage. Bump deliberately and watch the Linux job.
+          bun-version: 1.4.2
 
       - run: pnpm install --frozen-lockfile
 
@@ -238,7 +240,7 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.4.2
 
       - run: pnpm install --frozen-lockfile
 

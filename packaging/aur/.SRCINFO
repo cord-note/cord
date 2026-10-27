@@ -1,6 +1,6 @@
 pkgbase = cord-bin
 	pkgdesc = Local-first note-taking as a knowledge graph
-	pkgver = 2.0.0
+	pkgver = 2.4.0
 	pkgrel = 1
 	url = https://github.com/cord-note/cord
 	arch = x86_64
@@ -20,8 +20,8 @@ pkgbase = cord-bin
 	conflicts = cord
 	options = !strip
 	options = !debug
-	source = Cord_2.0.0_amd64.deb::https://github.com/cord-note/cord/releases/download/v2.0.0/Cord_2.0.0_amd64.deb
-	noextract = Cord_2.0.0_amd64.deb
+	source = Cord_2.4.0_amd64.deb::https://github.com/cord-note/cord/releases/download/v2.4.0/Cord_2.4.0_amd64.deb
+	noextract = Cord_2.4.0_amd64.deb
 	sha256sums = SKIP
 
 pkgname = cord-bin
