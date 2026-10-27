@@ -1,0 +1,16 @@
+/// Everything cord-core can fail with.
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("database error: {0}")]
+    Sqlite(#[from] rusqlite::Error),
+    #[error("file error: {0}")]
+    Io(#[from] std::io::Error),
+    #[error("bad clock stamp: {0}")]
+    BadHlc(String),
+    #[error("bad id: {0}")]
+    BadId(String),
+    #[error("database is version {found}, this build supports up to {supported}")]
+    TooNew { found: i64, supported: i64 },
+}
+
+pub type Result<T> = std::result::Result<T, Error>;
