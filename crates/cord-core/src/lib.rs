@@ -8,6 +8,7 @@ pub mod clock;
 pub mod changes;
 pub mod device;
 pub mod doc;
+pub mod index;
 
 pub use error::{Error, Result};
 
