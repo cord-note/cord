@@ -201,9 +201,13 @@ mod tests {
             run_pragma(&db.conn, "PRAGMA wal_checkpoint(TRUNCATE)").unwrap();
             run_pragma(&db.conn, "PRAGMA idx.wal_checkpoint(TRUNCATE)").unwrap();
         }
-        for (file, secret) in [(l.cord_db("u1").unwrap(), "secret-title"), (l.index_db("u1").unwrap(), "secret-body")] {
+        // Labelled by name: the path holds the user id, which must not reach output.
+        for (name, file, secret) in [
+            ("cord.db", l.cord_db("u1").unwrap(), "secret-title"),
+            ("index.db", l.index_db("u1").unwrap(), "secret-body"),
+        ] {
             let bytes = std::fs::read(&file).unwrap();
-            assert!(!bytes.windows(secret.len()).any(|w| w == secret.as_bytes()), "{file:?} holds plain text");
+            assert!(!bytes.windows(secret.len()).any(|w| w == secret.as_bytes()), "{name} holds plain text");
         }
         assert!(open_user(&l, "u1", None).is_err());
         assert!(open_user(&l, "u1", Some(&DbKey::from_bytes([8; 32]))).is_err());
