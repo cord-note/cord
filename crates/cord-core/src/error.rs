@@ -11,6 +11,8 @@ pub enum Error {
     BadId(String),
     #[error("database is version {found}, this build supports up to {supported}")]
     TooNew { found: i64, supported: i64 },
+    #[error("bad document: {0}")]
+    BadDoc(String),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
