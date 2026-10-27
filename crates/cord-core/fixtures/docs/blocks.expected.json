@@ -1,0 +1,143 @@
+{
+  "content": [
+    {
+      "attrs": {
+        "blockId": "h1",
+        "level": 1
+      },
+      "content": [
+        {
+          "text": "Notepad",
+          "type": "text"
+        }
+      ],
+      "type": "heading"
+    },
+    {
+      "attrs": {
+        "blockId": "t1"
+      },
+      "content": [
+        {
+          "attrs": {
+            "checked": true
+          },
+          "content": [
+            {
+              "content": [
+                {
+                  "text": "done",
+                  "type": "text"
+                }
+              ],
+              "type": "paragraph"
+            }
+          ],
+          "type": "taskItem"
+        },
+        {
+          "attrs": {
+            "checked": false
+          },
+          "content": [
+            {
+              "content": [
+                {
+                  "text": "todo",
+                  "type": "text"
+                }
+              ],
+              "type": "paragraph"
+            }
+          ],
+          "type": "taskItem"
+        }
+      ],
+      "type": "taskList"
+    },
+    {
+      "attrs": {
+        "blockId": "c1",
+        "language": "rust"
+      },
+      "content": [
+        {
+          "text": "fn main() {}\n",
+          "type": "text"
+        }
+      ],
+      "type": "codeBlock"
+    },
+    {
+      "attrs": {
+        "blockId": "q1"
+      },
+      "content": [
+        {
+          "content": [
+            {
+              "text": "quote",
+              "type": "text"
+            }
+          ],
+          "type": "paragraph"
+        }
+      ],
+      "type": "blockquote"
+    },
+    {
+      "attrs": {
+        "blockId": "bm1",
+        "latex": "E = mc^2"
+      },
+      "type": "blockMath"
+    },
+    {
+      "attrs": {
+        "blockId": "r1",
+        "refBlockId": "h9",
+        "refNoteId": "n9"
+      },
+      "type": "blockRef"
+    },
+    {
+      "attrs": {
+        "blockId": "d1",
+        "open": false
+      },
+      "content": [
+        {
+          "content": [
+            {
+              "text": "More",
+              "type": "text"
+            }
+          ],
+          "type": "detailsSummary"
+        },
+        {
+          "content": [
+            {
+              "content": [
+                {
+                  "text": "hidden",
+                  "type": "text"
+                }
+              ],
+              "type": "paragraph"
+            }
+          ],
+          "type": "detailsContent"
+        }
+      ],
+      "type": "details"
+    },
+    {
+      "attrs": {
+        "blockId": "hr1"
+      },
+      "type": "horizontalRule"
+    }
+  ],
+  "type": "doc"
+}

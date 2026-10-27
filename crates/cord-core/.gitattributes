@@ -1,0 +1,2 @@
+# Yjs fixtures are binary; never touch their bytes.
+*.ybin binary

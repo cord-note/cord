@@ -273,6 +273,51 @@ mod tests {
         assert!(matches!(json_to_state(&json!({ "type": "doc", "content": [{ "attrs": {} }] })), Err(Error::BadDoc(_))));
     }
 
+    use std::path::PathBuf;
+
+    fn fixtures() -> Vec<(String, PathBuf)> {
+        let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("fixtures/docs");
+        let mut names: Vec<(String, PathBuf)> = std::fs::read_dir(&dir)
+            .unwrap()
+            .filter_map(|e| {
+                let name = e.unwrap().file_name().into_string().unwrap();
+                name.strip_suffix(".input.json").map(|n| (n.to_owned(), dir.clone()))
+            })
+            .collect();
+        names.sort();
+        names
+    }
+
+    fn read_json(path: PathBuf) -> Value {
+        serde_json::from_slice(&std::fs::read(path).unwrap()).unwrap()
+    }
+
+    /// Regenerates `.ybin` and `.expected.json`. Run on purpose only:
+    /// `cargo test write_fixtures -- --ignored`, then review the diff.
+    #[test]
+    #[ignore]
+    fn write_fixtures() {
+        for (name, dir) in fixtures() {
+            let state = json_to_state(&read_json(dir.join(format!("{name}.input.json")))).unwrap();
+            std::fs::write(dir.join(format!("{name}.ybin")), &state).unwrap();
+            let pretty = serde_json::to_string_pretty(&state_to_json(&state).unwrap()).unwrap();
+            std::fs::write(dir.join(format!("{name}.expected.json")), pretty + "\n").unwrap();
+        }
+    }
+
+    #[test]
+    fn fixtures_decode_to_their_expected_json() {
+        let all = fixtures();
+        assert_eq!(all.len(), 5);
+        for (name, dir) in all {
+            let expected = read_json(dir.join(format!("{name}.expected.json")));
+            let stored = std::fs::read(dir.join(format!("{name}.ybin"))).unwrap();
+            assert_eq!(state_to_json(&stored).unwrap(), expected, "{name}.ybin");
+            let fresh = json_to_state(&read_json(dir.join(format!("{name}.input.json")))).unwrap();
+            assert_eq!(state_to_json(&fresh).unwrap(), expected, "{name}.input.json");
+        }
+    }
+
     /// Insert `s` at `at` in the first paragraph, as another client would.
     fn edit(base: &[u8], client: u64, at: u32, s: &str) -> Vec<u8> {
         let d = Doc::with_client_id(client);

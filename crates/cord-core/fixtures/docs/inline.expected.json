@@ -1,0 +1,55 @@
+{
+  "content": [
+    {
+      "attrs": {
+        "blockId": "i1"
+      },
+      "content": [
+        {
+          "text": "see ",
+          "type": "text"
+        },
+        {
+          "attrs": {
+            "id": "n2",
+            "label": "Other note"
+          },
+          "type": "mention"
+        },
+        {
+          "type": "hardBreak"
+        },
+        {
+          "attrs": {
+            "latex": "x^2"
+          },
+          "type": "inlineMath"
+        },
+        {
+          "text": " and ",
+          "type": "text"
+        },
+        {
+          "attrs": {
+            "label": "frag",
+            "linkId": "l1",
+            "toFragmentId": "f1",
+            "toNoteId": "n3"
+          },
+          "type": "fragmentLink"
+        }
+      ],
+      "type": "paragraph"
+    },
+    {
+      "attrs": {
+        "alt": "a cat",
+        "blockId": "img1",
+        "src": "attachment:a1",
+        "width": 320
+      },
+      "type": "image"
+    }
+  ],
+  "type": "doc"
+}
