@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react';
-import Clouds from './Clouds';
+import LoginScene from './LoginScene';
+import { BUILTIN_SCENE_IDS, useLoginScenes } from './scenes';
 import { useAuthStore, type AuthView } from '../store/auth';
 import { PinView } from './login/PinView';
 import { PasswordView } from './login/PasswordView';
@@ -39,11 +40,12 @@ export default function LoginScreen() {
   const selectedUserId = useAuthStore((s) => s.selectedUserId);
   const { title, subtitle } = COPY[view];
   const View = VIEWS[view];
+  const scenes = useLoginScenes();
 
   return (
     <div className={`${styles.screen} cord-login`}>
       <div className={styles.art}>
-        <Clouds seed={7} cell={4} />
+        <LoginScene scenes={scenes} builtinIds={BUILTIN_SCENE_IDS} />
       </div>
 
       <header className={styles.topBar}>
