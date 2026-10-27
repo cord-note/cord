@@ -43,14 +43,14 @@ jobs:
   publish:
     name: cord-bin
     if: github.event_name == 'workflow_dispatch' || github.event.release.prerelease == false
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     container: archlinux:base-devel
 
     steps:
       - name: Install tooling
         run: pacman -Syu --noconfirm --needed git openssh namcap github-cli
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - run: git config --global --add safe.directory '*'
 

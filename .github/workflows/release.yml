@@ -28,9 +28,9 @@ jobs:
   # Cheap to check, so check it before spending forty minutes of matrix time.
   guard:
     name: tag matches manifest
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Compare tag to tauri.conf.json, package.json and Cargo.toml
         if: startsWith(github.ref, 'refs/tags/v')
@@ -83,13 +83,13 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: pnpm
 
       - uses: oven-sh/setup-bun@v2
@@ -190,7 +190,7 @@ jobs:
 
       # A second copy, independent of the release, so a manual dispatch still
       # produces something inspectable and a failed publish is not a lost build.
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: cord-${{ matrix.rust-target }}
@@ -211,7 +211,7 @@ jobs:
   build_rpm:
     name: Fedora (x64 rpm)
     needs: guard
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     container: fedora:43
 
     steps:
@@ -225,17 +225,17 @@ jobs:
             webkit2gtk4.1-devel gtk3-devel libappindicator-gtk3-devel librsvg2-devel \
             appstream desktop-file-utils rpmlint
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # The container runs as root over a directory owned by the runner user,
       # which git treats as dubious and refuses to read.
       - run: git config --global --add safe.directory '*'
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: pnpm
 
       - uses: oven-sh/setup-bun@v2
@@ -321,7 +321,7 @@ jobs:
           rpm=$(find apps/desktop/src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/rpm                   -name '*.rpm' -print -quit)
           rpmlint "$rpm"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: cord-fedora-rpm
@@ -341,7 +341,7 @@ jobs:
   verify_aur:
     name: AUR PKGBUILD
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     container: archlinux:base-devel
     steps:
       - name: Install tooling
@@ -352,11 +352,11 @@ jobs:
           # and pacman has nothing to resolve the package's depends against.
           pacman -S --noconfirm --needed webkit2gtk-4.1 gtk3 hicolor-icon-theme
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - run: git config --global --add safe.directory '*'
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: cord-x86_64-unknown-linux-gnu
           path: artifact
@@ -424,7 +424,7 @@ jobs:
 
       # Downloadable from the run. Until there is an AUR account this is the
       # only way to try cord-bin without waiting for a release.
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: cord-arch-package
