@@ -367,3 +367,28 @@ export interface ThemeImportResult {
   imported: { id: string; label: string }[];
   problems: ThemeFileProblem[];
 }
+
+/** A scene file a theme lists, as cord-core read it off disk. */
+export interface RawSceneFile {
+  source?: string;
+  error?: string;
+}
+
+/** One theme's files as cord-core read them; the renderer sanitizes these. */
+export interface RawTheme {
+  cssPath: string;
+  folder: string | null;
+  css: string;
+  /** theme.json; {} when missing or broken. */
+  manifest: Record<string, unknown>;
+  /** Fonts and images the CSS refers to, by the reference as written, as data: URIs. */
+  assets: Record<string, string>;
+  /** The scene files theme.json lists, by the path as written. */
+  sceneFiles: Record<string, RawSceneFile>;
+}
+
+export interface RawThemeScan {
+  dir: string;
+  themes: RawTheme[];
+  problems: ThemeFileProblem[];
+}

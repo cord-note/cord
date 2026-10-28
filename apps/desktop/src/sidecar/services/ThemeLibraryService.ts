@@ -6,9 +6,10 @@ import { basename, dirname, extname, isAbsolute, join, relative, resolve, sep } 
 import { unzipSync } from 'fflate';
 import { BUILTIN_THEMES } from '@shared/theming/builtinThemes';
 import type { LibraryTheme, ThemeImportResult, ThemeLibraryScan } from '@shared/types';
-import { sanitizeThemeCss } from '../themes/sanitizeThemeCss';
+import { sanitizeThemeCss } from '@shared/theming/sanitizeThemeCss';
 import { downloadArchive, parseRepoUrl, type FetchLike } from '../themes/repoSource';
-import { loadScenes } from '../themes/loadScenes';
+import { loadScenes } from '@shared/theming/loadScenes';
+import { readSceneFiles } from '../themes/sceneFiles';
 import { resolveConfigDir } from './SettingsFileService';
 
 // Theme files on disk. Themes are per-device preferences, like settings files,
@@ -201,7 +202,9 @@ function loadTheme(c: Candidate): LibraryTheme | { error: string } {
   if (BUILTIN_IDS.has(id)) return { error: `"${id}" is the id of a built-in theme` };
 
   const manifest = c.folder ? readManifest(join(c.folder, 'theme.json')) : {};
-  const { scenes, problems } = c.folder ? loadScenes(id, c.folder, manifest.scenes) : { scenes: [], problems: [] };
+  const { scenes, problems } = c.folder
+    ? loadScenes(id, manifest.scenes, readSceneFiles(c.folder, manifest.scenes))
+    : { scenes: [], problems: [] };
   const fallbackName = c.folder ? basename(c.folder) : basename(c.cssPath, extname(c.cssPath));
   return {
     id,
