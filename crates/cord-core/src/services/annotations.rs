@@ -131,8 +131,8 @@ mod tests {
 
         let on_a = for_note(&s, &a).unwrap();
         assert_eq!(on_a["ba"].tags.iter().map(|t| t.name.as_str()).collect::<Vec<_>>(), ["t"]);
-        assert_eq!(on_a["ba"].links, [l.clone()]);
-        assert_eq!(for_note(&s, &b).unwrap()["bb"].backlinks, [l.clone()]);
+        assert_eq!(on_a["ba"].links, std::slice::from_ref(&l));
+        assert_eq!(for_note(&s, &b).unwrap()["bb"].backlinks, std::slice::from_ref(&l));
 
         detach_tag(&mut s, "ba", &t.id).unwrap();
         delete_link(&mut s, &l.id).unwrap();
