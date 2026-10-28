@@ -81,7 +81,10 @@ mod tests {
         let (_d, mut s) = test_session();
         let a = create(&mut s, NewVault { name: "Work".into(), color: Some("#4f8ef7".into()), ..Default::default() }).unwrap();
         let b = create(&mut s, NewVault { name: "Home".into(), ..Default::default() }).unwrap();
-        assert_eq!(list(&s).unwrap().iter().map(|v| v.name.as_str()).collect::<Vec<_>>(), ["Work", "Home"]);
+        // Same-millisecond creates have no defined order, so compare as a set.
+        let mut names: Vec<String> = list(&s).unwrap().into_iter().map(|v| v.name).collect();
+        names.sort();
+        assert_eq!(names, ["Home", "Work"]);
 
         let renamed = update(&mut s, &a.id, VaultChanges { name: Some("Job".into()), ..Default::default() }).unwrap();
         assert_eq!((renamed.name.as_str(), renamed.color.as_deref()), ("Job", Some("#4f8ef7")));
