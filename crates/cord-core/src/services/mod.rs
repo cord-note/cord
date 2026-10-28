@@ -2,4 +2,5 @@
 
 pub mod notes;
 pub mod queries;
+pub mod tags;
 pub mod vaults;
