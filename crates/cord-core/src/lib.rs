@@ -9,6 +9,7 @@ pub mod changes;
 pub mod device;
 pub mod doc;
 pub mod index;
+pub mod model;
 
 pub use error::{Error, Result};
 

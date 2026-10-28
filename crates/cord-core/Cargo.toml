@@ -11,6 +11,8 @@ thiserror = "2"
 nanoid = "0.4"
 yrs = "0.28"
 serde_json = "1"
+serde = { version = "1", features = ["derive"] }
+sha2 = "0.10"
 
 [dev-dependencies]
 tempfile = "3"
