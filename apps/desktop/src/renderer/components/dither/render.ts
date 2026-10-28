@@ -7,16 +7,12 @@
 export type DitherShape = 'square' | 'diamond' | 'glyph';
 /** The side the ink grows from. `none` scatters it evenly over the surface. */
 export type DitherFrom = 'left' | 'right' | 'top' | 'bottom' | 'none';
-/** `noise` is weather-like texture; `cumulus` draws lit, lobed cloud banks. */
-export type DitherField = 'noise' | 'cumulus';
-
 
 /** Everything that decides the picture, apart from size, time and colours. */
 export interface DitherOptions {
   seed: number;
   cell: number;
   shape: DitherShape;
-  field: DitherField;
   from: DitherFrom;
   reach: number;
   scale: number;
@@ -44,150 +40,6 @@ const BAYER: readonly number[] = [
 
 // Densest last, for the glyph shape.
 const GLYPHS = ['.', ':', '-', '=', '+', '*', '%', '#'];
-
-/**
- * Clouds are sized against the shorter side (with some slack for wide
- * canvases), so a tall, narrow surface gets more banks rather than one giant one.
- */
-function cloudUnit(width: number, height: number): number {
-  return Math.min(height, width * 1.2);
-}
-
-/** One round lobe of a cloud, in cloud units (see `cloudUnit`). */
-interface Puff {
-  x: number;
-  y: number;
-  r: number;
-  /** Depth toward the viewer; the nearest lobe surface is the one seen. */
-  z: number;
-  /** Flat underside of the cloud this lobe belongs to. */
-  base: number;
-}
-
-/**
- * The cloud layer. It is `period` wide and wraps: lobes near one end reach
- * round to the other, so the drift loops without a seam. Lobes are bucketed
- * by x so a sample only visits the few that can reach it.
- */
-export interface CloudField {
-  period: number;
-  bucketWidth: number;
-  buckets: Puff[][];
-}
-
-const BUCKET_WIDTH = 0.08;
-
-function seededRandom(seed: number): () => number {
-  let s = seed >>> 0 || 1;
-  return () => {
-    s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
-    return s / 4294967296;
-  };
-}
-
-/** `dx` folded into [-period/2, period/2). */
-function wrapDelta(dx: number, period: number): number {
-  return dx - period * Math.floor(dx / period + 0.5);
-}
-
-/**
- * Cumulus banks: a broad flat base, a domed top built from big lobes along
- * its contour, and small lobes on the rim for the cauliflower edge. `span`
- * and `depth` are the canvas width and height in cloud units.
- */
-function makeClouds(seed: number, span: number, depth: number, from: DitherFrom, reach: number): CloudField {
-  const rand = seededRandom(seed * 7919);
-  const period = span * 1.3;
-  const puffs: Puff[] = [];
-  const clusters = Math.max(4, Math.round(period * depth * 4.5 * (0.5 + reach)));
-  for (let k = 0; k < clusters; k++) {
-    // Lean the banks toward the side the ink grows from.
-    let t = rand();
-    if (from === 'right' || from === 'bottom') t = 1 - (1 - t) * (1 - t);
-    if (from === 'left' || from === 'top') t = t * t;
-    const horizontal = from === 'top' || from === 'bottom';
-    const cx = horizontal ? rand() * period : t * span * 1.1;
-    const cy = (horizontal ? t : rand()) * depth * 1.1 - depth * 0.05;
-    const halfWidth = 0.16 + rand() * 0.2;
-    const height = halfWidth * (0.75 + rand() * 0.5);
-    const base = cy + height * 0.4;
-
-    // Core: a few big lobes sitting on the base, filling the body.
-    const core = 3 + Math.floor(rand() * 3);
-    for (let i = 0; i < core; i++) {
-      const a = (i / (core - 1)) * 1.4 - 0.7 + (rand() - 0.5) * 0.2;
-      const r = halfWidth * (0.42 + rand() * 0.2) * (1 - Math.abs(a) * 0.35);
-      puffs.push({ x: cx + a * halfWidth, y: base - r * 0.55, r, z: (rand() - 0.5) * r * 0.6, base });
-    }
-    // Crown: mid-size lobes along the domed top, higher toward the middle.
-    const crown = 5 + Math.floor(rand() * 5);
-    for (let i = 0; i < crown; i++) {
-      const a = rand() * 1.6 - 0.8;
-      const dome = 1 - a * a;
-      const r = halfWidth * (0.24 + rand() * 0.18) * (0.6 + 0.4 * dome);
-      puffs.push({ x: cx + a * halfWidth, y: base - height * dome + r * 0.55, r, z: rand() * r * 0.8, base });
-    }
-    // Rim detail: small lobes on the upper contour.
-    const rim = 8 + Math.floor(rand() * 8);
-    for (let i = 0; i < rim; i++) {
-      const a = rand() * 1.8 - 0.9;
-      const dome = 1 - a * a;
-      const r = halfWidth * (0.08 + rand() * 0.1);
-      puffs.push({ x: cx + a * halfWidth, y: base - height * dome * (0.92 + rand() * 0.12) + r * 0.3, r, z: rand() * r * 2, base });
-    }
-  }
-
-  const count = Math.max(1, Math.ceil(period / BUCKET_WIDTH));
-  const bucketWidth = period / count;
-  const buckets: Puff[][] = Array.from({ length: count }, () => []);
-  for (const p of puffs) {
-    p.x = ((p.x % period) + period) % period;
-    const reachX = p.r * 1.2;
-    const first = Math.floor((p.x - reachX) / bucketWidth);
-    const last = Math.floor((p.x + reachX) / bucketWidth);
-    for (let b = first; b <= last; b++) buckets[((b % count) + count) % count]!.push(p);
-  }
-  return { period, bucketWidth, buckets };
-}
-
-// Sunlight from above, a little left and toward the viewer.
-const LIGHT = (() => {
-  const x = -0.35, y = -0.8, z = 0.5;
-  const n = Math.hypot(x, y, z);
-  return { x: x / n, y: y / n, z: z / n };
-})();
-
-/**
- * Brightness of the cloud layer at (u, v): 0 is open sky. Every lobe is a
- * sphere; the one whose surface is nearest the viewer here is the one seen,
- * lit by its own surface normal. So each billow gets a bright rim and the
- * creases where lobes overlap fall into shade — which is what makes it read
- * as cumulus rather than a blob. Lobes darken toward the cloud's flat base.
- * `u` must already be folded into [0, period).
- */
-function cloudShade(field: CloudField, u: number, v: number): number {
-  const index = Math.floor(u / field.bucketWidth);
-  const bucket = field.buckets[Math.min(field.buckets.length - 1, Math.max(0, index))]!;
-  let nearest = -Infinity;
-  let shade = 0;
-  for (const p of bucket) {
-    if (v >= p.base) continue;
-    const dx = wrapDelta(u - p.x, field.period) / p.r;
-    const dy = (v - p.y) / p.r;
-    const d2 = dx * dx + dy * dy;
-    if (d2 >= 1) continue;
-    const nz = Math.sqrt(1 - d2);
-    const surface = p.z + nz * p.r;
-    if (surface <= nearest) continue;
-    nearest = surface;
-    const lambert = Math.max(0, dx * LIGHT.x + dy * LIGHT.y + nz * LIGHT.z);
-    // The very rim of a lobe goes thin and translucent.
-    const rim = Math.min(1, nz * 3.2);
-    const underside = Math.min(1, (p.base - v) / (p.r * 0.9));
-    shade = (0.3 + 1.15 * lambert) * rim * (0.5 + 0.5 * underside);
-  }
-  return shade;
-}
 
 function hash(x: number, y: number, seed: number): number {
   let h = (x * 374761393 + y * 668265263 + seed * 2147483647) | 0;
@@ -233,13 +85,6 @@ function gradient(from: DitherFrom, nx: number, ny: number): number {
   }
 }
 
-/** Cloud banks for a canvas of this size, or null for the noise field. */
-export function prepare(options: DitherOptions, width: number, height: number): CloudField | null {
-  if (options.field !== 'cumulus' || width === 0 || height === 0) return null;
-  const unit = cloudUnit(width, height);
-  return makeClouds(options.seed, width / unit, height / unit, options.from, options.reach);
-}
-
 type Ctx2D = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 
 /** Paint one frame. `width`/`height` are CSS pixels; the context is already sized for `dpr`. */
@@ -251,9 +96,8 @@ export function paint(
   dpr: number,
   time: number,
   inks: Inks,
-  clouds: CloudField | null,
 ): void {
-  const { seed, cell, shape, field, from, reach, scale, quiet } = options;
+  const { seed, cell, shape, from, reach, scale, quiet } = options;
   if (width === 0 || height === 0) return;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, width, height);
@@ -279,26 +123,6 @@ export function paint(
         const nx = cols > 1 ? c / (cols - 1) : 0;
         const ny = rows > 1 ? r / (rows - 1) : 0;
         const threshold = BAYER[(r & 7) * 8 + (c & 7)]!;
-        let value: number;
-        if (field === 'cumulus' && clouds) {
-          const unit = cloudUnit(width, height);
-          // Unwrapped cloud-space x: continuous as the layer drifts, so the
-          // noise sampled from it never jumps at the wrap.
-          const uc = (c * cell) / unit - time * 0.000004;
-          const v = (r * cell) / unit;
-          // Lumpy edges: nudge where the lobes are sampled with fine noise.
-          const wu = uc + (fbm(uc * 16, v * 16, seed + 13) - 0.5) * 0.05;
-          const wv = v + (fbm(uc * 16 + 9.2, v * 16 + 4.1, seed + 17) - 0.5) * 0.05;
-          const u = ((wu % clouds.period) + clouds.period) % clouds.period;
-          const shade = cloudShade(clouds, u, wv) * (0.88 + (fbm(uc * 3, v * 3, seed + 21) - 0.5) * 0.3);
-          if (shade <= 0) continue;
-          // Thin the banks out toward the far side, so they never end on the edge.
-          const fade = from === 'none' ? 1 : Math.min(1, gradient(from, nx, ny) * 3);
-          value = Math.min(1, shade) * fade;
-          if (value <= threshold) continue;
-          drawCell(c, r, value, threshold);
-          continue;
-        }
         const px = c / scale + drift;
         const py = r / scale - drift * 0.6;
         // Domain warp: sample the field at a point pushed around by a second
@@ -308,7 +132,7 @@ export function paint(
         // Value noise bunches around 0.5; stretch it so masses and holes both occur.
         const raw = fbm(px + wx * 2.4, py + wy * 2.4, seed);
         const n = Math.min(1, Math.max(0, (raw - 0.5) * 2.4 + 0.5));
-        value = from === 'none'
+        const value = from === 'none'
           ? n * (0.4 + reach) - 0.2
           : n * 0.85 + (gradient(from, nx, ny) - 0.5) * 1.3 + bias;
         if (value <= threshold) continue;
@@ -321,10 +145,8 @@ export function paint(
         const y = r * cell;
         const strong = !quiet && value > threshold + 0.3;
         // Accent comes in patches, not sparkles: a slow field decides where.
-        // Clouds take only a tint of it, in their shaded parts.
         const accent = !quiet && fbm(c / (scale * 2.5), r / (scale * 2.5), seed + 31) > 0.66
-          && hash(c, r, seed + 99) > (field === 'cumulus' ? 0.8 : 0.55)
-          && (field !== 'cumulus' || !strong);
+          && hash(c, r, seed + 99) > 0.55;
         if (shape === 'glyph') {
           glyphCells.push([x, y, value, accent ? 2 : strong ? 1 : 0]);
           return;

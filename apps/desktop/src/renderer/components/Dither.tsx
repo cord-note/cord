@@ -1,13 +1,14 @@
 import { useEffect, useRef } from 'react';
-import { paint, prepare, type CloudField, type DitherField, type DitherFrom, type DitherOptions, type DitherShape, type Inks } from './dither/render';
+import { paint, type DitherFrom, type DitherOptions, type DitherShape, type Inks } from './dither/render';
 import type { DitherMessage } from './dither/dither.worker';
 import styles from './Dither.module.css';
 
-export type { DitherField, DitherFrom, DitherShape } from './dither/render';
+export type { DitherFrom, DitherShape } from './dither/render';
 
 /**
- * A generated, ordered-dither texture for large empty surfaces: the lock screen,
- * empty states, blank panes. Drawn on a canvas from a seeded noise field and a
+ * A generated, ordered-dither texture for large empty surfaces: empty states,
+ * blank panes, and the lock screen when WebGL is missing (see `LoginScene`).
+ * Drawn on a canvas from a seeded noise field and a
  * Bayer threshold matrix, so it costs no image assets and follows the theme:
  * the ink colours are read from the `--dither-*` tokens and re-read whenever the
  * theme or scheme changes.
@@ -26,7 +27,6 @@ interface DitherProps {
   /** Size of one dither cell in CSS pixels. */
   cell?: number;
   shape?: DitherShape;
-  field?: DitherField;
   from?: DitherFrom;
   /** How far the ink reaches, 0–1. */
   reach?: number;
@@ -117,8 +117,7 @@ function mainThreadPainter(canvas: HTMLCanvasElement, options: DitherOptions, in
   let height = 0;
   let dpr = 1;
   let time = 0;
-  let clouds: CloudField | null = null;
-  const draw = (): void => paint(ctx, options, width, height, dpr, time, inks, clouds);
+  const draw = (): void => paint(ctx, options, width, height, dpr, time, inks);
   return {
     resize: (w, h, d) => {
       width = w;
@@ -126,7 +125,6 @@ function mainThreadPainter(canvas: HTMLCanvasElement, options: DitherOptions, in
       dpr = d;
       canvas.width = Math.round(w * d);
       canvas.height = Math.round(h * d);
-      clouds = prepare(options, w, h);
       draw();
     },
     setInks: (next) => { inks = next; draw(); },
@@ -139,7 +137,6 @@ export default function Dither({
   seed = 1,
   cell = 6,
   shape = 'square',
-  field = 'noise',
   from = 'right',
   reach = 0.6,
   scale = 22,
@@ -152,7 +149,7 @@ export default function Dither({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const options: DitherOptions = { seed, cell, shape, field, from, reach, scale, quiet };
+    const options: DitherOptions = { seed, cell, shape, from, reach, scale, quiet };
     const inks = readInks(canvas);
     const painter = workerPainter(canvas, options, inks) ?? mainThreadPainter(canvas, options, inks);
     if (!painter) return;
@@ -211,13 +208,13 @@ export default function Dither({
       motion.removeEventListener('change', start);
       painter.dispose();
     };
-  }, [seed, cell, shape, field, from, reach, scale, animate, quiet]);
+  }, [seed, cell, shape, from, reach, scale, animate, quiet]);
 
   // Keyed by the options: a canvas handed to a worker can never be drawn on
   // from here again, so new options need a fresh element.
   return (
     <canvas
-      key={`${seed}-${cell}-${shape}-${field}-${from}-${reach}-${scale}-${quiet}`}
+      key={`${seed}-${cell}-${shape}-${from}-${reach}-${scale}-${quiet}`}
       ref={canvasRef}
       className={`${styles.canvas} cord-dither ${className ?? ''}`}
       aria-hidden="true"

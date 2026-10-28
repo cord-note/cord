@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { LibraryTheme, ThemeFileProblem, ThemeImportResult } from '@shared/types';
+import type { LibraryTheme, LoginScene, ThemeFileProblem, ThemeImportResult } from '@shared/types';
 import { api } from '../ipc';
 import { log } from '../lib/log';
 import { useThemeRegistry, type ThemeRegistration } from '../registry/ThemeRegistry';
@@ -24,6 +24,8 @@ interface ThemeLibraryStore {
   problems: ThemeFileProblem[];
   scanning: boolean;
   error: string | null;
+  /** The cached theme's lock-screen scenes, for the lock screen before the first scan. */
+  cachedScenes: { themeId: string | null; scenes: LoginScene[] };
   scan:       () => Promise<void>;
   importFrom: (source: string) => Promise<ThemeImportResult>;
   importUrl:  (url: string) => Promise<ThemeImportResult>;
@@ -36,6 +38,7 @@ export const useThemeLibrary = create<ThemeLibraryStore>((set, get) => ({
   problems: [],
   scanning: false,
   error: null,
+  cachedScenes: { themeId: null, scenes: [] },
 
   scan: async () => {
     set({ scanning: true });
@@ -111,7 +114,7 @@ function inject(id: string, css: string): void {
 }
 
 interface CachedTheme {
-  theme: Pick<LibraryTheme, 'id' | 'label' | 'description' | 'author' | 'css'>;
+  theme: Pick<LibraryTheme, 'id' | 'label' | 'description' | 'author' | 'css'> & { scenes?: LoginScene[] };
 }
 
 /** Keeps the chosen library theme in the boot cache; clears it for a built-in. */
@@ -122,7 +125,10 @@ function writeCache(): void {
   try {
     if (!chosen) { localStorage.removeItem(cacheKey(userId)); return; }
     const entry: CachedTheme = {
-      theme: { id: chosen.id, label: chosen.label, description: chosen.description, author: chosen.author, css: chosen.css },
+      theme: {
+        id: chosen.id, label: chosen.label, description: chosen.description, author: chosen.author, css: chosen.css,
+        scenes: chosen.scenes,
+      },
     };
     localStorage.setItem(cacheKey(userId), JSON.stringify(entry));
   } catch {
@@ -140,6 +146,7 @@ export function restoreCachedLibraryTheme(): void {
     const { theme } = JSON.parse(raw) as CachedTheme;
     inject(theme.id, theme.css);
     useThemeRegistry.getState().register(registrationOf(theme));
+    useThemeLibrary.setState({ cachedScenes: { themeId: theme.id, scenes: Array.isArray(theme.scenes) ? theme.scenes : [] } });
   } catch {
     // Unreadable cache: the real scan after unlock replaces it.
   }

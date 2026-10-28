@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react';
-import Dither from './Dither';
+import LoginScene from './LoginScene';
+import { BUILTIN_SCENE_IDS, useLoginScenes } from './scenes';
 import { useAuthStore, type AuthView } from '../store/auth';
 import { PinView } from './login/PinView';
 import { PasswordView } from './login/PasswordView';
@@ -39,11 +40,12 @@ export default function LoginScreen() {
   const selectedUserId = useAuthStore((s) => s.selectedUserId);
   const { title, subtitle } = COPY[view];
   const View = VIEWS[view];
+  const scenes = useLoginScenes();
 
   return (
     <div className={`${styles.screen} cord-login`}>
       <div className={styles.art}>
-        <Dither seed={7} cell={4} shape="square" field="cumulus" from="right" reach={0.6} />
+        <LoginScene scenes={scenes} builtinIds={BUILTIN_SCENE_IDS} />
       </div>
 
       <header className={styles.topBar}>

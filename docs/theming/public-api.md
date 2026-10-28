@@ -118,8 +118,15 @@ matching dither without defining them.
 | Token | Used for |
 |---|---|
 | `--dither-ink` | Mid-tone marks |
-| `--dither-ink-strong` | Dense, bright marks — cloud tops, the thick of a field |
+| `--dither-ink-strong` | Dense, bright marks — the thick of a field |
 | `--dither-accent` | Occasional patches of accent colour |
+| `--dither-scene-light` | Densest marks of the lock-screen scenes |
+| `--dither-scene-mid` | Middle marks of the scenes |
+| `--dither-scene-shade` | Sparsest, dimmest marks of the scenes |
+| `--dither-scene-invert` | `1` to draw scenes as ink on paper: dense marks for dark parts |
+
+The scene tones default to the dither inks, softened toward the page on a light
+scheme, where scenes are also inverted. See [login-scenes.md](login-scenes.md).
 
 ### Type
 

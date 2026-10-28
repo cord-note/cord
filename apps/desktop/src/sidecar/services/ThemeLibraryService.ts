@@ -8,13 +8,14 @@ import { BUILTIN_THEMES } from '@shared/theming/builtinThemes';
 import type { LibraryTheme, ThemeImportResult, ThemeLibraryScan } from '@shared/types';
 import { sanitizeThemeCss } from '../themes/sanitizeThemeCss';
 import { downloadArchive, parseRepoUrl, type FetchLike } from '../themes/repoSource';
+import { loadScenes } from '../themes/loadScenes';
 import { resolveConfigDir } from './SettingsFileService';
 
 // Theme files on disk. Themes are per-device preferences, like settings files,
 // so nothing here touches the database or the operation log.
 //
 // A theme is either a folder holding theme.css (plus an optional theme.json and
-// any fonts or images it uses), or a single loose .css file.
+// any fonts, images or lock-screen scenes it uses), or a single loose .css file.
 
 const MAX_CSS_BYTES   = 1024 * 1024;
 const MAX_ASSET_BYTES = 2 * 1024 * 1024;
@@ -38,7 +39,7 @@ interface Candidate {
   folder: string | null;
 }
 
-interface Manifest { name?: string; description?: string; author?: string; source?: string }
+interface Manifest { name?: string; description?: string; author?: string; source?: string; scenes?: unknown }
 
 export class ThemeLibraryService {
   /** @param fetcher injectable for tests; the sidecar uses the global fetch. */
@@ -200,6 +201,7 @@ function loadTheme(c: Candidate): LibraryTheme | { error: string } {
   if (BUILTIN_IDS.has(id)) return { error: `"${id}" is the id of a built-in theme` };
 
   const manifest = c.folder ? readManifest(join(c.folder, 'theme.json')) : {};
+  const { scenes, problems } = c.folder ? loadScenes(id, c.folder, manifest.scenes) : { scenes: [], problems: [] };
   const fallbackName = c.folder ? basename(c.folder) : basename(c.cssPath, extname(c.cssPath));
   return {
     id,
@@ -209,7 +211,8 @@ function loadTheme(c: Candidate): LibraryTheme | { error: string } {
     source: typeof manifest.source === 'string' && manifest.source.startsWith('https://') ? manifest.source : null,
     path: c.folder ?? c.cssPath,
     css,
-    dropped,
+    dropped: [...dropped, ...problems],
+    scenes,
   };
 }
 

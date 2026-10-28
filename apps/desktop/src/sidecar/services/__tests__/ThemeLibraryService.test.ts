@@ -34,6 +34,19 @@ describe('ThemeLibraryService', () => {
     expect(scan.themes[0]!.dropped).toHaveLength(1);
   });
 
+  it('reads the lock-screen scenes a theme lists, and reports bad ones', () => {
+    mkdirSync(join(library, 'dusk', 'scenes'), { recursive: true });
+    writeFileSync(join(library, 'dusk', 'theme.css'), themeCss('dusk'));
+    writeFileSync(join(library, 'dusk', 'scenes', 'rain.glsl'), 'float scene(vec2 p, vec2 span) { return 0.5; }');
+    writeFileSync(join(library, 'dusk', 'theme.json'), JSON.stringify({
+      scenes: [{ file: 'scenes/rain.glsl', name: 'Rain' }, { file: 'scenes/gone.glsl' }],
+    }));
+
+    const [dusk] = service.scan(library).themes;
+    expect(dusk!.scenes.map((s) => [s.id, s.name])).toEqual([['dusk/rain', 'Rain']]);
+    expect(dusk!.dropped.some((d) => d.includes('scenes/gone.glsl'))).toBe(true);
+  });
+
   it('inlines fonts beside the theme and refuses ones outside it', () => {
     mkdirSync(join(library, 'dusk'));
     writeFileSync(join(library, 'dusk', 'f.woff2'), 'FONT');
