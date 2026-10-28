@@ -15,6 +15,7 @@ pub mod session;
 pub mod services;
 pub mod accounts;
 pub mod settings_files;
+pub mod themes;
 
 pub use error::{Error, Result};
 
