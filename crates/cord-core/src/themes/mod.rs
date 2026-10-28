@@ -315,4 +315,42 @@ mod tests {
         assert!(def.is_dir());
         assert_eq!(s.dir, display(&def));
     }
+
+    fn fixture_root() -> PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("fixtures/themes")
+    }
+
+    /// Paths as `<root>/…` with forward slashes, so the file is the same on every OS.
+    fn portable(scan: &RawThemeScan) -> String {
+        let root = display(&fixture_root()).replace('\\', "/");
+        let fix = |p: &str| p.replace('\\', "/").replace(&root, "<root>");
+        let mut s = scan.clone();
+        s.dir = fix(&s.dir);
+        for t in &mut s.themes {
+            t.css_path = fix(&t.css_path);
+            t.folder = t.folder.as_deref().map(fix);
+        }
+        for p in &mut s.problems {
+            p.path = fix(&p.path);
+        }
+        serde_json::to_string_pretty(&s).unwrap() + "\n"
+    }
+
+    fn fixture_scan() -> RawThemeScan {
+        let lib = fixture_root().join("library");
+        scan(&display(&lib), &lib)
+    }
+
+    /// Regenerates scan.raw.json: `cargo test write_theme_fixture -- --ignored`, then review.
+    #[test]
+    #[ignore]
+    fn write_theme_fixture() {
+        fs::write(fixture_root().join("scan.raw.json"), portable(&fixture_scan())).unwrap();
+    }
+
+    #[test]
+    fn the_fixture_library_reads_as_recorded() {
+        let recorded = fs::read_to_string(fixture_root().join("scan.raw.json")).unwrap().replace("\r\n", "\n");
+        assert_eq!(portable(&fixture_scan()), recorded);
+    }
 }

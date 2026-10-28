@@ -1,0 +1,65 @@
+{
+  "dir": "<root>/library",
+  "themes": [
+    {
+      "cssPath": "<root>/library/broken.css",
+      "folder": null,
+      "css": "body { color: red; }\n",
+      "manifest": {},
+      "assets": {},
+      "sceneFiles": {}
+    },
+    {
+      "cssPath": "<root>/library/dusk/theme.css",
+      "folder": "<root>/library/dusk",
+      "css": "@font-face { font-family: A; src: url(f.woff2); }\n@font-face { font-family: B; src: url(../../secret.woff2); }\n[data-theme=\"dusk\"] { --accent: #f00; }\n:root { --bg: red; }\n",
+      "manifest": {
+        "author": "Ola",
+        "name": "Dusk",
+        "scenes": [
+          {
+            "file": "scenes/rain.glsl",
+            "name": "Rain"
+          },
+          {
+            "file": "scenes/bad.glsl"
+          },
+          {
+            "file": "scenes/gone.glsl"
+          }
+        ]
+      },
+      "assets": {
+        "f.woff2": "data:font/woff2;base64,Rk9OVA=="
+      },
+      "sceneFiles": {
+        "scenes/bad.glsl": {
+          "source": "#define X\n"
+        },
+        "scenes/gone.glsl": {
+          "error": "file not found"
+        },
+        "scenes/rain.glsl": {
+          "source": "float scene(vec2 p, vec2 span) { return 0.5; }\n"
+        }
+      }
+    },
+    {
+      "cssPath": "<root>/library/mono.css",
+      "folder": null,
+      "css": "[data-theme=\"mono\"] { --accent: #000; }\n",
+      "manifest": {},
+      "assets": {},
+      "sceneFiles": {}
+    },
+    {
+      "cssPath": "<root>/library/sea-glass.css",
+      "folder": null,
+      "css": "[data-theme=\"sea-glass\"] { --accent: #00f; }\n",
+      "manifest": {},
+      "assets": {},
+      "sceneFiles": {}
+    }
+  ],
+  "problems": []
+}
