@@ -13,6 +13,7 @@ pub mod model;
 pub mod entity;
 pub mod session;
 pub mod services;
+pub mod accounts;
 
 pub use error::{Error, Result};
 
