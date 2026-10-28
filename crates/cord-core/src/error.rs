@@ -13,6 +13,14 @@ pub enum Error {
     TooNew { found: i64, supported: i64 },
     #[error("bad document: {0}")]
     BadDoc(String),
+    #[error("not found: {0}")]
+    NotFound(String),
+    #[error("{0}")]
+    Invalid(String),
+    #[error("unknown field: {0}")]
+    BadField(String),
+    #[error("no such row yet: {0}")]
+    MissingRow(String),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
