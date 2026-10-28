@@ -11,6 +11,7 @@ pub mod doc;
 pub mod index;
 pub mod model;
 pub mod entity;
+pub mod session;
 
 pub use error::{Error, Result};
 
