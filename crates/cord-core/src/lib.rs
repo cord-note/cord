@@ -10,6 +10,7 @@ pub mod device;
 pub mod doc;
 pub mod index;
 pub mod model;
+pub mod entity;
 
 pub use error::{Error, Result};
 
