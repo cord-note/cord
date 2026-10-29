@@ -20,7 +20,7 @@ pkgbase = cord-bin
 	conflicts = cord
 	options = !strip
 	options = !debug
-	source = Cord_2.4.1_amd64.deb::https://github.com/cord-note/cord/releases/download/v2.4.0/Cord_2.4.1_amd64.deb
+	source = Cord_2.4.1_amd64.deb::https://github.com/cord-note/cord/releases/download/v2.4.1/Cord_2.4.1_amd64.deb
 	noextract = Cord_2.4.1_amd64.deb
 	sha256sums = SKIP
 

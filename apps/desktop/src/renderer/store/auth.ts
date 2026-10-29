@@ -150,7 +150,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
     },
 
     lock: async () => {
-      if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+      if (typeof HTMLElement !== 'undefined' && document.activeElement instanceof HTMLElement) {
         document.activeElement.blur();
       }
       // Pending settings edits go to this user's files before the session ends.
