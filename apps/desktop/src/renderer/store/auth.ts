@@ -150,7 +150,8 @@ export const useAuthStore = create<AuthState>((set, get) => {
     },
 
     lock: async () => {
-      if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+      // Check HTMLElement itself: tests can stub `document` without the DOM classes.
+      if (typeof HTMLElement !== 'undefined' && document.activeElement instanceof HTMLElement) {
         document.activeElement.blur();
       }
       // Pending settings edits go to this user's files before the session ends.

@@ -1,0 +1,10 @@
+{"type":"doc","content":[{"type":"paragraph","attrs":{"blockId":"i1"},"content":[
+  {"type":"text","text":"see "},
+  {"type":"mention","attrs":{"id":"n2","label":"Other note","displayText":null}},
+  {"type":"hardBreak"},
+  {"type":"inlineMath","attrs":{"latex":"x^2"}},
+  {"type":"text","text":" and "},
+  {"type":"fragmentLink","attrs":{"linkId":"l1","toNoteId":"n3","toFragmentId":"f1","label":"frag"}}
+]},
+{"type":"image","attrs":{"blockId":"img1","src":"attachment:a1","alt":"a cat","title":null,"width":320}}
+]}

@@ -1,0 +1,16 @@
+{"type":"doc","content":[
+  {"type":"heading","attrs":{"blockId":"h1","level":1,"textAlign":null},"content":[{"type":"text","text":"Notepad"}]},
+  {"type":"taskList","attrs":{"blockId":"t1"},"content":[
+    {"type":"taskItem","attrs":{"checked":true},"content":[{"type":"paragraph","content":[{"type":"text","text":"done"}]}]},
+    {"type":"taskItem","attrs":{"checked":false},"content":[{"type":"paragraph","content":[{"type":"text","text":"todo"}]}]}
+  ]},
+  {"type":"codeBlock","attrs":{"blockId":"c1","language":"rust"},"content":[{"type":"text","text":"fn main() {}\n"}]},
+  {"type":"blockquote","attrs":{"blockId":"q1"},"content":[{"type":"paragraph","content":[{"type":"text","text":"quote"}]}]},
+  {"type":"blockMath","attrs":{"blockId":"bm1","latex":"E = mc^2"}},
+  {"type":"blockRef","attrs":{"blockId":"r1","refBlockId":"h9","refNoteId":"n9"}},
+  {"type":"details","attrs":{"blockId":"d1","open":false},"content":[
+    {"type":"detailsSummary","content":[{"type":"text","text":"More"}]},
+    {"type":"detailsContent","content":[{"type":"paragraph","content":[{"type":"text","text":"hidden"}]}]}
+  ]},
+  {"type":"horizontalRule","attrs":{"blockId":"hr1"}}
+]}

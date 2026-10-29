@@ -1,0 +1,23 @@
+[package]
+name = "cord-core"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+publish = false
+
+[dependencies]
+rusqlite = { version = "0.32", features = ["bundled-sqlcipher-vendored-openssl"] }
+thiserror = "2"
+nanoid = "0.4"
+yrs = "0.28"
+serde_json = "1"
+serde = { version = "1", features = ["derive"] }
+sha2 = "0.10"
+bcrypt = "0.17"
+getrandom = "0.2"
+regex = "1"
+url = "2"
+percent-encoding = "2"
+base64 = "0.22"
+zip = { version = "2", default-features = false, features = ["deflate"] }
+tempfile = "3"
