@@ -13,8 +13,82 @@ use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
 
 use crate::core::{Core, Shared};
 
+/// Registers every command on `$builder`; shared by the app and the IPC tests.
+macro_rules! with_commands {
+    ($builder:expr) => {
+        $builder.invoke_handler(tauri::generate_handler![
+            // vaults
+            $crate::commands::vaults::vaults_list,
+            $crate::commands::vaults::vaults_create,
+            $crate::commands::vaults::vaults_update,
+            $crate::commands::vaults::vaults_archive,
+            // notes
+            $crate::commands::notes::notes_list,
+            $crate::commands::notes::notes_get,
+            $crate::commands::notes::notes_create,
+            $crate::commands::notes::notes_update,
+            $crate::commands::notes::notes_delete,
+            $crate::commands::notes::notes_restore,
+            $crate::commands::notes::notes_list_deleted,
+            $crate::commands::notes::notes_get_links,
+            $crate::commands::notes::notes_search,
+            $crate::commands::notes::notes_permanent_delete,
+            $crate::commands::notes::notes_unlinked_mentions,
+            $crate::commands::notes::notes_convert,
+            $crate::commands::notes::notes_body_state,
+            $crate::commands::notes::notes_apply_body_update,
+            // blocks
+            $crate::commands::blocks::blocks_list_for_note,
+            $crate::commands::blocks::blocks_resolve_ref,
+            $crate::commands::blocks::blocks_reproject,
+            // tags
+            $crate::commands::tags::tags_list,
+            $crate::commands::tags::tags_create,
+            $crate::commands::tags::tags_update,
+            $crate::commands::tags::tags_delete,
+            $crate::commands::tags::tags_attach,
+            $crate::commands::tags::tags_detach,
+            $crate::commands::tags::tags_get_for_note,
+            $crate::commands::tags::tags_get_note_map,
+            // fragments
+            $crate::commands::fragments::fragments_get_for_note,
+            $crate::commands::fragments::fragments_attach_tag,
+            $crate::commands::fragments::fragments_detach_tag,
+            $crate::commands::fragments::fragments_create_link,
+            $crate::commands::fragments::fragments_delete_link,
+            // auth
+            $crate::commands::auth::auth_lock_screen,
+            $crate::commands::auth::auth_current,
+            $crate::commands::auth::auth_register,
+            $crate::commands::auth::auth_login,
+            $crate::commands::auth::auth_unlock_pin,
+            $crate::commands::auth::auth_set_pin,
+            $crate::commands::auth::auth_verify_password,
+            $crate::commands::auth::auth_change_password,
+            $crate::commands::auth::auth_issue_recovery_key,
+            $crate::commands::auth::auth_recover,
+            $crate::commands::auth::auth_lock,
+            // attachments
+            $crate::commands::attachments::attachments_create,
+            // settings
+            $crate::commands::settings::settings_read,
+            $crate::commands::settings::settings_write,
+            $crate::commands::themes::themes_default_dir,
+            $crate::commands::themes::themes_scan,
+            $crate::commands::themes::themes_import,
+            $crate::commands::themes::themes_import_url,
+            // app
+            $crate::commands::app::app_updater_supported,
+        ])
+    };
+}
+
+// After the macro, which it uses.
+#[cfg(test)]
+mod ipc_tests;
+
 pub fn run() {
-    tauri::Builder::default()
+    let builder = tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
@@ -46,71 +120,8 @@ pub fn run() {
                 }
             }
             Ok(())
-        })
-        .invoke_handler(tauri::generate_handler![
-            // vaults
-            commands::vaults::vaults_list,
-            commands::vaults::vaults_create,
-            commands::vaults::vaults_update,
-            commands::vaults::vaults_archive,
-            // notes
-            commands::notes::notes_list,
-            commands::notes::notes_get,
-            commands::notes::notes_create,
-            commands::notes::notes_update,
-            commands::notes::notes_delete,
-            commands::notes::notes_restore,
-            commands::notes::notes_list_deleted,
-            commands::notes::notes_get_links,
-            commands::notes::notes_search,
-            commands::notes::notes_permanent_delete,
-            commands::notes::notes_unlinked_mentions,
-            commands::notes::notes_convert,
-            commands::notes::notes_body_state,
-            commands::notes::notes_apply_body_update,
-            // blocks
-            commands::blocks::blocks_list_for_note,
-            commands::blocks::blocks_resolve_ref,
-            commands::blocks::blocks_reproject,
-            // tags
-            commands::tags::tags_list,
-            commands::tags::tags_create,
-            commands::tags::tags_update,
-            commands::tags::tags_delete,
-            commands::tags::tags_attach,
-            commands::tags::tags_detach,
-            commands::tags::tags_get_for_note,
-            commands::tags::tags_get_note_map,
-            // fragments
-            commands::fragments::fragments_get_for_note,
-            commands::fragments::fragments_attach_tag,
-            commands::fragments::fragments_detach_tag,
-            commands::fragments::fragments_create_link,
-            commands::fragments::fragments_delete_link,
-            // auth
-            commands::auth::auth_lock_screen,
-            commands::auth::auth_current,
-            commands::auth::auth_register,
-            commands::auth::auth_login,
-            commands::auth::auth_unlock_pin,
-            commands::auth::auth_set_pin,
-            commands::auth::auth_verify_password,
-            commands::auth::auth_change_password,
-            commands::auth::auth_issue_recovery_key,
-            commands::auth::auth_recover,
-            commands::auth::auth_lock,
-            // attachments
-            commands::attachments::attachments_create,
-            // settings
-            commands::settings::settings_read,
-            commands::settings::settings_write,
-            commands::themes::themes_default_dir,
-            commands::themes::themes_scan,
-            commands::themes::themes_import,
-            commands::themes::themes_import_url,
-            // app
-            commands::app::app_updater_supported,
-        ])
+        });
+    with_commands!(builder)
         .run(tauri::generate_context!())
         .expect("error running Cord");
 }
