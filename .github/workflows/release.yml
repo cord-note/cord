@@ -64,22 +64,19 @@ jobs:
           - label: Windows (x64)
             os: windows-latest
             rust-target: x86_64-pc-windows-msvc
-            bun-target: bun-windows-x64
           # macos-latest is Apple Silicon. Intel Macs are deliberately not
-          # built: it would need a macos-13 runner and a bun-darwin-x64 entry
-          # in build:sidecar, and an unsigned .app cannot be opened normally
-          # on either architecture until Developer ID signing exists.
+          # built: it would need a macos-13 runner, and an unsigned .app cannot
+          # be opened normally on either architecture until Developer ID
+          # signing exists.
           - label: macOS (Apple Silicon)
             os: macos-latest
             rust-target: aarch64-apple-darwin
-            bun-target: bun-darwin-arm64
           # Pinned to 22.04, not ubuntu-latest. An AppImage links against the
           # glibc of the machine that built it, so building on 24.04 would
           # refuse to start on any older distro.
           - label: Linux (x64)
             os: ubuntu-22.04
             rust-target: x86_64-unknown-linux-gnu
-            bun-target: bun-linux-x64
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -94,8 +91,8 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          # Pinned, not latest: Bun 1.4.4's compiled sidecar crashes linuxdeploy
-          # while it builds the AppImage. Bump deliberately and watch the Linux job.
+          # Runs the renderer build (beforeBuildCommand). Pinned so a new Bun
+          # can't change a release build unannounced.
           bun-version: 1.4.2
 
       - run: pnpm install --frozen-lockfile
@@ -116,18 +113,6 @@ jobs:
           sudo apt-get install -y \
             libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev \
             patchelf libgtk-3-dev
-
-      # Only this runner's target. The three-target build in `build:sidecar`
-      # exists for building every installer from one machine; here each runner
-      # already is the platform it ships, so the other two are wasted minutes.
-      # tauri-build resolves externalBin at build-script time and fails if the
-      # binary for the host triple is missing, so this must precede the build.
-      # The same script as `pnpm dev`, so the Windows sidecar gets its Cord
-      # name and icon. It builds for the host triple, which is this runner's.
-      - name: Build the sidecar for this platform
-        working-directory: apps/desktop
-        shell: bash
-        run: bun scripts/build-sidecar-host.ts
 
       - uses: tauri-apps/tauri-action@v0
         env:
@@ -255,12 +240,6 @@ jobs:
           # a different webkit is not a cache the ubuntu-22.04 job can share.
           key: fedora-rpm
 
-      - name: Build the sidecar for this platform
-        working-directory: apps/desktop
-        run: |
-          bun build --compile --target=bun-linux-x64 src/sidecar/index.ts \
-            --outfile src-tauri/binaries/cord-sidecar-x86_64-unknown-linux-gnu
-
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -297,7 +276,6 @@ jobs:
           rpm -qpR "$rpm" | grep -qx gtk3
           rpm -qp --qf '%{LICENSE}' "$rpm" | grep -q 'AGPL-3.0-or-later'
           rpm -qpl "$rpm" | grep -qx /usr/bin/cord
-          rpm -qpl "$rpm" | grep -qx /usr/bin/cord-sidecar
           rpm -qpl "$rpm" | grep -qx /usr/share/applications/Cord.desktop
           rpm -qpl "$rpm" | grep -qx /usr/share/metainfo/app.cord.desktop.metainfo.xml
           for size in 32x32 64x64 128x128 256x256 512x512; do
@@ -386,8 +364,7 @@ jobs:
           sudo -u builder makepkg --noconfirm --skipchecksums
 
       # namcap exits 0 whatever it finds, so a bare call proves nothing. Error
-      # lines gate; warnings are printed and tolerated - the Bun sidecar is
-      # unstripped and lacks PIE on purpose, and neither is fixable here.
+      # lines gate; warnings are printed and tolerated.
       - name: namcap
         run: |
           cd packaging/aur
@@ -406,7 +383,6 @@ jobs:
           pacman -U --noconfirm ./*.pkg.tar.zst
           set -x
           test -x /usr/bin/cord
-          test -x /usr/bin/cord-sidecar
           test -f /usr/share/applications/Cord.desktop
           test -f /usr/share/metainfo/app.cord.desktop.metainfo.xml
           for size in 32x32 64x64 128x128 256x256 512x512; do

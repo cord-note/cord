@@ -30,9 +30,8 @@ depends=(
 )
 provides=('cord')
 conflicts=('cord')
-# The Bun sidecar is a compiled binary with its bundle embedded, and the Rust
-# binary is already stripped by the release profile. Nothing to strip, and no
-# source to build a debug package from.
+# The one binary is already stripped by the release profile. Nothing to strip,
+# and no source to build a debug package from.
 options=('!strip' '!debug')
 
 _deb="Cord_${pkgver}_amd64.deb"
