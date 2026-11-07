@@ -8,7 +8,7 @@ import { setSettingsCacheUser, useSettings } from './index';
 
 let activeUserId: string | null = null;
 
-/** True while a signed-in user's files are loaded. Reloading before that is refused by the sidecar. */
+/** True while a signed-in user's files are loaded. Reloading before that is refused by cord-core. */
 export function hasActiveSettingsUser(): boolean {
   return activeUserId !== null;
 }

@@ -1,49 +1,45 @@
-use crate::state::AppState;
-use super::http::{fwd_delete, fwd_get, fwd_post};
+use std::collections::BTreeMap;
+
+use cord_core::services::annotations;
 use serde_json::Value;
 use tauri::State;
 
-#[tauri::command]
-pub async fn fragments_get_for_note(
-    state: State<'_, AppState>,
-    note_id: String,
-) -> Result<Value, String> {
-    fwd_get(&state, &format!("/fragments?noteId={note_id}")).await
-}
+use crate::core::{run, Shared};
+use crate::dto::{CreateFragmentLinkIn, FragmentAnnotationOut, FragmentLinkOut};
 
 #[tauri::command]
+pub async fn fragments_get_for_note(core: State<'_, Shared>, note_id: String) -> Result<Value, String> {
+    run(&core, move |c| {
+        let map = c.session(|s| annotations::for_note(s, &note_id))?;
+        Ok(map.into_iter().map(|(k, v)| (k, FragmentAnnotationOut::from(v))).collect::<BTreeMap<_, _>>())
+    })
+    .await
+}
+
+// The vault argument stays for the renderer; the tag's own vault is used.
+#[tauri::command]
 pub async fn fragments_attach_tag(
-    state: State<'_, AppState>,
+    core: State<'_, Shared>,
     block_id: String,
     note_id: String,
     vault_id: String,
     tag_id: String,
 ) -> Result<Value, String> {
-    fwd_post(
-        &state,
-        &format!("/fragments/{block_id}/tags/{tag_id}"),
-        serde_json::json!({ "noteId": note_id, "vaultId": vault_id }),
-    ).await
+    let _ = vault_id;
+    run(&core, move |c| c.session(|s| annotations::attach_tag(s, &block_id, &note_id, &tag_id))).await
 }
 
 #[tauri::command]
-pub async fn fragments_detach_tag(
-    state: State<'_, AppState>,
-    block_id: String,
-    tag_id: String,
-) -> Result<Value, String> {
-    fwd_delete(&state, &format!("/fragments/{block_id}/tags/{tag_id}")).await
+pub async fn fragments_detach_tag(core: State<'_, Shared>, block_id: String, tag_id: String) -> Result<Value, String> {
+    run(&core, move |c| c.session(|s| annotations::detach_tag(s, &block_id, &tag_id))).await
 }
 
 #[tauri::command]
-pub async fn fragments_create_link(state: State<'_, AppState>, data: Value) -> Result<Value, String> {
-    fwd_post(&state, "/fragment-links", data).await
+pub async fn fragments_create_link(core: State<'_, Shared>, data: CreateFragmentLinkIn) -> Result<Value, String> {
+    run(&core, move |c| c.session(|s| annotations::create_link(s, data.into())).map(FragmentLinkOut::from)).await
 }
 
 #[tauri::command]
-pub async fn fragments_delete_link(
-    state: State<'_, AppState>,
-    link_id: String,
-) -> Result<Value, String> {
-    fwd_delete(&state, &format!("/fragment-links/{link_id}")).await
+pub async fn fragments_delete_link(core: State<'_, Shared>, link_id: String) -> Result<Value, String> {
+    run(&core, move |c| c.session(|s| annotations::delete_link(s, &link_id))).await
 }

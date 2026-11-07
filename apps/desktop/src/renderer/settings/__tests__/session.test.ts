@@ -13,7 +13,7 @@ Object.assign(globalThis, {
   },
 });
 
-/** The sidecar's side: one set of files per signed-in user. */
+/** cord-core's side: one set of files per signed-in user. */
 const files = new Map<string, string>();
 let signedIn = 'u1';
 mock.module('@renderer/ipc', () => ({

@@ -1,0 +1,84 @@
+{
+  "content": [
+    {
+      "attrs": {
+        "blockId": "tb1"
+      },
+      "content": [
+        {
+          "content": [
+            {
+              "attrs": {
+                "colspan": 1,
+                "colwidth": [
+                  150
+                ],
+                "rowspan": 1
+              },
+              "content": [
+                {
+                  "content": [
+                    {
+                      "text": "Name",
+                      "type": "text"
+                    }
+                  ],
+                  "type": "paragraph"
+                }
+              ],
+              "type": "tableHeader"
+            },
+            {
+              "attrs": {
+                "colspan": 1,
+                "rowspan": 1
+              },
+              "content": [
+                {
+                  "content": [
+                    {
+                      "text": "Value",
+                      "type": "text"
+                    }
+                  ],
+                  "type": "paragraph"
+                }
+              ],
+              "type": "tableHeader"
+            }
+          ],
+          "type": "tableRow"
+        },
+        {
+          "content": [
+            {
+              "attrs": {
+                "colspan": 2,
+                "colwidth": [
+                  150,
+                  90
+                ],
+                "rowspan": 1
+              },
+              "content": [
+                {
+                  "content": [
+                    {
+                      "text": "wide",
+                      "type": "text"
+                    }
+                  ],
+                  "type": "paragraph"
+                }
+              ],
+              "type": "tableCell"
+            }
+          ],
+          "type": "tableRow"
+        }
+      ],
+      "type": "table"
+    }
+  ],
+  "type": "doc"
+}

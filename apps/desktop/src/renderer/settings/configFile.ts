@@ -2,7 +2,7 @@ import type { ConfigFileName } from '@shared/types';
 
 export type { ConfigFileName };
 
-/** Raw access to a config file; the sidecar in the app, a fake in tests. */
+/** Raw access to a config file; cord-core in the app, a fake in tests. */
 export interface ConfigFileIO {
   read: (file: ConfigFileName) => Promise<string | null>;
   write: (file: ConfigFileName, text: string) => Promise<void>;

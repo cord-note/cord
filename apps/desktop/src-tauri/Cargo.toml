@@ -20,8 +20,8 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 reqwest = { version = "0.12", features = ["json"] }
 tokio = { version = "1", features = ["full"] }
-urlencoding = "2"
-rusqlite = { version = "0.32", features = ["bundled"] }
+base64 = "0.22"
+cord-core = { path = "../../../crates/cord-core" }
 
 [profile.release]
 panic = "abort"
@@ -29,3 +29,7 @@ codegen-units = 1
 lto = true
 opt-level = "s"
 strip = true
+
+[dev-dependencies]
+tempfile = "3"
+tauri = { version = "2", features = ["test"] }

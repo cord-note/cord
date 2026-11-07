@@ -86,7 +86,7 @@ describe('settings store', () => {
     let readable = false;
     const store = createSettingsStore({
       io: {
-        read: async () => { if (!readable) throw new Error('sidecar down'); return '{ "editor.fontSize": 17 }'; },
+        read: async () => { if (!readable) throw new Error('read failed'); return '{ "editor.fontSize": 17 }'; },
         write: async (_f, text) => { writes.push(text); },
       },
       definitions: () => defs,

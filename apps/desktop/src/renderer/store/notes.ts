@@ -28,6 +28,8 @@ interface NoteStore {
   setActiveNote:        (id: string | null) => Promise<void>;
   createNote:           (input: CreateNoteInput) => Promise<Note>;
   updateNote:           (id: string, input: UpdateNoteInput) => Promise<Note>;
+  /** A body update landed; cord-core returned the note with its body re-derived. */
+  applySaved:           (note: Note) => void;
   convertNote:          (id: string, kind: NoteKind) => Promise<Note>;
   deleteNote:           (id: string) => Promise<void>;
   restoreNote:          (id: string) => Promise<Note>;
@@ -166,6 +168,11 @@ export const useNoteStore = create<NoteStore>((set, get) => ({
       notes: s.notes.map((n) => (n.id === id ? { ...n, ...note } : n)),
     }));
     return note;
+  },
+
+  applySaved: (note) => {
+    loadedBodies.add(note.id);
+    set((s) => ({ notes: s.notes.map((n) => (n.id === note.id ? { ...n, ...note } : n)) }));
   },
 
   convertNote: async (id, kind) => {

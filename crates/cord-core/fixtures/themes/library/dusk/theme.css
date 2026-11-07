@@ -1,0 +1,4 @@
+@font-face { font-family: A; src: url(f.woff2); }
+@font-face { font-family: B; src: url(../../secret.woff2); }
+[data-theme="dusk"] { --accent: #f00; }
+:root { --bg: red; }

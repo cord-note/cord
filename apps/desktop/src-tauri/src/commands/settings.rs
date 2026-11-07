@@ -1,20 +1,26 @@
-use crate::state::AppState;
-use super::http::{fwd_get, fwd_post};
+use cord_core::settings_files;
 use serde_json::{json, Value};
 use tauri::State;
 
-// Thin forwards. The sidecar validates the file name and stores the text.
+use crate::core::{err, run, Shared};
+use crate::dto::DONE;
 
 #[tauri::command]
-pub async fn settings_read(state: State<'_, AppState>, file: String) -> Result<Value, String> {
-    fwd_get(&state, &format!("/settings/{file}")).await
+pub async fn settings_read(core: State<'_, Shared>, file: String) -> Result<Value, String> {
+    run(&core, move |c| {
+        let id = c.me()?;
+        let text = settings_files::read(&c.layout, &id, &file).map_err(err)?;
+        Ok(json!({ "text": text }))
+    })
+    .await
 }
 
 #[tauri::command]
-pub async fn settings_write(
-    state: State<'_, AppState>,
-    file: String,
-    text: String,
-) -> Result<Value, String> {
-    fwd_post(&state, &format!("/settings/{file}"), json!({ "text": text })).await
+pub async fn settings_write(core: State<'_, Shared>, file: String, text: String) -> Result<Value, String> {
+    run(&core, move |c| {
+        let id = c.me()?;
+        settings_files::write(&c.layout, &id, &file, &text).map_err(err)?;
+        Ok(DONE)
+    })
+    .await
 }

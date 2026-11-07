@@ -6,8 +6,8 @@ import { useThemeRegistry, type ThemeRegistration } from '../registry/ThemeRegis
 import { getSetting, lastCacheUser, useSettings } from '../settings';
 import { useThemeStore } from './theme';
 
-// Library themes: read from the theme folder by the sidecar (already filtered
-// to the public theme API), injected as one <style> each and registered so the
+// Library themes: read from the theme folder by cord-core and filtered
+// to the public theme API in the renderer), injected as one <style> each and registered so the
 // gallery and data-theme can use them. Every library theme's CSS is loaded at
 // once because the gallery previews them all; the filter guarantees each rule
 // is scoped to its own [data-theme], so only the chosen one takes effect.

@@ -1,56 +1,46 @@
-use crate::state::AppState;
-use super::http::{fwd_delete, fwd_get, fwd_patch, fwd_post};
+use cord_core::services::tags;
 use serde_json::Value;
 use tauri::State;
 
+use crate::core::{run, Shared};
+use crate::dto::{CreateTagIn, UpdateTagIn};
+
 #[tauri::command]
-pub async fn tags_list(state: State<'_, AppState>, vault_id: String) -> Result<Value, String> {
-    fwd_get(&state, &format!("/tags?vaultId={vault_id}")).await
+pub async fn tags_list(core: State<'_, Shared>, vault_id: String) -> Result<Value, String> {
+    run(&core, move |c| c.session(|s| tags::list(s, &vault_id))).await
 }
 
 #[tauri::command]
-pub async fn tags_create(state: State<'_, AppState>, data: Value) -> Result<Value, String> {
-    fwd_post(&state, "/tags", data).await
+pub async fn tags_create(core: State<'_, Shared>, data: CreateTagIn) -> Result<Value, String> {
+    run(&core, move |c| c.session(|s| tags::create(s, data.into()))).await
 }
 
 #[tauri::command]
-pub async fn tags_update(
-    state: State<'_, AppState>,
-    tag_id: String,
-    data: Value,
-) -> Result<Value, String> {
-    fwd_patch(&state, &format!("/tags/{tag_id}"), data).await
+pub async fn tags_update(core: State<'_, Shared>, tag_id: String, data: UpdateTagIn) -> Result<Value, String> {
+    run(&core, move |c| c.session(|s| tags::update(s, &tag_id, data.into()))).await
 }
 
 #[tauri::command]
-pub async fn tags_delete(state: State<'_, AppState>, tag_id: String) -> Result<Value, String> {
-    fwd_delete(&state, &format!("/tags/{tag_id}")).await
+pub async fn tags_delete(core: State<'_, Shared>, tag_id: String) -> Result<Value, String> {
+    run(&core, move |c| c.session(|s| tags::delete(s, &tag_id))).await
 }
 
 #[tauri::command]
-pub async fn tags_attach(
-    state: State<'_, AppState>,
-    note_id: String,
-    tag_id: String,
-) -> Result<Value, String> {
-    fwd_post(&state, &format!("/notes/{note_id}/tags/{tag_id}"), Value::Null).await
+pub async fn tags_attach(core: State<'_, Shared>, note_id: String, tag_id: String) -> Result<Value, String> {
+    run(&core, move |c| c.session(|s| tags::attach(s, &note_id, &tag_id))).await
 }
 
 #[tauri::command]
-pub async fn tags_detach(
-    state: State<'_, AppState>,
-    note_id: String,
-    tag_id: String,
-) -> Result<Value, String> {
-    fwd_delete(&state, &format!("/notes/{note_id}/tags/{tag_id}")).await
+pub async fn tags_detach(core: State<'_, Shared>, note_id: String, tag_id: String) -> Result<Value, String> {
+    run(&core, move |c| c.session(|s| tags::detach(s, &note_id, &tag_id))).await
 }
 
 #[tauri::command]
-pub async fn tags_get_for_note(state: State<'_, AppState>, note_id: String) -> Result<Value, String> {
-    fwd_get(&state, &format!("/notes/{note_id}/tags")).await
+pub async fn tags_get_for_note(core: State<'_, Shared>, note_id: String) -> Result<Value, String> {
+    run(&core, move |c| c.session(|s| tags::for_note(s, &note_id))).await
 }
 
 #[tauri::command]
-pub async fn tags_get_note_map(state: State<'_, AppState>, vault_id: String) -> Result<Value, String> {
-    fwd_get(&state, &format!("/tags/note-map?vaultId={vault_id}")).await
+pub async fn tags_get_note_map(core: State<'_, Shared>, vault_id: String) -> Result<Value, String> {
+    run(&core, move |c| c.session(|s| tags::note_map(s, &vault_id))).await
 }

@@ -10,14 +10,10 @@ export const message = (err: unknown): string => (err instanceof Error ? err.mes
 export const isFixable = (err: unknown): boolean => FIXABLE.test(message(err));
 export const isPin = (s: string): boolean => /^\d{4,6}$/.test(s);
 
-/** Transport failures mean the sidecar is gone; say that, not the URL it failed to reach. */
-const UNREACHABLE = /error sending request|connection refused|failed to fetch|timed out/i;
-
 /** A failure reason a person can read. The raw error goes to the log. */
 export function failureReason(err: unknown): string {
   const raw = message(err);
   log('error', 'account', 'Account change failed', raw);
-  if (UNREACHABLE.test(raw)) return 'Cord’s background service didn’t respond. Restart Cord and try again.';
   return /[.!?]$/.test(raw) ? raw : `${raw}.`;
 }
 

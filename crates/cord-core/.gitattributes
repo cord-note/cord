@@ -1,0 +1,5 @@
+# Yjs fixtures are binary; never touch their bytes.
+*.ybin binary
+# The theme fixture must be byte-identical on every OS (its scan is recorded).
+fixtures/themes/** -text
+*.woff2 binary

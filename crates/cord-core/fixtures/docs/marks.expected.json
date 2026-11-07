@@ -1,0 +1,102 @@
+{
+  "content": [
+    {
+      "attrs": {
+        "blockId": "m1"
+      },
+      "content": [
+        {
+          "text": "plain ",
+          "type": "text"
+        },
+        {
+          "marks": [
+            {
+              "attrs": {},
+              "type": "bold"
+            }
+          ],
+          "text": "bold",
+          "type": "text"
+        },
+        {
+          "marks": [
+            {
+              "attrs": {},
+              "type": "bold"
+            },
+            {
+              "attrs": {},
+              "type": "italic"
+            }
+          ],
+          "text": " both",
+          "type": "text"
+        },
+        {
+          "marks": [
+            {
+              "attrs": {
+                "class": null,
+                "href": "https://cord.example",
+                "rel": null,
+                "target": "_blank"
+              },
+              "type": "link"
+            }
+          ],
+          "text": " link",
+          "type": "text"
+        },
+        {
+          "marks": [
+            {
+              "attrs": {
+                "color": "#ff0"
+              },
+              "type": "highlight"
+            }
+          ],
+          "text": " hi",
+          "type": "text"
+        },
+        {
+          "marks": [
+            {
+              "attrs": {},
+              "type": "code"
+            }
+          ],
+          "text": " code",
+          "type": "text"
+        },
+        {
+          "marks": [
+            {
+              "attrs": {},
+              "type": "superscript"
+            }
+          ],
+          "text": "2",
+          "type": "text"
+        },
+        {
+          "marks": [
+            {
+              "attrs": {},
+              "type": "strike"
+            },
+            {
+              "attrs": {},
+              "type": "underline"
+            }
+          ],
+          "text": " u",
+          "type": "text"
+        }
+      ],
+      "type": "paragraph"
+    }
+  ],
+  "type": "doc"
+}

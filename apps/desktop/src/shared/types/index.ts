@@ -1,6 +1,6 @@
 // DTOs that cross the IPC boundary.
 // Plain data shapes only — no classes, no methods.
-// Imported by both renderer and sidecar.
+// The shapes that cross the IPC boundary to cord-core.
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
@@ -26,7 +26,7 @@ export interface LoginInput {
   password: string;
 }
 
-/** A signed-in user as the sidecar reports them. */
+/** A signed-in user as cord-core reports them. */
 export interface AuthUser extends User {
   hasPin: boolean;
   hasRecoveryKey: boolean;
@@ -176,8 +176,6 @@ export interface Block {
   level: number | null;
   text: string;
   refBlockId: string | null;
-  createdAt: number;
-  updatedAt: number;
 }
 
 /** Resolved target of a `blockRef` node. */
@@ -215,7 +213,6 @@ export interface NoteLink {
   id: string;
   fromNoteId: string;
   toNoteId: string;
-  createdAt: number;
 }
 
 export interface NoteLinks {
@@ -365,5 +362,30 @@ export interface ThemeLibraryScan {
 
 export interface ThemeImportResult {
   imported: { id: string; label: string }[];
+  problems: ThemeFileProblem[];
+}
+
+/** A scene file a theme lists, as cord-core read it off disk. */
+export interface RawSceneFile {
+  source?: string;
+  error?: string;
+}
+
+/** One theme's files as cord-core read them; the renderer sanitizes these. */
+export interface RawTheme {
+  cssPath: string;
+  folder: string | null;
+  css: string;
+  /** theme.json; {} when missing or broken. */
+  manifest: Record<string, unknown>;
+  /** Fonts and images the CSS refers to, by the reference as written, as data: URIs. */
+  assets: Record<string, string>;
+  /** The scene files theme.json lists, by the path as written. */
+  sceneFiles: Record<string, RawSceneFile>;
+}
+
+export interface RawThemeScan {
+  dir: string;
+  themes: RawTheme[];
   problems: ThemeFileProblem[];
 }

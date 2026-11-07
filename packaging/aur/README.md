@@ -108,8 +108,8 @@ the file and pass `--skipchecksums`, which is what `verify_aur` does.
 - `package()` unpacks `data.tar.gz` from the `.deb` whole rather than naming
   individual paths. Tauri already lays the `.deb` out correctly, so this picks
   up new icon sizes or added files without the PKGBUILD needing a change.
-- `options=('!strip')` — the Bun sidecar is a compiled binary with its bundle
-  embedded, and the Rust binary is stripped by the release profile already.
+- `options=('!strip')` — the one binary, `cord`, is stripped by the release
+  profile already.
 - `provides`/`conflicts` name `cord`, so a from-source `cord` package could be
   added later without the two colliding.
 - Updates are the package manager's job. Cord's built-in updater disables itself

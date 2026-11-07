@@ -17,7 +17,7 @@ import { ColorSwatch } from './ColorSwatch';
 import { SettingRow } from './SettingRow';
 import styles from '../SettingsPage.module.css';
 
-/** Debounce before a typed vault name is written back to the sidecar. */
+/** Debounce before a typed vault name is written back to cord-core. */
 const NAME_SAVE_DEBOUNCE_MS = 600;
 
 export default function VaultPage() {
