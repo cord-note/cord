@@ -150,7 +150,6 @@ export const useAuthStore = create<AuthState>((set, get) => {
     },
 
     lock: async () => {
-      // Check HTMLElement itself: tests can stub `document` without the DOM classes.
       if (typeof HTMLElement !== 'undefined' && document.activeElement instanceof HTMLElement) {
         document.activeElement.blur();
       }

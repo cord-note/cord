@@ -6,7 +6,7 @@
 # rather than naming paths that would rot the next time the bundle changes.
 
 pkgname=cord-bin
-pkgver=2.4.0
+pkgver=2.4.1
 pkgrel=1
 pkgdesc="Local-first note-taking as a knowledge graph"
 arch=('x86_64')
