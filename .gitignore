@@ -13,7 +13,6 @@ target/
 # Leading **/ so these match under apps/desktop/, not just the repo root —
 # a mid-string slash without it anchors the pattern to this file's directory.
 **/src-tauri/gen/
-**/src-tauri/binaries/
 
 # Tooling caches
 .impeccable/

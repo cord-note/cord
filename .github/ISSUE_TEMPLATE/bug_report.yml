@@ -69,6 +69,6 @@ body:
       label: Console output
       description: >
         If the app is misbehaving visibly, the webview console often says why.
-        Open devtools in a dev build, or attach the sidecar output if you
+        Open devtools in a dev build, or attach the terminal output if you
         launched from a terminal. Optional.
       render: shell
