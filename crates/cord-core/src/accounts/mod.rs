@@ -107,6 +107,11 @@ impl<'a> Accounts<'a> {
         self
     }
 
+    /// The same accounts with test-speed hashing, from a borrowed handle.
+    pub fn fast(&self) -> Accounts<'a> {
+        Accounts { conn: self.conn, layout: self.layout, hash_cost: 4, recovery_delay: Duration::ZERO }
+    }
+
     /// Everything the lock screen shows before anyone has unlocked.
     pub fn lock_screen(&self) -> Result<LockScreenState> {
         let sql = format!("SELECT {USER_COLUMNS} FROM users ORDER BY username");
