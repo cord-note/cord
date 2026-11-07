@@ -1,28 +1,26 @@
-use crate::state::AppState;
-use super::http::{fwd_get, fwd_patch, fwd_post};
+use cord_core::services::vaults;
 use serde_json::Value;
 use tauri::State;
 
+use crate::core::{run, Shared};
+use crate::dto::VaultIn;
+
 #[tauri::command]
-pub async fn vaults_list(state: State<'_, AppState>) -> Result<Value, String> {
-    fwd_get(&state, "/vaults").await
+pub async fn vaults_list(core: State<'_, Shared>) -> Result<Value, String> {
+    run(&core, |c| c.session(|s| vaults::list(s))).await
 }
 
 #[tauri::command]
-pub async fn vaults_create(state: State<'_, AppState>, data: Value) -> Result<Value, String> {
-    fwd_post(&state, "/vaults", data).await
+pub async fn vaults_create(core: State<'_, Shared>, data: VaultIn) -> Result<Value, String> {
+    run(&core, move |c| c.session(|s| vaults::create(s, data.new_vault()))).await
 }
 
 #[tauri::command]
-pub async fn vaults_update(
-    state: State<'_, AppState>,
-    id: String,
-    data: Value,
-) -> Result<Value, String> {
-    fwd_patch(&state, &format!("/vaults/{id}"), data).await
+pub async fn vaults_update(core: State<'_, Shared>, id: String, data: VaultIn) -> Result<Value, String> {
+    run(&core, move |c| c.session(|s| vaults::update(s, &id, data.changes()))).await
 }
 
 #[tauri::command]
-pub async fn vaults_archive(state: State<'_, AppState>, id: String) -> Result<Value, String> {
-    fwd_post(&state, &format!("/vaults/{id}/archive"), Value::Null).await
+pub async fn vaults_archive(core: State<'_, Shared>, id: String) -> Result<Value, String> {
+    run(&core, move |c| c.session(|s| vaults::archive(s, &id))).await
 }

@@ -1,61 +1,113 @@
-use crate::state::AppState;
-use super::http::{fwd_get, fwd_post};
-use serde_json::Value;
+use cord_core::accounts::AuthUser;
+use serde_json::{json, Value};
 use tauri::State;
 
-// Thin forwards. The sidecar validates input and owns every rule.
+use crate::core::{run, Core, Shared};
+use crate::dto::{ChangePasswordIn, Credentials, PasswordIn, RecoverIn, SetPinIn, UnlockPinIn, DONE};
 
-#[tauri::command]
-pub async fn auth_lock_screen(state: State<'_, AppState>) -> Result<Value, String> {
-    fwd_get(&state, "/auth/lock-screen").await
+// Signing in opens the user's data; locking closes it.
+fn signed_in(c: &Core, user: AuthUser) -> Result<AuthUser, String> {
+    c.sign_in(&user.id)?;
+    Ok(user)
 }
 
 #[tauri::command]
-pub async fn auth_current(state: State<'_, AppState>) -> Result<Value, String> {
-    fwd_get(&state, "/auth/current").await
+pub async fn auth_lock_screen(core: State<'_, Shared>) -> Result<Value, String> {
+    run(&core, |c| c.accounts(|a| a.lock_screen())).await
 }
 
 #[tauri::command]
-pub async fn auth_register(state: State<'_, AppState>, data: Value) -> Result<Value, String> {
-    fwd_post(&state, "/auth/register", data).await
+pub async fn auth_current(core: State<'_, Shared>) -> Result<Value, String> {
+    run(&core, |c| match c.user_id() {
+        Some(id) => c.accounts(|a| a.user(&id)),
+        None => Ok(None),
+    })
+    .await
 }
 
 #[tauri::command]
-pub async fn auth_login(state: State<'_, AppState>, data: Value) -> Result<Value, String> {
-    fwd_post(&state, "/auth/login", data).await
+pub async fn auth_register(core: State<'_, Shared>, data: Credentials) -> Result<Value, String> {
+    run(&core, move |c| {
+        let user = c.accounts(|a| a.register(&data.username, &data.password))?;
+        signed_in(c, user)
+    })
+    .await
 }
 
 #[tauri::command]
-pub async fn auth_unlock_pin(state: State<'_, AppState>, data: Value) -> Result<Value, String> {
-    fwd_post(&state, "/auth/unlock-pin", data).await
+pub async fn auth_login(core: State<'_, Shared>, data: Credentials) -> Result<Value, String> {
+    run(&core, move |c| {
+        let user = c.accounts(|a| a.login(&data.username, &data.password))?;
+        signed_in(c, user)
+    })
+    .await
 }
 
 #[tauri::command]
-pub async fn auth_set_pin(state: State<'_, AppState>, data: Value) -> Result<Value, String> {
-    fwd_post(&state, "/auth/pin", data).await
+pub async fn auth_unlock_pin(core: State<'_, Shared>, data: UnlockPinIn) -> Result<Value, String> {
+    run(&core, move |c| {
+        let result = c.accounts(|a| a.unlock_with_pin(&data.user_id, &data.pin))?;
+        if let Some(user) = &result.user {
+            c.sign_in(&user.id)?;
+        }
+        Ok(result)
+    })
+    .await
 }
 
 #[tauri::command]
-pub async fn auth_verify_password(state: State<'_, AppState>, data: Value) -> Result<Value, String> {
-    fwd_post(&state, "/auth/verify-password", data).await
+pub async fn auth_set_pin(core: State<'_, Shared>, data: SetPinIn) -> Result<Value, String> {
+    run(&core, move |c| {
+        let id = c.me()?;
+        c.accounts(|a| a.set_pin(&id, &data.pin, data.password.as_deref()))
+    })
+    .await
 }
 
 #[tauri::command]
-pub async fn auth_change_password(state: State<'_, AppState>, data: Value) -> Result<Value, String> {
-    fwd_post(&state, "/auth/password", data).await
+pub async fn auth_verify_password(core: State<'_, Shared>, data: PasswordIn) -> Result<Value, String> {
+    run(&core, move |c| {
+        let id = c.me()?;
+        c.accounts(|a| a.verify_password(&id, data.password.as_deref().unwrap_or_default()))?;
+        Ok(DONE)
+    })
+    .await
 }
 
 #[tauri::command]
-pub async fn auth_issue_recovery_key(state: State<'_, AppState>, data: Value) -> Result<Value, String> {
-    fwd_post(&state, "/auth/recovery-key", data).await
+pub async fn auth_change_password(core: State<'_, Shared>, data: ChangePasswordIn) -> Result<Value, String> {
+    run(&core, move |c| {
+        let id = c.me()?;
+        c.accounts(|a| a.change_password(&id, &data.current_password, &data.new_password))?;
+        Ok(DONE)
+    })
+    .await
 }
 
 #[tauri::command]
-pub async fn auth_recover(state: State<'_, AppState>, data: Value) -> Result<Value, String> {
-    fwd_post(&state, "/auth/recover", data).await
+pub async fn auth_issue_recovery_key(core: State<'_, Shared>, data: PasswordIn) -> Result<Value, String> {
+    run(&core, move |c| {
+        let id = c.me()?;
+        let key = c.accounts(|a| a.issue_recovery_key(&id, data.password.as_deref()))?;
+        Ok(json!({ "recoveryKey": key }))
+    })
+    .await
 }
 
 #[tauri::command]
-pub async fn auth_lock(state: State<'_, AppState>) -> Result<Value, String> {
-    fwd_post(&state, "/auth/lock", Value::Null).await
+pub async fn auth_recover(core: State<'_, Shared>, data: RecoverIn) -> Result<Value, String> {
+    run(&core, move |c| {
+        let user = c.accounts(|a| a.recover(&data.username, &data.recovery_key, &data.new_password))?;
+        signed_in(c, user)
+    })
+    .await
+}
+
+#[tauri::command]
+pub async fn auth_lock(core: State<'_, Shared>) -> Result<Value, String> {
+    run(&core, |c| {
+        c.sign_out();
+        Ok(DONE)
+    })
+    .await
 }
