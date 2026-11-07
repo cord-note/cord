@@ -19,6 +19,8 @@ import { api } from '../ipc';
 import { log } from '../lib/log';
 import { createCordHost } from '../shuttle/cordHost';
 import { outboundMentions as findOutboundMentions } from '../shuttle/outboundMentions';
+import type * as Y from 'yjs';
+import { BodySync, loadDoc } from '../shuttle/bodySync';
 import type { Note } from '@shared/types';
 import styles from './Editor.module.css';
 
@@ -29,11 +31,7 @@ interface Props {
   note: Note;
 }
 
-/**
- * The stored body as a document for Shuttle, or null for an empty note. A
- * document from before Shuttle passes through unchanged: Shuttle opens it
- * read-only and never saves it.
- */
+/** The stored body as JSON, for the outbound mentions shown before the first edit. */
 function parseStoredDoc(bodyJson: string): JSONContent | null {
   try {
     const parsed: unknown = JSON.parse(bodyJson);
@@ -68,6 +66,10 @@ export default function Editor({ note }: Props) {
   const [outboundMentions, setOutboundMentions] = useState<Note[]>([]);
   /** Set when wiki links changed; the save that follows re-derives note_links. */
   const linksDirty = useRef(false);
+  /** The open note's Y.Doc, tagged with its note so a stale one is never shown. */
+  const [body, setBody] = useState<{ noteId: string; doc: Y.Doc } | null>(null);
+  const saveDelayRef = useRef(saveDelay);
+  saveDelayRef.current = saveDelay;
 
   const noteIdRef = useRef(note.id);
   const titleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -79,7 +81,7 @@ export default function Editor({ note }: Props) {
   const [localTitle, setLocalTitle] = useState(note.title);
   const isNotepad = note.kind === 'notepad';
 
-  // Read only when the note changes: Shuttle owns the document after that.
+  // Read only when the note changes, for the first outbound-mention list.
   const doc = useMemo(() => parseStoredDoc(note.bodyJson), [note.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const openNote = useCallback((id: string, blockId?: string) => {
@@ -106,18 +108,44 @@ export default function Editor({ note }: Props) {
     log,
   }), [notes, activeVaultId, openNote, loadFragments, bindings]);
 
+  // Saving is Yjs's job (below); this only refreshes the outbound mentions.
   const handleChange = useCallback((id: string, json: JSONContent) => {
-    void updateNote(id, { bodyJson: JSON.stringify(json) })
-      .then(() => {
-        // note_links is derived by the sidecar on save, so reload after it lands.
+    setOutboundMentions(findOutboundMentions(json, useNoteStore.getState().notes, id));
+  }, []);
+
+  // Load the note's Yjs state, edit it, and send local edits in batches.
+  useEffect(() => {
+    let cancelled = false;
+    let sync: BodySync | null = null;
+    const id = note.id;
+    const send = async (noteId: string, update: Uint8Array): Promise<void> => {
+      try {
+        const saved = await api.notes.applyBodyUpdate(noteId, update);
+        useNoteStore.getState().applySaved(saved);
+        // note_links is derived by cord-core on each body update.
         if (linksDirty.current) {
           linksDirty.current = false;
-          void loadLinks(id);
+          void loadLinks(noteId);
         }
+      } catch (error) {
+        log('error', 'editor', 'Saving the note failed', { noteId, error: String(error) });
+        throw error;
+      }
+    };
+    api.notes.bodyState(id)
+      .then((state) => {
+        if (cancelled) return;
+        const ydoc = loadDoc(state);
+        sync = new BodySync(id, ydoc, send, () => saveDelayRef.current);
+        setBody({ noteId: id, doc: ydoc });
       })
-      .catch((error: unknown) => log('error', 'editor', 'Saving the note failed', { noteId: id, error: String(error) }));
-    setOutboundMentions(findOutboundMentions(json, useNoteStore.getState().notes, id));
-  }, [updateNote, loadLinks]);
+      .catch((error: unknown) => log('error', 'editor', 'Opening the note failed', { noteId: id, error: String(error) }));
+    return () => {
+      cancelled = true;
+      // A failed last send is logged by `send`.
+      sync?.dispose().catch(() => undefined);
+    };
+  }, [note.id, loadLinks]);
 
   const handleReady = useCallback((e: ShuttleEditorInstance | null, c: ShuttleControls | null) => {
     setEditor(e);
@@ -281,9 +309,11 @@ export default function Editor({ note }: Props) {
       </div>
 
       <div className={`${styles.content} cord-editor__body`} ref={contentRef}>
+        {body?.noteId === note.id && (
         <ShuttleEditor
           docKey={note.id}
-          doc={doc}
+          doc={null}
+          ydoc={body.doc}
           mode={note.kind}
           host={host}
           twitch={false}
@@ -300,6 +330,7 @@ export default function Editor({ note }: Props) {
           {editor && <FragmentOverlay editor={editor} noteId={note.id} contentEl={contentRef.current} />}
           {editor && <WikiLinkPills editor={editor} contentEl={contentRef.current} />}
         </ShuttleEditor>
+        )}
       </div>
 
       {editor && <EditorContextMenu editor={editor} noteId={note.id} controls={controls} />}

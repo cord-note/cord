@@ -23,7 +23,7 @@ function harness(overrides: Partial<CordHostDeps> = {}): Harness {
     api: {
       blocks: {
         listForNote: async (noteId) => [
-          { id: 'b1', noteId, vaultId: 'v1', type: 'heading', sort: 0, level: 2, text: 'Head', refBlockId: null, createdAt: 0, updatedAt: 0 },
+          { id: 'b1', noteId, vaultId: 'v1', type: 'heading', sort: 0, level: 2, text: 'Head', refBlockId: null },
         ] satisfies Block[],
         resolveRef: async (blockId): Promise<BlockRefTarget | null> => (blockId === 'b1'
           ? { blockId: 'b1', noteId: 'a', noteTitle: 'Alpha', type: 'paragraph', contentJson: '{"type":"paragraph"}' }
