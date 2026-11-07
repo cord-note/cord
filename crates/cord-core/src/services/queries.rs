@@ -229,7 +229,8 @@ mod tests {
     #[test]
     fn lists_blocks_and_resolves_refs() {
         let (_d, mut s) = test_session();
-        let id = note(&mut s, "Src", json!([para("real", "quoted"), { "type": "bulletList" }]));
+        // A node type Shuttle gives no id keeps a synthetic one.
+        let id = note(&mut s, "Src", json!([para("real", "quoted"), { "type": "callout" }]));
         let blocks = blocks_for_note(&s, &id).unwrap();
         let synthetic = format!("{id}:1");
         assert_eq!(blocks.iter().map(|b| b.id.as_str()).collect::<Vec<_>>(), ["real", synthetic.as_str()]);

@@ -1,6 +1,7 @@
 use rusqlite::{OptionalExtension, Row};
 use serde_json::{json, Value};
 
+use crate::doc::ids::mint_block_ids;
 use crate::doc::yjs::json_to_state;
 use crate::entity::Entity;
 use crate::model::{NewNote, Note, NoteChanges, NoteListItem};
@@ -71,10 +72,12 @@ pub fn create(s: &mut Session, input: NewNote) -> Result<Note> {
     if !KINDS.contains(&kind.as_str()) {
         return Err(Error::Invalid(format!("unknown note kind: {kind}")));
     }
-    let body = match input.body {
+    let mut body = match input.body {
         Some(doc) => doc,
         None => serde_json::from_str(EMPTY_DOC_JSON).map_err(|e| Error::BadDoc(e.to_string()))?,
     };
+    // The editor gets this body through Yjs, where it mints no ids itself.
+    mint_block_ids(&mut body);
     let state = json_to_state(&body)?;
     let id = nanoid::nanoid!();
     let vault = input.vault_id;
@@ -179,7 +182,11 @@ mod tests {
         let (_d, mut s) = test_session();
         let n = new(&mut s, "First");
         assert_eq!((n.meta.title.as_str(), n.meta.kind.as_str(), n.meta.is_pinned), ("First", "note", false));
-        assert_eq!(serde_json::from_str::<Value>(&n.body_json).unwrap(), serde_json::from_str::<Value>(EMPTY_DOC_JSON).unwrap());
+        let body: Value = serde_json::from_str(&n.body_json).unwrap();
+        assert_eq!(body["content"].as_array().map(Vec::len), Some(1));
+        assert_eq!(body["content"][0]["type"], "paragraph");
+        // Shuttle mints no ids on content that arrives through Yjs, so cord-core does.
+        assert_eq!(body["content"][0]["attrs"]["blockId"].as_str().map(str::len), Some(10));
         assert_eq!(list(&s, "v1").unwrap().len(), 1);
     }
 
