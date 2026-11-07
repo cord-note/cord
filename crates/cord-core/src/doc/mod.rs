@@ -2,4 +2,5 @@
 
 pub mod blocks;
 pub mod helpers;
+pub mod ids;
 pub mod yjs;
