@@ -7,7 +7,7 @@ import { createSettingsStore } from './store';
 export type { SettingKey, SettingValues } from './schema';
 export { registerSetting, settingDefinition, useSettingsRegistry } from './registry';
 
-/** Remembers whose cache painted the last frame, so the next launch paints it before the sidecar answers. */
+/** Remembers whose cache painted the last frame, so the next launch paints it before cord-core answers. */
 const CACHE_USER_KEY = 'cord-settings-cache-user';
 
 /** Whose boot cache `useSettings` reads and writes. Null when nobody is chosen. */
@@ -33,7 +33,7 @@ export function lastCacheUser(): string | null {
   }
 }
 
-/** The app's settings. File-backed through the sidecar. */
+/** The app's settings. File-backed through cord-core. */
 export const useSettings = createSettingsStore({
   io: ipcConfigIO,
   definitions: () => useSettingsRegistry.getState().definitions,

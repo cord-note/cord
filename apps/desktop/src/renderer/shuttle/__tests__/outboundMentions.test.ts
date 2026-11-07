@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { outboundMentions } from '../outboundMentions';
-import type { DocNode } from '@shared/blockDoc';
+import type { JSONContent as DocNode } from 'shuttle-editor';
 
 // Notes this document names in plain text without linking them — the status
 // bar offers to turn each into a wiki link.

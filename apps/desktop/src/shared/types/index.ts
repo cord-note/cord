@@ -1,6 +1,6 @@
 // DTOs that cross the IPC boundary.
 // Plain data shapes only — no classes, no methods.
-// Imported by both renderer and sidecar.
+// The shapes that cross the IPC boundary to cord-core.
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
@@ -26,7 +26,7 @@ export interface LoginInput {
   password: string;
 }
 
-/** A signed-in user as the sidecar reports them. */
+/** A signed-in user as cord-core reports them. */
 export interface AuthUser extends User {
   hasPin: boolean;
   hasRecoveryKey: boolean;
