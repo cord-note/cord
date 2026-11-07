@@ -13,8 +13,9 @@ import type {
   RegisterInput, LoginInput,
   AuthUser, LockScreenState, UnlockPinInput, PinUnlockResult, SetPinInput,
   ChangePasswordInput, IssueRecoveryKeyInput, RecoveryKeyResult, RecoverInput,
-  ConfigFileName, ThemeLibraryScan, ThemeImportResult,
+  ConfigFileName, ThemeLibraryScan, ThemeImportResult, RawThemeScan,
 } from '@shared/types';
+import { assembleLibrary } from '@shared/theming/assembleLibrary';
 
 export const api = {
   vaults: {
@@ -37,6 +38,10 @@ export const api = {
     permanentDelete:  (id: string)                               => invoke<void>('notes_permanent_delete', { id }),
     unlinkedMentions: (noteId: string, vaultId: string)          => invoke<UnlinkedMention[]>('notes_unlinked_mentions', { noteId, vaultId }),
     convert:          (id: string, kind: NoteKind)               => invoke<Note>('notes_convert', { id, kind }),
+    /** The note's Yjs state; empty for a note with no body yet. */
+    bodyState:        async (id: string)                         => new Uint8Array(await invoke<ArrayBuffer>('notes_body_state', { id })),
+    /** Sends a Yjs update as raw bytes; returns the note with its body re-derived. */
+    applyBodyUpdate:  (id: string, update: Uint8Array)           => invoke<Note>('notes_apply_body_update', update, { headers: { 'x-note-id': id } }),
   },
 
   blocks: {
@@ -90,7 +95,8 @@ export const api = {
   themes: {
     defaultDir: ()                             => invoke<{ dir: string }>('themes_default_dir'),
     /** `dir` is the library folder; '' means the default one. */
-    scan:       (dir: string)                  => invoke<ThemeLibraryScan>('themes_scan', { dir }),
+    /** cord-core reads the files; the CSS is filtered here (assembleLibrary). */
+    scan:       async (dir: string): Promise<ThemeLibraryScan> => assembleLibrary(await invoke<RawThemeScan>('themes_scan', { dir })),
     import:     (source: string, dir: string)  => invoke<ThemeImportResult>('themes_import', { source, dir }),
     /** A GitHub, GitLab or Codeberg repo link, or an https .zip link. */
     importUrl:  (url: string, dir: string)     => invoke<ThemeImportResult>('themes_import_url', { url, dir }),

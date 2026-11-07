@@ -176,8 +176,6 @@ export interface Block {
   level: number | null;
   text: string;
   refBlockId: string | null;
-  createdAt: number;
-  updatedAt: number;
 }
 
 /** Resolved target of a `blockRef` node. */
@@ -215,7 +213,6 @@ export interface NoteLink {
   id: string;
   fromNoteId: string;
   toNoteId: string;
-  createdAt: number;
 }
 
 export interface NoteLinks {
