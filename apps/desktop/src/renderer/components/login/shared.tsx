@@ -18,7 +18,7 @@ export function useSubmit(action: () => Promise<void>) {
     try {
       await action();
     } catch (err: unknown) {
-      // Tauri rejects with the sidecar's message as a plain string.
+      // Tauri rejects with cord-core's message as a plain string.
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);

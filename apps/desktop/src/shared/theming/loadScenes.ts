@@ -10,8 +10,7 @@ import type { LoginScene, RawSceneFile } from '@shared/types';
 // no preprocessor, no uniforms or entry point of its own, plain ASCII, small.
 // What it costs to draw is checked by the renderer, which drops a slow scene.
 //
-// The files themselves are read off disk elsewhere (cord-core, or the
-// sidecar's sceneFiles.ts) and handed in by the path theme.json gives.
+// The files themselves are read off disk elsewhere (by cord-core) and handed in by the path theme.json gives.
 
 export const MAX_SCENES = 4;
 export const MAX_SCENE_BYTES = 16 * 1024;
