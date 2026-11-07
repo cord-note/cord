@@ -16,8 +16,10 @@ pub mod services;
 pub mod accounts;
 pub mod settings_files;
 pub mod themes;
+pub mod data_dir;
 
 pub use error::{Error, Result};
+pub use rusqlite;
 
 #[cfg(test)]
 mod tests {
