@@ -35,6 +35,8 @@ interface SettingDefinitionBase<T> {
   order?: number;
   /** Extra search terms. */
   keywords?: readonly string[];
+  /** Edited through another setting's control, so it gets no row of its own. Still in settings.json. */
+  hidden?: boolean;
   /** Replaces the control derived from the type. */
   control?: ComponentType<SettingControlProps<T>>;
   /**

@@ -4,6 +4,7 @@ import { api } from '@renderer/ipc';
 import { log } from '../lib/log';
 import { rememberPinLength } from '../lib/pinLength';
 import { flushUserSettings, loadUserSettings, previewUserSettings } from '../settings/session';
+import { restoreCachedLibraryTheme } from './themeLibrary';
 import { useVaultStore } from './vaults';
 import { useNoteStore } from './notes';
 import { useTagStore } from './tags';
@@ -98,6 +99,8 @@ export const useAuthStore = create<AuthState>((set, get) => {
     selectUser: async (userId) => {
       set({ selectedUserId: userId, view: entryView(get().lockScreen, userId), notice: null });
       await previewUserSettings(userId);
+      // Their library theme and lock-screen scenes, from their boot cache.
+      restoreCachedLibraryTheme();
     },
 
     setView: (view) => set({ view, notice: null }),

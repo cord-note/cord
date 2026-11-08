@@ -1,18 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { LoginScene as Scene } from '@shared/types';
 import Dither from './Dither';
-import { fieldShader, MARK_SHADER, VERTEX_SHADER } from './scenes/glsl';
 import { loadBlocked, pickScene, saveBlocked, sceneKey } from './scenes/pick';
+import { readTones, SceneRenderer } from './scenes/renderer';
 import styles from './LoginScene.module.css';
 
 /**
  * The animated dither picture on the lock screen. Picks one scene at random
- * from `scenes` each time it appears and keeps it while on screen.
+ * from `scenes` each time it appears and keeps it while on screen; pass one
+ * scene to always show it.
  *
- * Drawn by WebGL in two passes: the scene's shader works out a brightness per
- * cell, then a shared pass ordered-dithers that into marks (see
- * `scenes/glsl.ts`), so every scene has the same look. Colours come from the
- * `--dither-scene-*` tokens and follow theme changes.
+ * Drawn by WebGL (see `scenes/renderer.ts`), so every scene has the same
+ * dither look. Colours come from the `--dither-scene-*` tokens and follow
+ * theme changes.
  *
  * Theme scenes are untrusted: one that fails to compile, draws too slowly or
  * loses the GPU context is skipped from then on. Without WebGL, or with no
@@ -28,57 +28,8 @@ interface LoginSceneProps {
   className?: string;
 }
 
-/** A scene whose frame takes longer than this is too heavy to keep. */
-const MAX_FRAME_MS = 60;
 /** uTime wraps so scene maths stays precise. */
 const TIME_WRAP_S = 4 * 60 * 60;
-
-type Rgb = [number, number, number];
-
-/** Resolves any CSS colour (color-mix, oklch, …) to 0–1 RGB by painting it. */
-function toRgb(probe: CanvasRenderingContext2D, color: string): Rgb {
-  probe.clearRect(0, 0, 1, 1);
-  probe.fillStyle = '#000';
-  probe.fillStyle = color;
-  probe.fillRect(0, 0, 1, 1);
-  const [r, g, b] = probe.getImageData(0, 0, 1, 1).data;
-  return [(r ?? 0) / 255, (g ?? 0) / 255, (b ?? 0) / 255];
-}
-
-function compile(gl: WebGLRenderingContext, type: number, source: string): WebGLShader | null {
-  const shader = gl.createShader(type);
-  if (!shader) return null;
-  gl.shaderSource(shader, source);
-  gl.compileShader(shader);
-  return gl.getShaderParameter(shader, gl.COMPILE_STATUS) ? shader : null;
-}
-
-function link(gl: WebGLRenderingContext, fragment: string): WebGLProgram | null {
-  const vs = compile(gl, gl.VERTEX_SHADER, VERTEX_SHADER);
-  const fs = compile(gl, gl.FRAGMENT_SHADER, fragment);
-  const program = gl.createProgram();
-  if (!vs || !fs || !program) return null;
-  gl.attachShader(program, vs);
-  gl.attachShader(program, fs);
-  gl.linkProgram(program);
-  return gl.getProgramParameter(program, gl.LINK_STATUS) ? program : null;
-}
-
-/** Ten digits in a row, one cell each, white on transparent. */
-function glyphAtlas(cellPx: number, font: string): HTMLCanvasElement {
-  const atlas = document.createElement('canvas');
-  atlas.width = cellPx * 10;
-  atlas.height = cellPx;
-  const ctx = atlas.getContext('2d');
-  if (ctx) {
-    ctx.fillStyle = '#fff';
-    ctx.font = `${Math.round(cellPx * 0.95)}px ${font}`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    for (let d = 0; d < 10; d++) ctx.fillText(String(d), d * cellPx + cellPx / 2, cellPx / 2 + 0.5);
-  }
-  return atlas;
-}
 
 export default function LoginScene({ scenes, builtinIds, animate = true, className }: LoginSceneProps) {
   const boxRef = useRef<HTMLDivElement>(null);
@@ -101,12 +52,6 @@ export default function LoginScene({ scenes, builtinIds, animate = true, classNa
     const canvas = canvasRef.current;
     if (!box || !canvas || !scene || noWebgl) return;
     const current = scene;
-    const gl = canvas.getContext('webgl', { antialias: false, depth: false, stencil: false });
-    const probe = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
-    if (!gl || !probe) {
-      setNoWebgl(true);
-      return;
-    }
 
     /** Never show this scene again (theme scenes) or this session (built-ins). */
     function reject(): void {
@@ -117,133 +62,27 @@ export default function LoginScene({ scenes, builtinIds, animate = true, classNa
       });
     }
 
-    const field = link(gl, fieldShader(current.source));
-    const marks = link(gl, MARK_SHADER);
-    const fieldTex = gl.createTexture();
-    const glyphTex = gl.createTexture();
-    const framebuffer = gl.createFramebuffer();
-    const buffer = gl.createBuffer();
-    if (!marks || !fieldTex || !glyphTex || !framebuffer || !buffer) {
-      setNoWebgl(true);
-      return;
-    }
-    if (!field) {
-      reject();
-      return;
-    }
-
-    // One triangle that covers the viewport, shared by both passes.
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-    for (const program of [field, marks]) {
-      const aPos = gl.getAttribLocation(program, 'aPos');
-      gl.enableVertexAttribArray(aPos);
-      gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
-    }
-    for (const tex of [fieldTex, glyphTex]) {
-      gl.bindTexture(gl.TEXTURE_2D, tex);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    }
-
-    const at = (program: WebGLProgram, name: string): WebGLUniformLocation | null => gl.getUniformLocation(program, name);
-    gl.useProgram(field);
-    gl.uniform1f(at(field, 'uSeed'), 1 + Math.floor(Math.random() * 100));
-    gl.useProgram(marks);
-    gl.uniform1i(at(marks, 'uField'), 0);
-    gl.uniform1i(at(marks, 'uGlyphs'), 1);
-    gl.uniform1f(at(marks, 'uGlyph'), current.marks === 'glyph' ? 1 : 0);
+    const created = SceneRenderer.create(canvas, current, 1 + Math.floor(Math.random() * 100));
+    if (created === 'no-webgl') { setNoWebgl(true); return; }
+    if (created === 'bad-scene') { reject(); return; }
+    const renderer: SceneRenderer = created;
 
     const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
     const started = performance.now();
-    let cols = 1;
-    let rows = 1;
-    let cellPx = 1;
     let timer = 0;
     let visible = true;
     let checked = false;
 
-    function setTones(): void {
-      if (!gl || !probe || !marks) return;
-      const css = getComputedStyle(canvas!);
-      const tone = (name: string, fallback: string): Rgb => toRgb(probe, css.getPropertyValue(name).trim() || fallback);
-      gl.useProgram(marks);
-      gl.uniform3fv(at(marks, 'uShade'), tone('--dither-scene-shade', '#444'));
-      gl.uniform3fv(at(marks, 'uMid'), tone('--dither-scene-mid', '#777'));
-      gl.uniform3fv(at(marks, 'uLight'), tone('--dither-scene-light', '#ddd'));
-      gl.uniform1f(at(marks, 'uInvert'), css.getPropertyValue('--dither-scene-invert').trim() === '1' ? 1 : 0);
-    }
+    const time = (): number => (animate && !motion.matches ? ((performance.now() - started) / 1000) % TIME_WRAP_S : 0);
+    const draw = (): void => renderer.draw(time());
 
-    function draw(): void {
-      if (!gl || !field || !marks || gl.isContextLost()) return;
-      const time = animate && !motion.matches ? ((performance.now() - started) / 1000) % TIME_WRAP_S : 0;
-      gl.useProgram(field);
-      gl.uniform1f(at(field, 'uTime'), time);
-      gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
-      gl.viewport(0, 0, cols, rows);
-      gl.drawArrays(gl.TRIANGLES, 0, 3);
-
-      gl.useProgram(marks);
-      gl.uniform1f(at(marks, 'uTime'), time);
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-      gl.viewport(0, 0, cols * cellPx, rows * cellPx);
-      gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, fieldTex);
-      gl.activeTexture(gl.TEXTURE1);
-      gl.bindTexture(gl.TEXTURE_2D, glyphTex);
-      gl.drawArrays(gl.TRIANGLES, 0, 3);
-    }
-
-    /** Times a warm frame; a scene too heavy to redraw is dropped. */
-    function tooSlow(): boolean {
-      if (!gl) return false;
-      const pixel = new Uint8Array(4);
-      draw();
-      gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
-      const t0 = performance.now();
-      draw();
-      gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
-      return performance.now() - t0 > MAX_FRAME_MS;
-    }
-
-    // Whole device pixels per cell, so the marks stay crisp.
     function resize(): void {
-      if (!gl || !box || !canvas || !field || !marks) return;
+      if (!box) return;
       const rect = box.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
-      cellPx = Math.max(1, Math.round(current.cell * dpr));
-      cols = Math.max(1, Math.ceil((rect.width * dpr) / cellPx));
-      rows = Math.max(1, Math.ceil((rect.height * dpr) / cellPx));
-      canvas.width = cols * cellPx;
-      canvas.height = rows * cellPx;
-      canvas.style.width = `${canvas.width / dpr}px`;
-      canvas.style.height = `${canvas.height / dpr}px`;
-
-      gl.bindTexture(gl.TEXTURE_2D, fieldTex);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, cols, rows, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-      gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
-      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fieldTex, 0);
-      if (current.marks === 'glyph') {
-        const font = getComputedStyle(canvas).getPropertyValue('--font-mono').trim() || 'monospace';
-        gl.bindTexture(gl.TEXTURE_2D, glyphTex);
-        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, glyphAtlas(cellPx, font));
-        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
-      }
-
-      // Scene units: the shorter side, with slack for wide surfaces.
-      gl.useProgram(field);
-      gl.uniform2f(at(field, 'uRes'), cols, rows);
-      gl.uniform1f(at(field, 'uUnit'), Math.min(rows, cols * 1.2));
-      gl.useProgram(marks);
-      gl.uniform2f(at(marks, 'uCells'), cols, rows);
-      gl.uniform1f(at(marks, 'uCellPx'), cellPx);
-
+      renderer.resize(rect.width, rect.height, window.devicePixelRatio || 1);
       if (!checked) {
         checked = true;
-        if (tooSlow()) {
+        if (renderer.tooSlow(time())) {
           reject();
           return;
         }
@@ -271,7 +110,7 @@ export default function LoginScene({ scenes, builtinIds, animate = true, classNa
 
     // Theme and scheme changes arrive as attribute or inline-style changes on <html>.
     const themeObserver = new MutationObserver(() => {
-      setTones();
+      renderer.setTones(readTones(canvas));
       draw();
     });
     themeObserver.observe(document.documentElement, {
@@ -290,7 +129,7 @@ export default function LoginScene({ scenes, builtinIds, animate = true, classNa
     canvas.addEventListener('webglcontextrestored', onRestored);
 
     motion.addEventListener('change', start);
-    setTones();
+    renderer.setTones(readTones(canvas));
     resize();
     start();
 
@@ -302,12 +141,7 @@ export default function LoginScene({ scenes, builtinIds, animate = true, classNa
       motion.removeEventListener('change', start);
       canvas.removeEventListener('webglcontextlost', onLost);
       canvas.removeEventListener('webglcontextrestored', onRestored);
-      gl.deleteBuffer(buffer);
-      gl.deleteTexture(fieldTex);
-      gl.deleteTexture(glyphTex);
-      gl.deleteFramebuffer(framebuffer);
-      gl.deleteProgram(field);
-      gl.deleteProgram(marks);
+      renderer.dispose();
     };
   }, [scene, animate, noWebgl, generation, builtinIds]);
 

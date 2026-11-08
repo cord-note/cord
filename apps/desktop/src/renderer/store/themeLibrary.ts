@@ -15,6 +15,15 @@ import { useThemeStore } from './theme';
 const STYLE_ATTR = 'data-cord-library-theme';
 /** The chosen library theme, so the lock screen and first frame paint in it. */
 const cacheKey = (userId: string): string => `cord-theme-cache:${userId}`;
+/** Every library theme's lock-screen scenes, so the lock screen can show any of them before unlock. */
+const scenesKey = (userId: string): string => `cord-login-scenes:${userId}`;
+
+/** The lock-screen scenes one library theme brings. */
+export interface ThemeScenes {
+  themeId: string;
+  label: string;
+  scenes: LoginScene[];
+}
 
 interface ThemeLibraryStore {
   /** The folder last read. */
@@ -24,8 +33,8 @@ interface ThemeLibraryStore {
   problems: ThemeFileProblem[];
   scanning: boolean;
   error: string | null;
-  /** The cached theme's lock-screen scenes, for the lock screen before the first scan. */
-  cachedScenes: { themeId: string | null; scenes: LoginScene[] };
+  /** Scenes from every library theme: from the last scan, or the boot cache before one. */
+  sceneGroups: ThemeScenes[];
   scan:       () => Promise<void>;
   importFrom: (source: string) => Promise<ThemeImportResult>;
   importUrl:  (url: string) => Promise<ThemeImportResult>;
@@ -38,7 +47,7 @@ export const useThemeLibrary = create<ThemeLibraryStore>((set, get) => ({
   problems: [],
   scanning: false,
   error: null,
-  cachedScenes: { themeId: null, scenes: [] },
+  sceneGroups: [],
 
   scan: async () => {
     set({ scanning: true });
@@ -48,8 +57,12 @@ export const useThemeLibrary = create<ThemeLibraryStore>((set, get) => ({
         api.themes.defaultDir(),
       ]);
       apply(scan.themes);
-      set({ dir: scan.dir, defaultDir, themes: scan.themes, problems: scan.problems, error: null });
+      const sceneGroups = scan.themes
+        .filter((t) => t.scenes.length > 0)
+        .map((t) => ({ themeId: t.id, label: t.label, scenes: t.scenes }));
+      set({ dir: scan.dir, defaultDir, themes: scan.themes, problems: scan.problems, error: null, sceneGroups });
       writeCache();
+      writeScenesCache(sceneGroups);
     } catch (err) {
       set({ error: String(err).replace(/^Error:\s*/, '') });
       log('error', 'themes', 'Reading the theme library failed', err);
@@ -114,7 +127,7 @@ function inject(id: string, css: string): void {
 }
 
 interface CachedTheme {
-  theme: Pick<LibraryTheme, 'id' | 'label' | 'description' | 'author' | 'css'> & { scenes?: LoginScene[] };
+  theme: Pick<LibraryTheme, 'id' | 'label' | 'description' | 'author' | 'css'>;
 }
 
 /** Keeps the chosen library theme in the boot cache; clears it for a built-in. */
@@ -125,10 +138,7 @@ function writeCache(): void {
   try {
     if (!chosen) { localStorage.removeItem(cacheKey(userId)); return; }
     const entry: CachedTheme = {
-      theme: {
-        id: chosen.id, label: chosen.label, description: chosen.description, author: chosen.author, css: chosen.css,
-        scenes: chosen.scenes,
-      },
+      theme: { id: chosen.id, label: chosen.label, description: chosen.description, author: chosen.author, css: chosen.css },
     };
     localStorage.setItem(cacheKey(userId), JSON.stringify(entry));
   } catch {
@@ -136,17 +146,36 @@ function writeCache(): void {
   }
 }
 
-/** At startup, before unlock: bring back the last chosen library theme. */
+function writeScenesCache(groups: readonly ThemeScenes[]): void {
+  const userId = lastCacheUser();
+  if (!userId) return;
+  try {
+    localStorage.setItem(scenesKey(userId), JSON.stringify(groups));
+  } catch {
+    // Storage full or blocked: the lock screen shows built-in scenes until unlock.
+  }
+}
+
+function readScenesCache(userId: string): ThemeScenes[] {
+  try {
+    const data: unknown = JSON.parse(localStorage.getItem(scenesKey(userId)) ?? '[]');
+    return Array.isArray(data) ? (data as ThemeScenes[]).filter((g) => Array.isArray(g?.scenes)) : [];
+  } catch {
+    return [];
+  }
+}
+
+/** At startup, before unlock: bring back the last chosen library theme and every theme's scenes. */
 export function restoreCachedLibraryTheme(): void {
   const userId = lastCacheUser();
   if (!userId) return;
+  useThemeLibrary.setState({ sceneGroups: readScenesCache(userId) });
   try {
     const raw = localStorage.getItem(cacheKey(userId));
     if (!raw) return;
     const { theme } = JSON.parse(raw) as CachedTheme;
     inject(theme.id, theme.css);
     useThemeRegistry.getState().register(registrationOf(theme));
-    useThemeLibrary.setState({ cachedScenes: { themeId: theme.id, scenes: Array.isArray(theme.scenes) ? theme.scenes : [] } });
   } catch {
     // Unreadable cache: the real scan after unlock replaces it.
   }

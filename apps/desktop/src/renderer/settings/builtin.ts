@@ -1,6 +1,7 @@
 import { FontSizeControl } from '../components/settings/FontSizeControl';
 import { ThemePickerControl } from '../components/settings/ThemePickerControl';
 import { ThemeLibraryControl } from '../components/settings/ThemeLibraryControl';
+import { LoginSceneControl } from '../components/settings/LoginSceneControl';
 import { log } from '../lib/log';
 import { useVaultStore } from '../store/vaults';
 import { registerSetting, useSettings } from './index';
@@ -17,6 +18,8 @@ declare module './schema' {
     'vaults.distinctColors': boolean;
     'appearance.theme': string;
     'appearance.themeLibrary': string;
+    'appearance.loginScene': string;
+    'appearance.loginScenePool': string;
     'appearance.colorScheme': 'dark' | 'light' | 'system';
     'appearance.textScale': number;
     'appearance.density': Density;
@@ -82,6 +85,26 @@ registerSetting({
   description: 'Where Cord looks for extra themes: a folder of theme folders or .css files. Empty uses the default folder.',
   default: '', maxLength: 1024, keywords: ['themes', 'library', 'import', 'directory', 'path'],
   control: ThemeLibraryControl,
+});
+
+// A scene id ("clouds", "harbour/lighthouse"), or one of the two random modes.
+const SCENE_ID = '[a-z0-9][a-z0-9/-]{0,127}';
+
+registerSetting({
+  key: 'appearance.loginScene', type: 'string', section: 'Appearance', order: 27,
+  title: 'Lock-screen scene',
+  description: 'The animated picture beside the PIN: one scene, a random one each time, or a random one from a pool you choose.',
+  default: 'random', pattern: new RegExp(`^${SCENE_ID}$`), maxLength: 128,
+  keywords: ['login', 'lock screen', 'background', 'animation', 'dither', 'random', 'pool'],
+  control: LoginSceneControl,
+});
+
+registerSetting({
+  key: 'appearance.loginScenePool', type: 'string', section: 'Appearance', order: 28,
+  title: 'Lock-screen scene pool',
+  description: 'Scene ids, separated by commas, picked from when the lock-screen scene is "pool".',
+  default: '', pattern: new RegExp(`^(${SCENE_ID}(,${SCENE_ID})*)?$`), maxLength: 4096,
+  hidden: true,
 });
 
 registerSetting({

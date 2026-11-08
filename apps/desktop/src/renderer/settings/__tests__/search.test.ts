@@ -23,6 +23,12 @@ describe('filterSettings', () => {
     expect(keys(filterSettings(defs, 'editor', new Set()))).toEqual(['editor.fontSize', 'editor.spellCheck']);
   });
 
+  it('never lists a hidden setting', () => {
+    const hidden: SettingDefinition = { key: 'appearance.loginScenePool', type: 'string', title: 'Pool', description: 'Theme scenes.', section: 'Appearance', default: '', hidden: true };
+    expect(keys(filterSettings([...defs, hidden], '', new Set()))).toEqual(keys(defs));
+    expect(keys(filterSettings([...defs, hidden], 'theme', new Set()))).toEqual(['appearance.theme']);
+  });
+
   it('requires every word to match', () => {
     expect(keys(filterSettings(defs, 'editor size', new Set()))).toEqual(['editor.fontSize']);
   });

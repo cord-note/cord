@@ -1,9 +1,10 @@
 # Lock-screen scenes
 
-The lock screen shows an animated dither picture beside the PIN form. Each time
-it appears, Cord picks one scene at random from the built-in ones (clouds, a
-bridge in fog, a flower drawn in digits) plus any scenes the active theme
-brings.
+The lock screen shows an animated dither picture beside the PIN form. The
+scenes are the built-in ones (clouds, a bridge in fog, a flower drawn in
+digits) plus the scenes of every theme in the theme folder, whichever theme is
+active. In **Settings → Appearance → Lock-screen scene** you pick one to always
+show, a random one each time, or a random one from a pool you tick.
 
 A theme can ship its own scenes. A scene is a small piece of GLSL that works
 out how bright each dither cell is. Cord does everything else: the canvas,

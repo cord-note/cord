@@ -19,6 +19,7 @@ export function filterSettings(
   const onlyModified = tokens.includes(MODIFIED_FILTER);
   const words = tokens.filter((t) => t !== MODIFIED_FILTER);
   return defs.filter((def) => {
+    if (def.hidden) return false;
     if (onlyModified && !modified.has(def.key)) return false;
     const text = haystack(def);
     return words.every((w) => text.includes(w));
