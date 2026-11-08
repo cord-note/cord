@@ -17,6 +17,7 @@ pub mod accounts;
 pub mod settings_files;
 pub mod themes;
 pub mod data_dir;
+pub mod import;
 
 pub use error::{Error, Result};
 pub use rusqlite;
