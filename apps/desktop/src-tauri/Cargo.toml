@@ -30,6 +30,13 @@ lto = true
 opt-level = "s"
 strip = true
 
+# Unoptimized bcrypt makes a dev sign-in take over a second.
+[profile.dev.package.bcrypt]
+opt-level = 3
+
+[profile.dev.package.blowfish]
+opt-level = 3
+
 [dev-dependencies]
 tempfile = "3"
 tauri = { version = "2", features = ["test"] }
