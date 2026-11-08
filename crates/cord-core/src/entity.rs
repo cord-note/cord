@@ -6,7 +6,7 @@ use rusqlite::{params, params_from_iter, Connection, OptionalExtension};
 use serde_json::{Map, Value};
 
 use crate::clock;
-use crate::doc::yjs::merge_update;
+use crate::doc::yjs::{merge_update, state_to_json};
 use crate::hlc::Hlc;
 use crate::index::reindex_note;
 use crate::{Error, Result};
@@ -165,6 +165,9 @@ pub fn apply_body(conn: &Connection, note_id: &str, update: &[u8], hlc: &Hlc) ->
     let previous: Option<(Vec<u8>, i64)> = conn
         .query_row("SELECT yjs_state, updated_at FROM note_bodies WHERE note_id = ?1", [note_id], |r| Ok((r.get(0)?, r.get(1)?)))
         .optional()?;
+    let before: Option<String> = conn
+        .query_row("SELECT body_json FROM idx.note_docs WHERE note_id = ?1", [note_id], |r| r.get(0))
+        .optional()?;
     let stamp = hlc.wall as i64;
     // A first update may be incremental; merging it with itself yields a full state.
     let (state, at) = match previous {
@@ -176,9 +179,56 @@ pub fn apply_body(conn: &Connection, note_id: &str, update: &[u8], hlc: &Hlc) ->
          ON CONFLICT (note_id) DO UPDATE SET yjs_state = excluded.yjs_state, updated_at = excluded.updated_at",
         params![note_id, state, at],
     )?;
-    conn.execute("UPDATE notes SET updated_at = max(updated_at, ?1) WHERE id = ?2", params![stamp, note_id])?;
+    let edited = match before {
+        Some(old) => changes_content(&old, &state)?,
+        None => true,
+    };
+    if edited {
+        conn.execute("UPDATE notes SET updated_at = max(updated_at, ?1) WHERE id = ?2", params![stamp, note_id])?;
+    }
     reindex_note(conn, note_id)?;
     Ok(true)
+}
+
+/// Heading attributes Shuttle's table of contents adds on its own when a note
+/// opens. A body change that only touches these is stored but is not an edit.
+const TOC_ATTRS: [&str; 2] = ["id", "data-toc-id"];
+
+/// Whether the new state differs from the indexed body by more than what the
+/// editor adds on its own when a note opens: table of contents ids, and the
+/// empty paragraph it keeps at the end of a document.
+fn changes_content(old_json: &str, state: &[u8]) -> Result<bool> {
+    let mut old: Value = serde_json::from_str(old_json).map_err(|e| Error::BadDoc(e.to_string()))?;
+    let mut new = state_to_json(state)?;
+    for doc in [&mut old, &mut new] {
+        strip_toc_ids(doc);
+        drop_empty_tail(doc);
+    }
+    Ok(old != new)
+}
+
+fn drop_empty_tail(doc: &mut Value) {
+    let Some(kids) = doc.get_mut("content").and_then(Value::as_array_mut) else { return };
+    let empty = |n: &Value| {
+        n.get("type").and_then(Value::as_str) == Some("paragraph")
+            && n.get("content").and_then(Value::as_array).is_none_or(Vec::is_empty)
+    };
+    while kids.last().is_some_and(empty) {
+        kids.pop();
+    }
+}
+
+fn strip_toc_ids(node: &mut Value) {
+    if node.get("type").and_then(Value::as_str) == Some("heading") {
+        if let Some(attrs) = node.get_mut("attrs").and_then(Value::as_object_mut) {
+            for a in TOC_ATTRS {
+                attrs.remove(a);
+            }
+        }
+    }
+    if let Some(kids) = node.get_mut("content").and_then(Value::as_array_mut) {
+        kids.iter_mut().for_each(strip_toc_ids);
+    }
 }
 
 /// Store a note's whole body as it is, for the one-time import. Unlike
@@ -388,6 +438,58 @@ mod tests {
         assert_eq!(text, "first");
         let state: Vec<u8> = c.query_row("SELECT yjs_state FROM note_bodies", [], |r| r.get(0)).unwrap();
         assert_eq!(state_to_json(&state).unwrap()["content"][0]["content"][0]["text"], "first");
+    }
+
+    fn heading(text: &str) -> Vec<u8> {
+        json_to_state(&json!({ "type": "doc", "content": [
+            { "type": "heading", "attrs": { "level": 1, "blockId": "h1" }, "content": [{ "type": "text", "text": text }] }
+        ]})).unwrap()
+    }
+
+    /// The update Shuttle makes when a note ending in a heading opens: table of
+    /// contents ids on the heading, and an empty paragraph after it.
+    fn on_open(state: &[u8]) -> Vec<u8> {
+        use yrs::updates::decoder::Decode;
+        use yrs::{Any, Doc, ReadTxn, Transact, Update, Xml, XmlElementPrelim, XmlFragment, XmlOut};
+        let doc = Doc::new();
+        let frag = doc.get_or_insert_xml_fragment("default");
+        doc.transact_mut().apply_update(Update::decode_v1(state).unwrap()).unwrap();
+        let before = doc.transact().state_vector();
+        {
+            let mut txn = doc.transact_mut();
+            let Some(XmlOut::Element(el)) = frag.get(&txn, 0) else { panic!("no heading") };
+            el.insert_attribute(&mut txn, "id", Any::String("toc-1".into()));
+            el.insert_attribute(&mut txn, "data-toc-id", Any::String("toc-1".into()));
+            let end = frag.len(&txn);
+            let p = frag.insert(&mut txn, end, XmlElementPrelim::empty("paragraph"));
+            p.insert_attribute(&mut txn, "blockId", Any::String("tail".into()));
+        }
+        let txn = doc.transact();
+        txn.encode_state_as_update_v1(&before)
+    }
+
+    fn updated_at(c: &Connection, id: &str) -> i64 {
+        c.query_row("SELECT updated_at FROM notes WHERE id = ?1", [id], |r| r.get(0)).unwrap()
+    }
+
+    #[test]
+    fn what_the_editor_adds_on_open_is_stored_but_is_not_an_edit() {
+        let (_d, db) = open();
+        let c = &db.conn;
+        note(c, "n1", 10);
+        apply_body(c, "n1", &heading("Plan"), &h(20, 0)).unwrap();
+        assert_eq!(updated_at(c, "n1"), 20);
+
+        let state: Vec<u8> = c.query_row("SELECT yjs_state FROM note_bodies", [], |r| r.get(0)).unwrap();
+        assert!(apply_body(c, "n1", &on_open(&state), &h(30, 0)).unwrap());
+        assert_eq!(updated_at(c, "n1"), 20, "opening a note is not editing it");
+        let stored: Vec<u8> = c.query_row("SELECT yjs_state FROM note_bodies", [], |r| r.get(0)).unwrap();
+        let doc = state_to_json(&stored).unwrap();
+        assert_eq!(doc["content"][0]["attrs"]["data-toc-id"], "toc-1", "the ids are kept");
+        assert_eq!(doc["content"][1]["attrs"]["blockId"], "tail", "so is the paragraph");
+
+        apply_body(c, "n1", &heading("More"), &h(40, 0)).unwrap();
+        assert_eq!(updated_at(c, "n1"), 40, "a real change still counts");
     }
 
     #[test]
