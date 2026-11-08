@@ -158,6 +158,49 @@ fn pin_unlock_reopens_the_same_data() {
     assert_eq!(h.ok("vaults_list", json!({}))[0]["name"], "Kept");
 }
 
+/// A Cord 2.4.1 data folder: user "ola" (password "pw-long-enough", PIN "1234"),
+/// a vault and one note whose body says "pelican".
+pub(crate) fn old_install(dir: &std::path::Path) {
+    use cord_core::accounts::password;
+    let conn = cord_core::rusqlite::Connection::open(dir.join("cord.db")).unwrap();
+    conn.execute_batch(include_str!("../../../../crates/cord-core/fixtures/legacy/v2.4.1.sql")).unwrap();
+    let body = json!({ "type": "doc", "content": [
+        { "type": "paragraph", "attrs": { "blockId": "b1" }, "content": [{ "type": "text", "text": "pelican" }] }
+    ]});
+    conn.execute(
+        "INSERT INTO users (id, username, password_hash, pin_hash, created_at) VALUES ('u1', 'ola', ?1, ?2, 1)",
+        [password::hash("pw-long-enough", 4).unwrap(), password::hash("1234", 4).unwrap()],
+    )
+    .unwrap();
+    conn.execute_batch(
+        "INSERT INTO app_state VALUES ('last_user_id', 'u1', 1);
+         INSERT INTO vaults (id, user_id, name, created_at, updated_at) VALUES ('v1', 'u1', 'Old vault', 1, 1);",
+    )
+    .unwrap();
+    conn.execute(
+        "INSERT INTO notes (id, vault_id, title, body_json, created_at, updated_at) VALUES ('n1', 'v1', 'Old note', ?1, 1, 2)",
+        [body.to_string()],
+    )
+    .unwrap();
+}
+
+#[test]
+fn an_old_install_opens_with_its_pin() {
+    let dir = tempfile::tempdir().unwrap();
+    old_install(dir.path());
+    let core: Shared = Arc::new(Core::open(dir.path().to_path_buf()).unwrap());
+    let app = with_commands!(mock_builder().manage(core)).build(mock_context(noop_assets())).unwrap();
+    let webview = WebviewWindowBuilder::new(&app, "main", Default::default()).build().unwrap();
+    let h = Harness { _dir: dir, _app: app, webview };
+
+    assert_eq!(h.ok("auth_lock_screen", json!({}))["lastUserId"], "u1");
+    assert_eq!(h.ok("auth_unlock_pin", json!({ "data": { "userId": "u1", "pin": "1234" } }))["ok"], true);
+    assert_eq!(h.ok("vaults_list", json!({}))[0]["name"], "Old vault");
+    assert_eq!(h.ok("notes_list", json!({ "vaultId": "v1" }))[0]["title"], "Old note");
+    assert_eq!(h.ok("notes_search", json!({ "vaultId": "v1", "query": "pelican" }))[0]["id"], "n1");
+    assert!(!h.body_state("n1").is_empty());
+}
+
 #[test]
 fn settings_and_attachments_need_a_user() {
     let h = harness();

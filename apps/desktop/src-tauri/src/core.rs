@@ -8,7 +8,7 @@ use cord_core::accounts::Accounts;
 use cord_core::layout::DataLayout;
 use cord_core::rusqlite::Connection;
 use cord_core::session::Session;
-use cord_core::{data_dir, device, store};
+use cord_core::{data_dir, device, import, store};
 use serde::Serialize;
 use serde_json::Value;
 
@@ -22,15 +22,22 @@ pub struct Core {
 }
 
 impl Core {
-    /// Opens `machine.db` under `root`. Refuses an old install nothing has
-    /// imported yet, so this build can never shadow someone's notes.
+    /// Opens `machine.db` under `root`, importing a Cord 2.x install first if
+    /// there is one.
     pub fn open(root: PathBuf) -> Result<Self, String> {
         if data_dir::has_unimported_legacy_db(&root) {
-            return Err(format!(
-                "This build of Cord can't open the notes in {} yet. They are untouched. \
-                 Use a released Cord, or set CORD_DATA_DIR to another folder.",
-                root.display()
-            ));
+            let old = root.join("cord.db");
+            let report = import::run(&root).map_err(|e| {
+                format!("Cord could not bring over the notes in {}. They are untouched.\n\n{e}", old.display())
+            })?;
+            eprintln!(
+                "[core] imported {} user(s), {} vault(s), {} note(s); {} image file(s) were already missing; {} note(s) had no vault or owner",
+                report.users,
+                report.vaults,
+                report.notes,
+                report.missing_files.len(),
+                report.not_imported_notes
+            );
         }
         let layout = DataLayout::new(root);
         let machine = store::open_machine(&layout).map_err(err)?;
@@ -124,12 +131,30 @@ mod tests {
     }
 
     #[test]
-    fn refuses_an_unimported_old_install() {
+    fn imports_an_old_install_once() {
         let d = tempfile::tempdir().unwrap();
-        std::fs::write(d.path().join("cord.db"), "").unwrap();
+        crate::ipc_tests::old_install(d.path());
+        let old = std::fs::read(d.path().join("cord.db")).unwrap();
+        drop(Core::open(d.path().to_path_buf()).unwrap());
+        assert!(d.path().join("machine.db").is_file());
+        assert!(d.path().join("users/u1/cord.db").is_file());
+        assert_eq!(std::fs::read(d.path().join("cord.db")).unwrap(), old, "the old file is untouched");
+        // Opening again does not import again.
+        let core = Core::open(d.path().to_path_buf()).unwrap();
+        core.sign_in("u1").unwrap();
+        assert_eq!(core.session(|s| vaults::list(s)).unwrap().len(), 1);
+    }
+
+    #[test]
+    fn a_failed_import_says_where_the_old_notes_are() {
+        let d = tempfile::tempdir().unwrap();
+        crate::ipc_tests::old_install(d.path());
+        let conn = cord_core::rusqlite::Connection::open(d.path().join("cord.db")).unwrap();
+        conn.execute("UPDATE notes SET body_json = '{broken'", []).unwrap();
+        drop(conn);
         let e = Core::open(d.path().to_path_buf()).err().unwrap();
-        assert!(e.contains("untouched"));
-        assert!(!d.path().join("machine.db").exists(), "nothing is created beside the old file");
+        assert!(e.contains("untouched") && e.contains("cord.db"), "{e}");
+        assert!(!d.path().join("machine.db").exists());
     }
 
     #[test]
