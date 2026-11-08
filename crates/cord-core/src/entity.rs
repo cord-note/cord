@@ -181,6 +181,16 @@ pub fn apply_body(conn: &Connection, note_id: &str, update: &[u8], hlc: &Hlc) ->
     Ok(true)
 }
 
+/// Store a note's whole body as it is, for the one-time import. Unlike
+/// `apply_body` it leaves the note's `updated_at` alone; the caller reindexes.
+pub fn seed_body(conn: &Connection, note_id: &str, state: &[u8], updated_at: i64) -> Result<()> {
+    conn.execute(
+        "INSERT INTO note_bodies (note_id, yjs_state, updated_at) VALUES (?1, ?2, ?3)",
+        params![note_id, state, updated_at],
+    )?;
+    Ok(())
+}
+
 /// The entity id a create row describes.
 pub fn row_id(entity: Entity, row: &Value) -> Result<String> {
     let parts = entity
@@ -378,6 +388,18 @@ mod tests {
         assert_eq!(text, "first");
         let state: Vec<u8> = c.query_row("SELECT yjs_state FROM note_bodies", [], |r| r.get(0)).unwrap();
         assert_eq!(state_to_json(&state).unwrap()["content"][0]["content"][0]["text"], "first");
+    }
+
+    #[test]
+    fn seed_body_keeps_the_notes_own_times() {
+        let (_d, db) = open();
+        let c = &db.conn;
+        note(c, "n1", 10);
+        seed_body(c, "n1", &body("imported"), 7).unwrap();
+        let (updated, at): (i64, i64) = c
+            .query_row("SELECT n.updated_at, b.updated_at FROM notes n JOIN note_bodies b ON b.note_id = n.id", [], |r| Ok((r.get(0)?, r.get(1)?)))
+            .unwrap();
+        assert_eq!((updated, at), (1, 7));
     }
 
     #[test]

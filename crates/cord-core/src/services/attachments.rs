@@ -78,7 +78,7 @@ fn unseal(stored: Vec<u8>) -> Result<Vec<u8>> {
     Ok(stored)
 }
 
-fn write_file(dir: &Path, sha: &str, bytes: &[u8]) -> Result<()> {
+pub(crate) fn write_file(dir: &Path, sha: &str, bytes: &[u8]) -> Result<()> {
     let path = dir.join(sha);
     if path.exists() {
         return Ok(());
