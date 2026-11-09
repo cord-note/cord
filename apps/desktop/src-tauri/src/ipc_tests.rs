@@ -25,12 +25,19 @@ fn harness() -> Harness {
     Harness { _dir: dir, _app: app, webview }
 }
 
+/// The app's own page address. Tauri only lets its own page call app commands,
+/// and that address is per platform: http on Windows, the custom scheme elsewhere.
+#[cfg(windows)]
+const APP_ORIGIN: &str = "http://tauri.localhost";
+#[cfg(not(windows))]
+const APP_ORIGIN: &str = "tauri://localhost";
+
 fn request(cmd: &str, body: InvokeBody, headers: tauri::http::HeaderMap) -> InvokeRequest {
     InvokeRequest {
         cmd: cmd.into(),
         callback: CallbackFn(0),
         error: CallbackFn(1),
-        url: "http://tauri.localhost".parse().unwrap(),
+        url: APP_ORIGIN.parse().unwrap(),
         body,
         headers,
         invoke_key: INVOKE_KEY.to_string(),
