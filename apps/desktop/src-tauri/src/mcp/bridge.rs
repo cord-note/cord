@@ -49,7 +49,7 @@ async fn forward(http: &reqwest::Client, token: &str, session: &mut Option<Strin
     if let Some(id) = session.as_deref() {
         req = req.header("mcp-session-id", id);
     }
-    let resp = req.send().await.map_err(|_| CLOSED.to_owned())?;
+    let resp = req.send().await.map_err(|e| closed(&e))?;
     if resp.status() == reqwest::StatusCode::UNAUTHORIZED {
         return Err(BAD_TOKEN.to_owned());
     }
@@ -57,8 +57,14 @@ async fn forward(http: &reqwest::Client, token: &str, session: &mut Option<Strin
         *session = Some(id.to_owned());
     }
     let content_type = resp.headers().get("content-type").and_then(|v| v.to_str().ok()).unwrap_or("").to_owned();
-    let body = resp.text().await.map_err(|_| CLOSED.to_owned())?;
+    let body = resp.text().await.map_err(|e| closed(&e))?;
     Ok(messages(&content_type, &body))
+}
+
+// The client shows stderr in its logs, so the real cause goes there.
+fn closed(e: &reqwest::Error) -> String {
+    eprintln!("cord --mcp: {e:?}");
+    CLOSED.to_owned()
 }
 
 fn read_port() -> Option<u16> {

@@ -494,7 +494,7 @@ impl CordMcp {
 impl ServerHandler for CordMcp {
     fn get_info(&self) -> ServerConfig {
         ServerConfig::new(ServerCapabilities::builder().enable_tools().build())
-            .with_server_info(Implementation::from_build_env())
+            .with_server_info(Implementation::new("cord", env!("CARGO_PKG_VERSION")))
             .with_instructions(
                 "Cord is a local note-taking app. Notes live in vaults; tags can carry fields \
                  (like a database). Use search, then read_note. Block ids appear as ^id at the \
