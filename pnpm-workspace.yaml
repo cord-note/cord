@@ -7,6 +7,7 @@ allowBuilds:
 
 minimumReleaseAgeExclude:
   - shuttle-editor@0.3.0
+  - shuttle-editor@0.5.0
 
 # @tiptap/y-tiptap imports prosemirror-transform but declares it in neither its
 # dependencies nor its peerDependencies, so under pnpm's strict layout it has
