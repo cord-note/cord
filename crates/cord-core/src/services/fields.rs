@@ -211,7 +211,7 @@ fn removed_at(s: &Session, field_id: &str, target_id: &str) -> Result<Option<Opt
         .optional()?)
 }
 
-pub(crate) fn require(s: &Session, id: &str) -> Result<TagField> {
+pub fn require(s: &Session, id: &str) -> Result<TagField> {
     let sql = format!("SELECT {COLUMNS} FROM tag_fields f WHERE f.id = ?1 AND f.deleted_at IS NULL");
     s.conn().query_row(&sql, [id], field).optional()?.ok_or_else(|| Error::NotFound(format!("field {id}")))
 }

@@ -47,6 +47,22 @@ pub fn merge_update(state: &[u8], update: &[u8]) -> Result<Vec<u8>> {
     Ok(txn.encode_state_as_update_v1(&StateVector::default()))
 }
 
+/// An update that adds `blocks` after the note's last block. A real edit, so
+/// it merges with whatever is being typed at the same time.
+pub fn append_blocks(state: &[u8], blocks: &[Value]) -> Result<Vec<u8>> {
+    let ydoc = Doc::new();
+    let frag = ydoc.get_or_insert_xml_fragment(FRAGMENT);
+    apply(&ydoc, state)?;
+    let before = ydoc.transact().state_vector();
+    {
+        let mut txn = ydoc.transact_mut();
+        let nodes: Vec<&Value> = blocks.iter().filter(|b| b.is_object()).collect();
+        write_children(&mut txn, &frag, &nodes)?;
+    }
+    let txn = ydoc.transact();
+    Ok(txn.encode_state_as_update_v1(&before))
+}
+
 fn bad(msg: impl ToString) -> Error {
     Error::BadDoc(msg.to_string())
 }
@@ -265,6 +281,20 @@ mod tests {
         assert_eq!(mark_name("comment--Ab3+/=9z"), "comment");
         assert_eq!(mark_name("bold"), "bold");
         assert_eq!(mark_name("a--short"), "a--short");
+    }
+
+    #[test]
+    fn appended_blocks_land_at_the_end_as_one_update() {
+        let state = json_to_state(&json!({ "type": "doc", "content": [
+            { "type": "paragraph", "attrs": { "blockId": "a" }, "content": [{ "type": "text", "text": "first" }] }
+        ]})).unwrap();
+        let more = vec![json!({ "type": "paragraph", "attrs": { "blockId": "b" }, "content": [{ "type": "text", "text": "second" }] })];
+        let update = append_blocks(&state, &more).unwrap();
+        let merged = merge_update(&state, &update).unwrap();
+        let doc = state_to_json(&merged).unwrap();
+        assert_eq!(doc["content"][0]["content"][0]["text"], "first");
+        assert_eq!(doc["content"][1]["content"][0]["text"], "second");
+        assert!(update.len() < merged.len(), "only the change, not the whole state");
     }
 
     #[test]

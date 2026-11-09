@@ -277,7 +277,7 @@ fn least_used_color(s: &Session, vault_id: &str) -> Result<String> {
     Ok(TAG_COLORS[best].to_owned())
 }
 
-pub(crate) fn require_live(s: &Session, id: &str) -> Result<Tag> {
+pub fn require_live(s: &Session, id: &str) -> Result<Tag> {
     let sql = format!("SELECT {COLUMNS} FROM tags t WHERE t.id = ?1 AND t.deleted_at IS NULL");
     s.conn().query_row(&sql, [id], tag).optional()?.ok_or_else(|| Error::NotFound(format!("tag {id}")))
 }
