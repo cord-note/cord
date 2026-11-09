@@ -389,3 +389,111 @@ export interface RawThemeScan {
   themes: RawTheme[];
   problems: ThemeFileProblem[];
 }
+
+// ─── Active tags ──────────────────────────────────────────────────────────────
+
+export type FieldType = 'text' | 'number' | 'checkbox' | 'select' | 'multi_select' | 'date';
+export const FIELD_TYPES: readonly FieldType[] = ['text', 'number', 'checkbox', 'select', 'multi_select', 'date'];
+
+export interface SelectOption {
+  id: string;
+  name: string;
+  color: string | null;
+}
+
+export interface TagField {
+  id: string;
+  tagId: string;
+  vaultId: string;
+  name: string;
+  type: FieldType;
+  options: SelectOption[];
+  sort: number;
+  createdAt: number;
+}
+
+export interface CreateFieldInput {
+  tagId: string;
+  name: string;
+  type: FieldType;
+  options?: SelectOption[] | undefined;
+}
+
+export interface UpdateFieldInput {
+  name?: string | undefined;
+  type?: FieldType | undefined;
+  options?: SelectOption[] | undefined;
+  sort?: number | undefined;
+}
+
+export type TargetKind = 'note' | 'block';
+
+export interface FieldValue {
+  fieldId: string;
+  targetId: string;
+  targetKind: TargetKind;
+  noteId: string;
+  value: unknown;
+}
+
+export interface SetFieldValueInput {
+  fieldId: string;
+  targetId: string;
+  targetKind: TargetKind;
+  noteId: string;
+  value: unknown;
+}
+
+export interface NoteFields {
+  fields: TagField[];
+  values: FieldValue[];
+}
+
+export type FilterOp = 'is' | 'isNot' | 'contains' | 'isEmpty' | 'isNotEmpty' | 'before' | 'after';
+
+export interface ViewFilter {
+  fieldId: string;
+  op: FilterOp;
+  value?: unknown;
+}
+
+/** `fieldId` is a field id, or `TITLE_COLUMN` for the title. */
+export interface ViewSort {
+  fieldId: string;
+  dir: 'asc' | 'desc';
+}
+
+export interface ViewConfig {
+  filters?: ViewFilter[] | undefined;
+  sort?: ViewSort | null | undefined;
+  /** Visible field ids in order; missing means every field. */
+  columns?: string[] | undefined;
+  /** The select field a board groups by. */
+  groupBy?: string | null | undefined;
+}
+
+export type ViewKind = 'table' | 'board';
+
+export interface TagView {
+  id: string;
+  tagId: string;
+  vaultId: string;
+  kind: ViewKind;
+  config: ViewConfig;
+  createdAt: number;
+}
+
+export interface UpdateViewInput {
+  kind?: ViewKind | undefined;
+  config?: ViewConfig | undefined;
+}
+
+export interface TagRow {
+  kind: TargetKind;
+  targetId: string;
+  noteId: string;
+  title: string;
+  text: string | null;
+  updatedAt: number;
+  values: Record<string, unknown>;
+}

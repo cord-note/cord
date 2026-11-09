@@ -28,7 +28,7 @@ const names = readdirSync(DIR)
 
 describe('cord-core Yjs fixtures', () => {
   test('there are fixtures to check', () => {
-    expect(names.length).toBe(5);
+    expect(names.length).toBe(6);
   });
 
   for (const name of names) {

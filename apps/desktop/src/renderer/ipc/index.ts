@@ -14,6 +14,8 @@ import type {
   AuthUser, LockScreenState, UnlockPinInput, PinUnlockResult, SetPinInput,
   ChangePasswordInput, IssueRecoveryKeyInput, RecoveryKeyResult, RecoverInput,
   ConfigFileName, ThemeLibraryScan, ThemeImportResult, RawThemeScan,
+  TagField, CreateFieldInput, UpdateFieldInput, SetFieldValueInput, NoteFields,
+  TagView, UpdateViewInput, TagRow,
 } from '@shared/types';
 import { assembleLibrary } from '@shared/theming/assembleLibrary';
 
@@ -42,6 +44,25 @@ export const api = {
     bodyState:        async (id: string)                         => new Uint8Array(await invoke<ArrayBuffer>('notes_body_state', { id })),
     /** Sends a Yjs update as raw bytes; returns the note with its body re-derived. */
     applyBodyUpdate:  (id: string, update: Uint8Array)           => invoke<Note>('notes_apply_body_update', update, { headers: { 'x-note-id': id } }),
+  },
+
+  fields: {
+    list:       (tagId: string)                                => invoke<TagField[]>('tag_fields_list', { tagId }),
+    create:     (data: CreateFieldInput)                       => invoke<TagField>('tag_fields_create', { data }),
+    update:     (fieldId: string, data: UpdateFieldInput)      => invoke<TagField>('tag_fields_update', { fieldId, data }),
+    delete:     (fieldId: string)                              => invoke<void>('tag_fields_delete', { fieldId }),
+    setValue:   (data: SetFieldValueInput)                     => invoke<void>('field_values_set', { data }),
+    clearValue: (fieldId: string, targetId: string)            => invoke<void>('field_values_clear', { fieldId, targetId }),
+    forNote:    (noteId: string)                               => invoke<NoteFields>('field_values_for_note', { noteId }),
+  },
+
+  views: {
+    page:   (tagId: string)                          => invoke<TagView>('tag_views_page', { tagId }),
+    get:    (viewId: string)                         => invoke<TagView | null>('tag_views_get', { viewId }),
+    create: (tagId: string)                          => invoke<TagView>('tag_views_create', { tagId }),
+    update: (viewId: string, data: UpdateViewInput)  => invoke<TagView>('tag_views_update', { viewId, data }),
+    delete: (viewId: string)                         => invoke<void>('tag_views_delete', { viewId }),
+    rows:   (tagId: string)                          => invoke<TagRow[]>('tag_rows', { tagId }),
   },
 
   blocks: {
