@@ -162,6 +162,8 @@ export function FragmentOverlay({ editor, noteId: _noteId, contentEl }: Props) {
               .map((f) => {
                 const text = displayText(f, blockValue(blockId, f.id));
                 const isOpen = editing?.blockId === blockId && editing.field.id === f.id;
+                // Only set values show here; the tag's table sets the rest.
+                if (!text && !isOpen) return null;
                 return (
                   <span key={`fv-${f.id}`} className={`${styles.valueChip} cord-chip cord-chip--value`}>
                     <button type="button" className={styles.chipName} onClick={() => setEditing(isOpen ? null : { blockId, field: f })}>

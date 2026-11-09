@@ -18,6 +18,7 @@
 .cellInput { background: transparent; color: var(--text-primary); border: 1px solid transparent; border-radius: var(--radius-sm); font: inherit; width: 100%; min-width: 80px; padding: 2px var(--space-1); }
 .cellInput:hover, .cellInput:focus { border-color: var(--border); background: var(--bg-input); outline: none; }
 select.cellInput { cursor: pointer; }
+.cellInput[data-empty='true']:not(:focus) { color: var(--text-muted); }
 
 .tableWrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-md); }
 .table { border-collapse: collapse; width: 100%; font-size: var(--text-sm); }
@@ -43,9 +44,26 @@ select.cellInput { cursor: pointer; }
 .pageTitle { display: flex; align-items: center; gap: var(--space-2); margin: 0; font-size: 1.5rem; font-weight: 600; color: var(--text-primary); }
 .pageDot { width: 12px; height: 12px; border-radius: var(--radius-full); flex: none; }
 .fieldsPanel { border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-3); background: var(--bg-panel); }
-.embed { border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-3); }
-.strip { display: flex; flex-direction: column; gap: var(--space-1); margin: 0 0 var(--space-3); }
-.stripRow { display: flex; align-items: center; gap: var(--space-3); font-size: var(--text-sm); }
+/* Option pills: a plain name you can type over, and a quiet remove button. */
+.fieldsPanel .pill { cursor: default; padding: 2px var(--space-1) 2px var(--space-2); }
+.fieldsPanel .pill input { background: transparent; border: 0; height: auto; width: 10ch; padding: 0; color: var(--text-primary); font: inherit; }
+.fieldsPanel .pill input:focus { outline: none; text-decoration: underline; }
+.fieldsPanel .pill .btn { border: 0; height: auto; padding: 0 var(--space-1); background: none; color: var(--text-muted); }
+.fieldsPanel .pill .btn:hover { color: var(--danger); }
+.embed { border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-3); font-family: var(--font-ui, inherit); }
+/* Inside a note, the editor's own table styles must not reach the view. */
+.embed .table { margin: 0; table-layout: auto; }
+.embed .table th, .embed .table td { border: 0; border-bottom: 1px solid var(--border); background: none; }
+.embed .table tr:last-child td { border-bottom: 0; }
+.embed p { margin: 0; }
+/* Lines up with the editor's title and tag rows. */
+.strip {
+  display: flex; flex-direction: column; gap: var(--space-1);
+  width: 100%; max-width: calc(var(--editor-line-width, 720px) + 96px); margin: 0 auto;
+  padding: 0 var(--space-12) var(--space-3); flex-shrink: 0;
+}
+.stripRow { display: flex; align-items: center; gap: var(--space-3); font-size: var(--text-sm); min-height: 26px; }
+.stripRow .cellInput { width: auto; min-width: 180px; }
 .stripLabel { color: var(--text-muted); min-width: 140px; }
 .stripToggle { align-self: flex-start; background: none; border: 0; padding: 0; color: var(--text-muted); font-size: var(--text-xs); cursor: pointer; }
 .stripToggle:hover { color: var(--text-primary); }

@@ -45,6 +45,7 @@ export function ValueEditor({ field, value, onCommit }: Props) {
         <input
           className={styles.cellInput}
           type="date"
+          data-empty={v === null}
           value={typeof v === 'string' ? v.slice(0, 10) : ''}
           onChange={(e) => onCommit(e.target.value === '' ? null : e.target.value)}
           aria-label={field.name}
