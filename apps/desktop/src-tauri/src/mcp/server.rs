@@ -149,6 +149,30 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn the_bridge_survives_a_server_restart() {
+        use crate::mcp::bridge::Link;
+        let w = world();
+        let (s, token) = settings(&w, false);
+        let port_file = w._dir.path().join("mcp-test.json");
+        let first = start(w.core.clone(), None, w.user.clone(), s.clone()).await.unwrap();
+        std::fs::write(&port_file, serde_json::json!({ "port": first.port }).to_string()).unwrap();
+        let mut link = Link::new(port_file.clone(), &token);
+        let init = r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"t","version":"0"}}}"#;
+        assert!(link.forward(init).await.unwrap()[0].contains("\"result\""));
+        link.forward(r#"{"jsonrpc":"2.0","method":"notifications/initialized"}"#).await.unwrap();
+        let list = r#"{"jsonrpc":"2.0","id":2,"method":"tools/list"}"#;
+        assert!(link.forward(list).await.unwrap()[0].contains("read_note"));
+
+        // Lock and unlock: a new server on a new port, which knows no sessions.
+        first.cancel.cancel();
+        let second = start(w.core.clone(), None, w.user.clone(), s).await.unwrap();
+        std::fs::write(&port_file, serde_json::json!({ "port": second.port }).to_string()).unwrap();
+        let again = link.forward(r#"{"jsonrpc":"2.0","id":3,"method":"tools/list"}"#).await.unwrap();
+        assert!(again[0].contains("read_note"), "{again:?}");
+        second.cancel.cancel();
+    }
+
+    #[tokio::test]
     async fn no_token_or_a_browser_is_refused() {
         let w = world();
         let (s, token) = settings(&w, false);

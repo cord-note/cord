@@ -16,21 +16,21 @@ pub fn run() -> i32 {
 }
 
 async fn relay() -> i32 {
-    let token = std::env::var("CORD_MCP_TOKEN").unwrap_or_default().trim().to_owned();
-    let http = reqwest::Client::new();
-    let mut session: Option<String> = None;
+    let token = std::env::var("CORD_MCP_TOKEN").unwrap_or_default();
+    let mut link = Link::new(cord_core::data_dir::resolve().join(PORT_FILE), &token);
     let mut lines = BufReader::new(tokio::io::stdin()).lines();
     let mut out = tokio::io::stdout();
     while let Ok(Some(line)) = lines.next_line().await {
         if line.trim().is_empty() {
             continue;
         }
-        let replies = match forward(&http, &token, &mut session, &line).await {
+        let replies = match link.forward(&line).await {
             Ok(r) => r,
             Err(msg) => error_reply(&line, &msg).into_iter().collect(),
         };
         for r in replies {
-            if out.write_all(format!("{r}\n").as_bytes()).await.is_err() || out.flush().await.is_err() {
+            if out.write_all(format!("{r}
+").as_bytes()).await.is_err() || out.flush().await.is_err() {
                 return 1;
             }
         }
@@ -38,27 +38,89 @@ async fn relay() -> i32 {
     0
 }
 
-async fn forward(http: &reqwest::Client, token: &str, session: &mut Option<String>, line: &str) -> Result<Vec<String>, String> {
-    let port = read_port().ok_or_else(|| CLOSED.to_owned())?;
-    let mut req = http
-        .post(format!("http://127.0.0.1:{port}/mcp"))
-        .header("content-type", "application/json")
-        .header("accept", "application/json, text/event-stream")
-        .bearer_auth(token)
-        .body(line.to_owned());
-    if let Some(id) = session.as_deref() {
-        req = req.header("mcp-session-id", id);
+/// One client's connection to the app. Locking and unlocking Cord restarts the
+/// server on a new port, which forgets the client's session; the link then
+/// replays the client's `initialize` so the client never notices.
+pub struct Link {
+    http: reqwest::Client,
+    port_file: std::path::PathBuf,
+    token: String,
+    port: Option<u16>,
+    session: Option<String>,
+    init: Option<String>,
+}
+
+const INITIALIZED: &str = r#"{"jsonrpc":"2.0","method":"notifications/initialized"}"#;
+
+impl Link {
+    pub fn new(port_file: std::path::PathBuf, token: &str) -> Self {
+        Link { http: reqwest::Client::new(), port_file, token: token.trim().to_owned(), port: None, session: None, init: None }
     }
-    let resp = req.send().await.map_err(|e| failure(&e))?;
-    if resp.status() == reqwest::StatusCode::UNAUTHORIZED {
-        return Err(BAD_TOKEN.to_owned());
+
+    pub async fn forward(&mut self, line: &str) -> Result<Vec<String>, String> {
+        let is_init = serde_json::from_str::<Value>(line).ok().and_then(|v| v.get("method").cloned()) == Some(json!("initialize"));
+        if is_init {
+            self.init = Some(line.to_owned());
+            self.session = None;
+        }
+        let port = read_port(&self.port_file).ok_or_else(|| CLOSED.to_owned())?;
+        if self.port.is_some_and(|p| p != port) && !is_init {
+            self.reconnect(port).await?;
+        }
+        self.port = Some(port);
+        match self.send(port, line).await? {
+            Sent::Lost if !is_init && self.init.is_some() => {
+                self.reconnect(port).await?;
+                match self.send(port, line).await? {
+                    Sent::Ok(r) => Ok(r),
+                    Sent::Lost => Err(CLOSED.to_owned()),
+                }
+            }
+            Sent::Lost => Err(CLOSED.to_owned()),
+            Sent::Ok(r) => Ok(r),
+        }
     }
-    if let Some(id) = resp.headers().get("mcp-session-id").and_then(|v| v.to_str().ok()) {
-        *session = Some(id.to_owned());
+
+    /// Start a fresh session with the client's own `initialize`.
+    async fn reconnect(&mut self, port: u16) -> Result<(), String> {
+        self.session = None;
+        let Some(init) = self.init.clone() else { return Ok(()) };
+        self.send(port, &init).await?;
+        self.send(port, INITIALIZED).await?;
+        Ok(())
     }
-    let content_type = resp.headers().get("content-type").and_then(|v| v.to_str().ok()).unwrap_or("").to_owned();
-    let body = resp.text().await.map_err(|e| failure(&e))?;
-    Ok(messages(&content_type, &body))
+
+    async fn send(&mut self, port: u16, line: &str) -> Result<Sent, String> {
+        let mut req = self
+            .http
+            .post(format!("http://127.0.0.1:{port}/mcp"))
+            .header("content-type", "application/json")
+            .header("accept", "application/json, text/event-stream")
+            .bearer_auth(&self.token)
+            .body(line.to_owned());
+        if let Some(id) = self.session.as_deref() {
+            req = req.header("mcp-session-id", id);
+        }
+        let resp = req.send().await.map_err(|e| failure(&e))?;
+        if resp.status() == reqwest::StatusCode::UNAUTHORIZED {
+            return Err(BAD_TOKEN.to_owned());
+        }
+        // A session the server doesn't know (it restarted).
+        if self.session.is_some() && matches!(resp.status().as_u16(), 400 | 404) {
+            return Ok(Sent::Lost);
+        }
+        if let Some(id) = resp.headers().get("mcp-session-id").and_then(|v| v.to_str().ok()) {
+            self.session = Some(id.to_owned());
+        }
+        let content_type = resp.headers().get("content-type").and_then(|v| v.to_str().ok()).unwrap_or("").to_owned();
+        let body = resp.text().await.map_err(|e| failure(&e))?;
+        Ok(Sent::Ok(messages(&content_type, &body)))
+    }
+}
+
+enum Sent {
+    Ok(Vec<String>),
+    Lost,
 }
 
 // The client shows stderr in its logs, so the real cause goes there. The URL
@@ -68,8 +130,8 @@ fn failure(e: &reqwest::Error) -> String {
     if e.is_builder() { BAD_TOKEN } else { CLOSED }.to_owned()
 }
 
-fn read_port() -> Option<u16> {
-    let text = std::fs::read_to_string(cord_core::data_dir::resolve().join(PORT_FILE)).ok()?;
+fn read_port(file: &std::path::Path) -> Option<u16> {
+    let text = std::fs::read_to_string(file).ok()?;
     let v: Value = serde_json::from_str(&text).ok()?;
     u16::try_from(v.get("port")?.as_u64()?).ok()
 }
