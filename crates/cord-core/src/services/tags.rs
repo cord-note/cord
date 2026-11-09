@@ -178,6 +178,16 @@ pub fn merge_duplicates(s: &mut Session, vault_id: &str) -> Result<usize> {
                 attach_block_in(w, vault_id, &block, &note, keep)?;
                 detach_block_in(w, vault_id, &block, dup)?;
             }
+            for field in column(w, "SELECT id FROM tag_fields WHERE tag_id = ?1 AND deleted_at IS NULL ORDER BY id", dup)? {
+                w.set(Entity::TagField, vault_id, &field, "tag_id", json!(keep))?;
+            }
+            // The duplicate's own page view stays: the keeper's page has its own.
+            let page = crate::services::views::page_view_id(dup);
+            for view in column(w, "SELECT id FROM tag_views WHERE tag_id = ?1 AND deleted_at IS NULL ORDER BY id", dup)? {
+                if view != page {
+                    w.set(Entity::TagView, vault_id, &view, "tag_id", json!(keep))?;
+                }
+            }
             let now = w.now();
             w.set(Entity::Tag, vault_id, dup, "deleted_at", json!(now))?;
         }
@@ -353,7 +363,20 @@ mod tests {
             attach_block_in(w, "v1", "blk", &n, "tB")
         })
         .unwrap();
+        s.write(|w| {
+            w.create(Entity::TagField, "v1", json!({ "id": "fB", "tag_id": "tB", "vault_id": "v1", "name": "Status",
+                "type": "text", "options": "[]", "sort": 0, "created_at": 1 }))?;
+            w.create(Entity::TagView, "v1", json!({ "id": "tB-page", "tag_id": "tB", "vault_id": "v1", "kind": "table",
+                "config": "{}", "created_at": 1 }))?;
+            w.create(Entity::TagView, "v1", json!({ "id": "embed1", "tag_id": "tB", "vault_id": "v1", "kind": "table",
+                "config": "{}", "created_at": 1 }))
+        })
+        .unwrap();
         assert_eq!(merge_duplicates(&mut s, "v1").unwrap(), 1);
+        let field_tag: String = s.conn().query_row("SELECT tag_id FROM tag_fields WHERE id = 'fB'", [], |r| r.get(0)).unwrap();
+        let embed_tag: String = s.conn().query_row("SELECT tag_id FROM tag_views WHERE id = 'embed1'", [], |r| r.get(0)).unwrap();
+        let page_tag: String = s.conn().query_row("SELECT tag_id FROM tag_views WHERE id = 'tB-page'", [], |r| r.get(0)).unwrap();
+        assert_eq!((field_tag.as_str(), embed_tag.as_str(), page_tag.as_str()), ("tA", "tA", "tB"), "the old page view stays put");
         assert_eq!(list(&s, "v1").unwrap().iter().map(|t| t.id.as_str()).collect::<Vec<_>>(), ["tA"]);
         assert_eq!(for_note(&s, &n).unwrap()[0].id, "tA");
         let block_tag: String = s.conn().query_row("SELECT tag_id FROM block_tags WHERE removed_at IS NULL", [], |r| r.get(0)).unwrap();

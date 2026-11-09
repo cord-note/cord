@@ -2,7 +2,9 @@
 
 pub mod annotations;
 pub mod attachments;
+pub mod fields;
 pub mod notes;
 pub mod queries;
 pub mod tags;
 pub mod vaults;
+pub mod views;

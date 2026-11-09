@@ -1,7 +1,9 @@
 //! Values handed across the IPC boundary (camelCase JSON, as the TS types),
 //! and the plain inputs services take.
 
-use serde::Serialize;
+use std::collections::BTreeMap;
+
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
@@ -183,4 +185,100 @@ pub struct NewBlockLink {
     pub from_note_id: String,
     pub to_note_id: Option<String>,
     pub to_block_id: Option<String>,
+}
+
+/// One choice of a select field. Its id survives renames.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SelectOption {
+    pub id: String,
+    pub name: String,
+    pub color: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TagField {
+    pub id: String,
+    pub tag_id: String,
+    pub vault_id: String,
+    pub name: String,
+    #[serde(rename = "type")]
+    pub kind: String,
+    pub options: Vec<SelectOption>,
+    pub sort: i64,
+    pub created_at: i64,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct NewField {
+    pub tag_id: String,
+    pub name: String,
+    pub kind: String,
+    pub options: Vec<SelectOption>,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct FieldChanges {
+    pub name: Option<String>,
+    pub kind: Option<String>,
+    pub options: Option<Vec<SelectOption>>,
+    pub sort: Option<i64>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FieldValue {
+    pub field_id: String,
+    pub target_id: String,
+    pub target_kind: String,
+    pub note_id: String,
+    pub value: Value,
+}
+
+#[derive(Debug, Clone)]
+pub struct SetValue {
+    pub field_id: String,
+    pub target_id: String,
+    pub target_kind: String,
+    pub note_id: String,
+    pub value: Value,
+}
+
+/// The fields of every tag on a note or its blocks, and the values shown now.
+#[derive(Debug, Clone, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NoteFields {
+    pub fields: Vec<TagField>,
+    pub values: Vec<FieldValue>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TagView {
+    pub id: String,
+    pub tag_id: String,
+    pub vault_id: String,
+    pub kind: String,
+    pub config: Value,
+    pub created_at: i64,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct ViewChanges {
+    pub kind: Option<String>,
+    pub config: Option<Value>,
+}
+
+/// One row of a tag's table: a tagged note, or a tagged block in a live note.
+#[derive(Debug, Clone, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TagRow {
+    pub kind: String,
+    pub target_id: String,
+    pub note_id: String,
+    pub title: String,
+    pub text: Option<String>,
+    pub updated_at: i64,
+    pub values: BTreeMap<String, Value>,
 }
