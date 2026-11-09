@@ -14,6 +14,8 @@ import Editor from '../components/Editor';
 import Dither from '../components/Dither';
 import { TagPage } from '../components/tags/TagPage';
 import { TagViewPicker } from '../components/tags/TagViewPicker';
+import AgentsView from '../components/agents/AgentsView';
+import { useAgentsStore } from '../store/agents';
 import { useFragmentStore } from '../store/fragments';
 import styles from './NotesPage.module.css';
 
@@ -106,6 +108,17 @@ export default function NotesPage() {
     return () => { cancelled = true; stop?.(); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Agent status and calls, for the sidebar and the Agents view.
+  useEffect(() => useAgentsStore.getState().follow(), []);
+
+  // An agent's row opens its note, in whichever vault it lives.
+  const openFromAgent = (vaultId: string, noteId: string): void => {
+    if (vaultId !== useVaultStore.getState().activeVaultId) setActiveVault(vaultId);
+    setView('notes');
+    void setActiveNote(noteId);
+    void loadLinks(noteId);
+  };
+
   // Toggle panel from command palette
   useEffect(() => {
     const onToggle = () => setPanelCollapsed((v) => !v);
@@ -123,6 +136,7 @@ export default function NotesPage() {
   function renderMain() {
     if (view === 'settings') return <SettingsPage />;
     if (view === 'trash')    return <TrashView />;
+    if (view === 'agents')   return <AgentsView onOpenNote={openFromAgent} />;
     if (view === 'tag' && tagPageId) return <TagPage tagId={tagPageId} onOpen={openFromTag} />;
     if (activeNote) {
       // Body is fetched asynchronously after selection — wait for it before

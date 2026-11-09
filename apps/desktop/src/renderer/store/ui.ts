@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type AppView = 'notes' | 'trash' | 'settings' | 'tag';
+export type AppView = 'notes' | 'trash' | 'settings' | 'tag' | 'agents';
 export type SettingsTab = 'appearance' | 'app' | 'vault' | 'tags';
 
 interface UIStore {

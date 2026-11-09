@@ -93,13 +93,18 @@ pub async fn reconcile(core: Shared, events: Option<tauri::AppHandle>, state: &M
         let _ = std::fs::remove_file(&port_file);
     }
     if let Some((user, settings)) = want {
-        match start(core.clone(), events, user, settings).await {
+        match start(core.clone(), events.clone(), user, settings).await {
             Ok(r) => {
                 let _ = std::fs::write(&port_file, serde_json::json!({ "port": r.port }).to_string());
                 *running = Some(r);
             }
             Err(e) => eprintln!("[mcp] could not start the agent server: {e}"),
         }
+    }
+    // The sidebar and the Agents page show whether the server runs.
+    if let Some(app) = &events {
+        use tauri::Emitter;
+        let _ = app.emit("agents-status", serde_json::json!({ "port": running.as_ref().map(|r| r.port) }));
     }
 }
 

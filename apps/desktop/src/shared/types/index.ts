@@ -523,4 +523,6 @@ export interface AgentActivity {
   target: string | null;
   ok: boolean;
   error: string | null;
+  /** The note the call touched, when the target names one (or one of its blocks). */
+  note: { id: string; title: string; vaultId: string; deleted: boolean } | null;
 }

@@ -38,6 +38,7 @@ pub struct CordMcp {
 
 #[derive(Debug, Deserialize, rmcp::schemars::JsonSchema)]
 #[schemars(crate = "rmcp::schemars")]
+#[serde(rename_all = "camelCase")]
 pub struct SearchParams {
     /// Words to look for in titles and text.
     pub query: String,
@@ -47,24 +48,28 @@ pub struct SearchParams {
 
 #[derive(Debug, Deserialize, rmcp::schemars::JsonSchema)]
 #[schemars(crate = "rmcp::schemars")]
+#[serde(rename_all = "camelCase")]
 pub struct NoteParams {
     pub note_id: String,
 }
 
 #[derive(Debug, Deserialize, rmcp::schemars::JsonSchema)]
 #[schemars(crate = "rmcp::schemars")]
+#[serde(rename_all = "camelCase")]
 pub struct VaultParams {
     pub vault_id: String,
 }
 
 #[derive(Debug, Deserialize, rmcp::schemars::JsonSchema)]
 #[schemars(crate = "rmcp::schemars")]
+#[serde(rename_all = "camelCase")]
 pub struct TagParams {
     pub tag_id: String,
 }
 
 #[derive(Debug, Deserialize, rmcp::schemars::JsonSchema)]
 #[schemars(crate = "rmcp::schemars")]
+#[serde(rename_all = "camelCase")]
 pub struct CreateNoteParams {
     pub vault_id: String,
     pub title: String,
@@ -76,6 +81,7 @@ pub struct CreateNoteParams {
 
 #[derive(Debug, Deserialize, rmcp::schemars::JsonSchema)]
 #[schemars(crate = "rmcp::schemars")]
+#[serde(rename_all = "camelCase")]
 pub struct AppendParams {
     pub note_id: String,
     /// Markdown added after the note's last block.
@@ -84,6 +90,7 @@ pub struct AppendParams {
 
 #[derive(Debug, Deserialize, rmcp::schemars::JsonSchema)]
 #[schemars(crate = "rmcp::schemars")]
+#[serde(rename_all = "camelCase")]
 pub struct SetFieldParams {
     pub field_id: String,
     /// A note id, or a block id from read_note (the ^id at a block's end).
@@ -95,6 +102,7 @@ pub struct SetFieldParams {
 
 #[derive(Debug, Deserialize, rmcp::schemars::JsonSchema)]
 #[schemars(crate = "rmcp::schemars")]
+#[serde(rename_all = "camelCase")]
 pub struct TagTargetParams {
     /// A note id, or a block id from read_note.
     pub target_id: String,
@@ -203,7 +211,9 @@ impl CordMcp {
     async fn create_note(&self, Parameters(p): Parameters<CreateNoteParams>) -> Result<CallToolResult, McpError> {
         let title = p.title.clone();
         let r = self.do_create_note(p).await;
-        self.finish("create_note", Some(&title), r)
+        // Log the new note's id, so the activity list can link to it.
+        let target = r.as_ref().ok().and_then(|v| v["noteId"].as_str().map(str::to_owned)).unwrap_or(title);
+        self.finish("create_note", Some(&target), r)
     }
 
     #[tool(description = "Add Markdown to the end of a note.")]
@@ -271,6 +281,7 @@ impl CordMcp {
             error: result.as_ref().err().map(|e| e.message.to_string()),
         };
         let _ = agents::log_activity(&self.core.layout, &self.user, &entry);
+        self.emit("agent-activity", json!(entry));
         let value = result?;
         let text = serde_json::to_string_pretty(&value).unwrap_or_default();
         Ok(CallToolResult::success(vec![ContentBlock::text(text)]))
@@ -554,6 +565,16 @@ pub(crate) mod tests {
     pub(crate) fn server(w: &World, edit: bool) -> CordMcp {
         let access = Access { vaults: [w.open.clone()].into_iter().collect(), edit };
         CordMcp::new(w.core.clone(), None, w.user.clone(), Arc::new(access))
+    }
+
+    #[test]
+    fn arguments_are_camel_case() {
+        let w = world();
+        let tools = server(&w, true).tool_router.list_all();
+        let read = tools.iter().find(|t| t.name == "read_note").unwrap();
+        assert!(read.input_schema["properties"].get("noteId").is_some());
+        let tag = tools.iter().find(|t| t.name == "tag").unwrap();
+        assert!(tag.input_schema["properties"].get("targetId").is_some());
     }
 
     #[tokio::test]

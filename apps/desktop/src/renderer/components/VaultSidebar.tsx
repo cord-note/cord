@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Database, Trash2, Settings, Lock, Plus, Link2, GripVertical, FolderOpen, Archive } from 'lucide-react';
+import { Database, Trash2, Settings, Lock, Plus, Link2, GripVertical, FolderOpen, Archive, Bot } from 'lucide-react';
 import { useVaultStore } from '../store/vaults';
 import { useNoteStore } from '../store/notes';
 import { useTagStore } from '../store/tags';
 import { useAuthStore } from '../store/auth';
 import { useUIStore } from '../store/ui';
+import { useAgentsStore } from '../store/agents';
 import { useSetting } from '../settings';
 import { randomVaultColor } from '@shared/constants/vaultColors';
 import { openContextMenu, type MenuEntry } from '../store/contextMenu';
@@ -42,6 +43,16 @@ export default function VaultSidebar({ activeView, onOpenTrash }: Props) {
   const lock = useAuthStore((s) => s.lock);
   const { openSettings, view, setView } = useUIStore();
   const distinctVaultColors = useSetting('vaults.distinctColors');
+  const agentsRunning = useAgentsStore((s) => !!s.state?.allow && s.state.port !== null);
+  const lastCallAt = useAgentsStore((s) => s.lastCallAt);
+  // Flash the Agents icon briefly whenever an agent calls Cord.
+  const [agentFlash, setAgentFlash] = useState(false);
+  useEffect(() => {
+    if (!lastCallAt) return;
+    setAgentFlash(true);
+    const t = setTimeout(() => setAgentFlash(false), 900);
+    return () => clearTimeout(t);
+  }, [lastCallAt]);
 
   const userInitial = user?.username?.[0]?.toUpperCase() ?? '?';
 
@@ -282,6 +293,18 @@ export default function VaultSidebar({ activeView, onOpenTrash }: Props) {
             >
               <Link2 size={17} strokeWidth={1.75} className={styles.navIcon} />
               {expanded && <span className={styles.navLabel}>Connections</span>}
+            </button>
+
+            <button
+              className={`${styles.navBtn} cord-sidebar__item ${view === 'agents' ? `${styles.navActive} cord-sidebar__item--active` : ''}`}
+              onClick={() => setView(view === 'agents' ? 'notes' : 'agents')}
+              title={agentsRunning ? 'Agents (running)' : 'Agents'}
+            >
+              <span className={styles.agentIcon}>
+                <Bot size={17} strokeWidth={1.75} className={styles.navIcon} />
+                {agentsRunning && <span className={`${styles.agentDot} ${agentFlash ? styles.agentDotFlash : ''}`} />}
+              </span>
+              {expanded && <span className={styles.navLabel}>Agents</span>}
             </button>
           </nav>
 

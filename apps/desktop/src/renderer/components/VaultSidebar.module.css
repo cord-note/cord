@@ -400,3 +400,12 @@
   background: var(--danger-hover-bg);
   color: var(--danger);
 }
+
+/* Agents: a dot on the icon while the server runs; it flashes on each call. */
+.agentIcon { position: relative; display: inline-flex; }
+.agentDot {
+  position: absolute; right: -2px; bottom: -1px; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--accent); box-shadow: 0 0 0 2px var(--bg-sidebar);
+  transition: transform var(--duration-base) var(--ease-out);
+}
+.agentDotFlash { transform: scale(1.6); }
