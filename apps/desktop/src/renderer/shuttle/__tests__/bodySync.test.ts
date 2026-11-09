@@ -1,6 +1,23 @@
 import { describe, it, expect } from 'bun:test';
 import * as Y from 'yjs';
-import { BodySync, LOAD, REMOTE, loadDoc } from '../bodySync';
+import { BodySync, LOAD, REMOTE, applyRemoteUpdate, loadDoc } from '../bodySync';
+
+describe('applyRemoteUpdate', () => {
+  it('merges an agent edit into the open note without sending it back', async () => {
+    const doc = new Y.Doc();
+    const sent: Uint8Array[] = [];
+    const sync = new BodySync('n1', doc, async (_id, u) => { sent.push(u); }, () => 0);
+    const other = new Y.Doc();
+    other.getXmlFragment('default').insert(0, [new Y.XmlElement('paragraph')]);
+    const update = Y.encodeStateAsUpdate(other);
+
+    expect(applyRemoteUpdate(doc, 'n1', { noteId: 'n2', update: Array.from(update) })).toBe(false);
+    expect(applyRemoteUpdate(doc, 'n1', { noteId: 'n1', update: Array.from(update) })).toBe(true);
+    expect(doc.getXmlFragment('default').length).toBe(1);
+    await sync.flush();
+    expect(sent).toHaveLength(0);
+  });
+});
 
 const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
 

@@ -4,6 +4,19 @@ import * as Y from 'yjs';
 export const LOAD = 'load';
 export const REMOTE = 'remote';
 
+/** What the shell sends when an agent changed a note's body. */
+export interface BodyChanged {
+  noteId: string;
+  update: number[];
+}
+
+/** Merge an agent's edit into the open note's doc. False when it is for another note. */
+export function applyRemoteUpdate(doc: Y.Doc, noteId: string, payload: BodyChanged): boolean {
+  if (payload.noteId !== noteId) return false;
+  Y.applyUpdate(doc, Uint8Array.from(payload.update), REMOTE);
+  return true;
+}
+
 /** A note's Y.Doc from the state cord-core stored; empty bytes give an empty doc. */
 export function loadDoc(state: Uint8Array): Y.Doc {
   const doc = new Y.Doc();

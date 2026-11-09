@@ -16,6 +16,7 @@ import type {
   ConfigFileName, ThemeLibraryScan, ThemeImportResult, RawThemeScan,
   TagField, CreateFieldInput, UpdateFieldInput, SetFieldValueInput, NoteFields,
   TagView, UpdateViewInput, TagRow,
+  AgentsState, UpdateAgentsInput, AgentActivity,
 } from '@shared/types';
 import { assembleLibrary } from '@shared/theming/assembleLibrary';
 
@@ -63,6 +64,13 @@ export const api = {
     update: (viewId: string, data: UpdateViewInput)  => invoke<TagView>('tag_views_update', { viewId, data }),
     delete: (viewId: string)                         => invoke<void>('tag_views_delete', { viewId }),
     rows:   (tagId: string)                          => invoke<TagRow[]>('tag_rows', { tagId }),
+  },
+
+  agents: {
+    get:      ()                        => invoke<AgentsState>('agents_get'),
+    update:   (data: UpdateAgentsInput) => invoke<AgentsState>('agents_update', { data }),
+    newToken: ()                        => invoke<{ token: string }>('agents_new_token'),
+    activity: ()                        => invoke<AgentActivity[]>('agents_activity'),
   },
 
   blocks: {

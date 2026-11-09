@@ -497,3 +497,30 @@ export interface TagRow {
   updatedAt: number;
   values: Record<string, unknown>;
 }
+
+// ─── Agents (MCP) ─────────────────────────────────────────────────────────────
+
+export interface AgentsState {
+  allow: boolean;
+  edit: boolean;
+  vaults: string[];
+  hasToken: boolean;
+  /** The local server's port while it runs. */
+  port: number | null;
+  /** This Cord executable, for the client config. */
+  exe: string;
+}
+
+export interface UpdateAgentsInput {
+  allow: boolean;
+  edit: boolean;
+  vaults: string[];
+}
+
+export interface AgentActivity {
+  at: number;
+  tool: string;
+  target: string | null;
+  ok: boolean;
+  error: string | null;
+}

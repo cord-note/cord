@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
+import { listen } from '@tauri-apps/api/event';
 import { useVaultStore } from '../store/vaults';
 import { useNoteStore, isNoteBodyLoaded } from '../store/notes';
 import { useTagStore } from '../store/tags';
@@ -93,6 +94,17 @@ export default function NotesPage() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openSettings, setView, view, vaults, activeVaultId, setActiveVault]);
+
+  // An agent created, tagged or trashed notes: refresh the list and tags.
+  useEffect(() => {
+    let stop: (() => void) | null = null;
+    let cancelled = false;
+    void listen<{ vaultId: string }>('notes-changed', (e) => {
+      const vid = useVaultStore.getState().activeVaultId;
+      if (vid && e.payload.vaultId === vid) { void loadNotes(vid); void loadTags(vid); }
+    }).then((unlisten) => { if (cancelled) unlisten(); else stop = unlisten; });
+    return () => { cancelled = true; stop?.(); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Toggle panel from command palette
   useEffect(() => {

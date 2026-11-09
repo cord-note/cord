@@ -23,7 +23,8 @@ import { log } from '../lib/log';
 import { createCordHost } from '../shuttle/cordHost';
 import { outboundMentions as findOutboundMentions } from '../shuttle/outboundMentions';
 import type * as Y from 'yjs';
-import { BodySync, loadDoc } from '../shuttle/bodySync';
+import { BodySync, applyRemoteUpdate, loadDoc, type BodyChanged } from '../shuttle/bodySync';
+import { listen } from '@tauri-apps/api/event';
 import type { Note } from '@shared/types';
 import styles from './Editor.module.css';
 
@@ -155,6 +156,17 @@ export default function Editor({ note }: Props) {
       sync?.dispose().catch(() => undefined);
     };
   }, [note.id, loadLinks]);
+
+  // An agent edited this note: merge its update so the text appears live.
+  useEffect(() => {
+    const doc = body?.noteId === note.id ? body.doc : null;
+    if (!doc) return;
+    let stop: (() => void) | null = null;
+    let cancelled = false;
+    void listen<BodyChanged>('note-body-changed', (e) => { applyRemoteUpdate(doc, note.id, e.payload); })
+      .then((unlisten) => { if (cancelled) unlisten(); else stop = unlisten; });
+    return () => { cancelled = true; stop?.(); };
+  }, [body, note.id]);
 
   const handleReady = useCallback((e: ShuttleEditorInstance | null, c: ShuttleControls | null) => {
     setEditor(e);
