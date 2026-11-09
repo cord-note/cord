@@ -20,7 +20,9 @@ struct Harness {
 fn harness() -> Harness {
     let dir = tempfile::tempdir().unwrap();
     let core: Shared = Arc::new(Core::open(dir.path().to_path_buf()).unwrap());
-    let app = with_commands!(mock_builder().manage(core)).build(mock_context(noop_assets())).unwrap();
+    let app = with_commands!(mock_builder().manage(core).manage(crate::mcp::server::McpState::default()))
+        .build(mock_context(noop_assets()))
+        .unwrap();
     let webview = WebviewWindowBuilder::new(&app, "main", Default::default()).build().unwrap();
     Harness { _dir: dir, _app: app, webview }
 }
@@ -241,6 +243,21 @@ fn tag_fields_and_views_through_ipc() {
     h.ok("tag_fields_update", json!({ "fieldId": field["id"], "data": { "name": "State" } }));
     assert_eq!(h.ok("tag_fields_list", json!({ "tagId": tag["id"] }))[0]["name"], "State");
     h.ok("tag_fields_delete", json!({ "fieldId": field["id"] }));
+}
+
+#[test]
+fn agent_settings_through_ipc() {
+    let h = harness();
+    h.ok("auth_register", json!({ "data": { "username": "ola", "password": "pw-long-enough" } }));
+    let vault = h.ok("vaults_create", json!({ "data": { "name": "V" } }));
+    let start = h.ok("agents_get", json!({}));
+    assert_eq!((start["allow"].as_bool(), start["hasToken"].as_bool()), (Some(false), Some(false)));
+    let token = h.ok("agents_new_token", json!({}))["token"].as_str().unwrap().to_owned();
+    assert_eq!(token.len(), 32);
+    let saved = h.ok("agents_update", json!({ "data": { "allow": true, "edit": false, "vaults": [vault["id"]] } }));
+    assert_eq!((saved["allow"].as_bool(), saved["hasToken"].as_bool()), (Some(true), Some(true)));
+    assert!(saved.get("tokenHash").is_none(), "the hash never leaves the shell");
+    assert!(h.ok("agents_activity", json!({})).as_array().unwrap().is_empty());
 }
 
 #[test]

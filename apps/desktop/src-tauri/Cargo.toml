@@ -42,5 +42,5 @@ opt-level = 3
 
 [dev-dependencies]
 tempfile = "3"
-rmcp = { version = "3.9", features = ["client", "transport-streamable-http-client-reqwest"] }
+rmcp = { version = "3.9", features = ["client", "transport-streamable-http-client-reqwest", "reqwest"] }
 tauri = { version = "2", features = ["test"] }
