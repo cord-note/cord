@@ -20,6 +20,9 @@ pub enum Entity {
     BlockTag,
     BlockLink,
     Attachment,
+    TagField,
+    FieldValue,
+    TagView,
 }
 
 impl Entity {
@@ -32,6 +35,9 @@ impl Entity {
             Self::BlockTag => "block_tag",
             Self::BlockLink => "block_link",
             Self::Attachment => "attachment",
+            Self::TagField => "tag_field",
+            Self::FieldValue => "field_value",
+            Self::TagView => "tag_view",
         }
     }
 
@@ -44,6 +50,9 @@ impl Entity {
             Self::BlockTag => "block_tags",
             Self::BlockLink => "block_links",
             Self::Attachment => "attachments",
+            Self::TagField => "tag_fields",
+            Self::FieldValue => "field_values",
+            Self::TagView => "tag_views",
         }
     }
 
@@ -52,6 +61,7 @@ impl Entity {
         match self {
             Self::NoteTag => &["note_id", "tag_id"],
             Self::BlockTag => &["block_id", "tag_id"],
+            Self::FieldValue => &["field_id", "target_id"],
             _ => &["id"],
         }
     }
@@ -64,6 +74,9 @@ impl Entity {
             Self::Tag => &["name", "color", "deleted_at"],
             Self::NoteTag | Self::BlockTag => &["removed_at"],
             Self::BlockLink | Self::Attachment => &["deleted_at"],
+            Self::TagField => &["tag_id", "name", "type", "options", "sort", "deleted_at"],
+            Self::FieldValue => &["value", "removed_at"],
+            Self::TagView => &["tag_id", "kind", "config", "deleted_at"],
         }
     }
 
@@ -77,6 +90,9 @@ impl Entity {
             Self::BlockTag => &["note_id", "vault_id", "created_at"],
             Self::BlockLink => &["vault_id", "from_block_id", "from_note_id", "to_note_id", "to_block_id", "created_at"],
             Self::Attachment => &["vault_id", "sha256", "mime", "size", "created_at"],
+            Self::TagField => &["vault_id", "created_at"],
+            Self::FieldValue => &["target_kind", "note_id", "vault_id", "created_at"],
+            Self::TagView => &["vault_id", "created_at"],
         }
     }
 }
@@ -296,13 +312,18 @@ fn owning_note(conn: &Connection, entity: Entity, entity_id: &str) -> Result<Opt
         Entity::BlockLink => conn
             .query_row("SELECT from_note_id FROM block_links WHERE id = ?1", [entity_id], |r| r.get(0))
             .optional()?,
+        Entity::FieldValue => {
+            let (field, target) = entity_id.split_once(':').unwrap_or((entity_id, ""));
+            conn.query_row("SELECT note_id FROM field_values WHERE field_id = ?1 AND target_id = ?2", [field, target], |r| r.get(0))
+                .optional()?
+        }
         _ => None,
     })
 }
 
 fn owning_note_of_row(entity: Entity, row: &Map<String, Value>) -> Option<String> {
     let col = match entity {
-        Entity::NoteTag | Entity::BlockTag => "note_id",
+        Entity::NoteTag | Entity::BlockTag | Entity::FieldValue => "note_id",
         Entity::BlockLink => "from_note_id",
         _ => return None,
     };
@@ -323,6 +344,7 @@ fn purge_effects(conn: &Connection, note_id: &str, at: i64) -> Result<()> {
     conn.execute("UPDATE note_tags SET removed_at = ?2 WHERE note_id = ?1 AND removed_at IS NULL", params![note_id, at])?;
     conn.execute("UPDATE block_tags SET removed_at = ?2 WHERE note_id = ?1 AND removed_at IS NULL", params![note_id, at])?;
     conn.execute("UPDATE block_links SET deleted_at = ?2 WHERE from_note_id = ?1 AND deleted_at IS NULL", params![note_id, at])?;
+    conn.execute("UPDATE field_values SET removed_at = ?2 WHERE note_id = ?1 AND removed_at IS NULL", params![note_id, at])?;
     reindex_note(conn, note_id)
 }
 
@@ -490,6 +512,27 @@ mod tests {
 
         apply_body(c, "n1", &heading("More"), &h(40, 0)).unwrap();
         assert_eq!(updated_at(c, "n1"), 40, "a real change still counts");
+    }
+
+    #[test]
+    fn field_values_are_frozen_with_their_note_and_removed_by_a_purge() {
+        let (_d, db) = open();
+        let c = &db.conn;
+        note(c, "n1", 10);
+        let field = json!({ "id": "f1", "tag_id": "t1", "vault_id": "v1", "name": "Status", "type": "text",
+                            "options": "[]", "sort": 0, "created_at": 1 });
+        apply_create(c, Entity::TagField, &field, &h(11, 0)).unwrap();
+        let value = json!({ "field_id": "f1", "target_id": "n1", "target_kind": "note", "note_id": "n1",
+                            "vault_id": "v1", "value": "\"todo\"", "created_at": 1 });
+        apply_create(c, Entity::FieldValue, &value, &h(12, 0)).unwrap();
+        assert!(apply_field(c, Entity::FieldValue, "f1:n1", "value", &json!("\"done\""), &h(13, 0)).unwrap());
+        // The merge moves fields by their tag_id field.
+        assert!(apply_field(c, Entity::TagField, "f1", "tag_id", &json!("t2"), &h(14, 0)).unwrap());
+
+        apply_field(c, Entity::Note, "n1", "purged_at", &json!(50), &h(50, 0)).unwrap();
+        let removed: Option<i64> = c.query_row("SELECT removed_at FROM field_values", [], |r| r.get(0)).unwrap();
+        assert_eq!(removed, Some(50));
+        assert!(!apply_field(c, Entity::FieldValue, "f1:n1", "value", &json!("\"x\""), &h(60, 0)).unwrap(), "frozen");
     }
 
     #[test]

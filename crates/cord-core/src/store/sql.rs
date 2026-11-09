@@ -5,7 +5,7 @@
 pub const MACHINE: &[&str] = &[MACHINE_V1];
 
 /// `users/<id>/cord.db` — authored data and local-only sync tables.
-pub const CORD: &[&str] = &[CORD_V1];
+pub const CORD: &[&str] = &[CORD_V1, CORD_V2];
 
 /// `users/<id>/index.db` is derived and never migrated: a different version
 /// means the file is deleted and rebuilt.
@@ -186,6 +186,46 @@ CREATE TABLE vault_connections (
 );
 "#;
 
+/// Active tags: fields on tags, values on notes and blocks, saved views.
+const CORD_V2: &str = r#"
+CREATE TABLE tag_fields (
+  id         TEXT PRIMARY KEY,
+  tag_id     TEXT NOT NULL,
+  vault_id   TEXT NOT NULL,
+  name       TEXT NOT NULL,
+  type       TEXT NOT NULL,             -- text | number | checkbox | select | multi_select | date
+  options    TEXT NOT NULL DEFAULT '[]', -- JSON [{ id, name, color }]
+  sort       INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL,
+  deleted_at INTEGER
+);
+CREATE INDEX idx_tag_fields_tag ON tag_fields (tag_id);
+
+CREATE TABLE field_values (
+  field_id    TEXT NOT NULL,
+  target_id   TEXT NOT NULL,            -- a note id or a blockId
+  target_kind TEXT NOT NULL,            -- note | block
+  note_id     TEXT NOT NULL,            -- the owning note, for purges
+  vault_id    TEXT NOT NULL,
+  value       TEXT,                     -- JSON
+  created_at  INTEGER NOT NULL,
+  removed_at  INTEGER,
+  PRIMARY KEY (field_id, target_id)
+);
+CREATE INDEX idx_field_values_note ON field_values (note_id);
+
+CREATE TABLE tag_views (
+  id         TEXT PRIMARY KEY,
+  tag_id     TEXT NOT NULL,
+  vault_id   TEXT NOT NULL,
+  kind       TEXT NOT NULL DEFAULT 'table', -- table | board
+  config     TEXT NOT NULL DEFAULT '{}',    -- JSON { filters, sort, columns, groupBy }
+  created_at INTEGER NOT NULL,
+  deleted_at INTEGER
+);
+CREATE INDEX idx_tag_views_tag ON tag_views (tag_id);
+"#;
+
 pub const INDEX: &str = r#"
 CREATE TABLE note_docs (
   note_id           TEXT PRIMARY KEY,
@@ -270,8 +310,8 @@ mod tests {
             tables(&conn),
             [
                 "attachments", "block_links", "block_tags", "change_pending", "changes",
-                "connections", "field_clocks", "note_bodies", "note_tags", "notes",
-                "tags", "vault_connections", "vaults",
+                "connections", "field_clocks", "field_values", "note_bodies", "note_tags", "notes",
+                "tag_fields", "tag_views", "tags", "vault_connections", "vaults",
             ]
         );
     }
