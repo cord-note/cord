@@ -308,7 +308,7 @@ mod tests {
     #[test]
     fn fixtures_decode_to_their_expected_json() {
         let all = fixtures();
-        assert_eq!(all.len(), 5);
+        assert_eq!(all.len(), 6);
         for (name, dir) in all {
             let expected = read_json(dir.join(format!("{name}.expected.json")));
             let stored = std::fs::read(dir.join(format!("{name}.ybin"))).unwrap();

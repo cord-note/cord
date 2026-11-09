@@ -7,9 +7,10 @@
 use serde_json::Value;
 
 /// Copy of `BLOCK_TYPES` in Shuttle (src/extensions/blockTypes.ts).
-pub const BLOCK_TYPES: [&str; 15] = [
+pub const BLOCK_TYPES: [&str; 16] = [
     "paragraph", "heading", "bulletList", "orderedList", "taskList", "blockquote", "codeBlock",
     "blockMath", "horizontalRule", "image", "youtube", "twitch", "table", "details", "blockRef",
+    "tagView",
 ];
 
 /// Gives every block-type node without a `blockId` a new one, the way
@@ -60,5 +61,11 @@ mod tests {
         assert!(c[2]["content"][0]["content"][0]["attrs"]["blockId"].is_string(), "nested paragraphs get ids too");
         assert!(c[2]["content"][0]["content"][0]["content"][0]["attrs"].is_null(), "text nodes are left alone");
         assert_eq!(mint_block_ids(&mut doc), 0, "running it again changes nothing");
+    }
+
+    #[test]
+    fn tag_views_are_blocks() {
+        let mut doc = json!({ "type": "doc", "content": [{ "type": "tagView", "attrs": { "viewId": "v1" } }] });
+        assert_eq!(mint_block_ids(&mut doc), 1);
     }
 }

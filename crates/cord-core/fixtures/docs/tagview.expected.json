@@ -1,0 +1,24 @@
+{
+  "content": [
+    {
+      "attrs": {
+        "blockId": "p1"
+      },
+      "content": [
+        {
+          "text": "Tasks:",
+          "type": "text"
+        }
+      ],
+      "type": "paragraph"
+    },
+    {
+      "attrs": {
+        "blockId": "tv1",
+        "viewId": "view-1"
+      },
+      "type": "tagView"
+    }
+  ],
+  "type": "doc"
+}
