@@ -22,6 +22,9 @@ reqwest = { version = "0.12", features = ["json"] }
 tokio = { version = "1", features = ["full"] }
 base64 = "0.22"
 cord-core = { path = "../../../crates/cord-core" }
+rmcp = { version = "3.9", features = ["server", "macros", "transport-streamable-http-server", "schemars"] }
+axum = "0.8"
+tokio-util = "0.7"
 
 [profile.release]
 panic = "abort"
@@ -39,4 +42,5 @@ opt-level = 3
 
 [dev-dependencies]
 tempfile = "3"
+rmcp = { version = "3.9", features = ["client", "transport-streamable-http-client-reqwest"] }
 tauri = { version = "2", features = ["test"] }
