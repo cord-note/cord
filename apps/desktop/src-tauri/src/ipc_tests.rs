@@ -209,6 +209,41 @@ fn an_old_install_opens_with_its_pin() {
 }
 
 #[test]
+fn tag_fields_and_views_through_ipc() {
+    let h = harness();
+    h.ok("auth_register", json!({ "data": { "username": "ola", "password": "pw-long-enough" } }));
+    let vault = h.ok("vaults_create", json!({ "data": { "name": "V" } }));
+    let tag = h.ok("tags_create", json!({ "data": { "vaultId": vault["id"], "name": "task" } }));
+    let note = h.ok("notes_create", json!({ "data": { "vaultId": vault["id"], "title": "Ship it" } }));
+    h.ok("tags_attach", json!({ "noteId": note["id"], "tagId": tag["id"] }));
+
+    let field = h.ok("tag_fields_create", json!({ "data": { "tagId": tag["id"], "name": "Status", "type": "select",
+        "options": [{ "id": "todo", "name": "Todo", "color": null }] } }));
+    assert_eq!(field["type"], "select");
+    h.ok("field_values_set", json!({ "data": { "fieldId": field["id"], "targetId": note["id"], "targetKind": "note",
+        "noteId": note["id"], "value": "todo" } }));
+    assert!(h.call("field_values_set", json!({ "data": { "fieldId": field["id"], "targetId": note["id"], "targetKind": "note",
+        "noteId": note["id"], "value": 7 } })).is_err());
+
+    let rows = h.ok("tag_rows", json!({ "tagId": tag["id"] }));
+    assert_eq!(rows[0]["values"][field["id"].as_str().unwrap()], "todo");
+    assert_eq!(h.ok("field_values_for_note", json!({ "noteId": note["id"] }))["values"][0]["value"], "todo");
+
+    let page = h.ok("tag_views_page", json!({ "tagId": tag["id"] }));
+    let saved = h.ok("tag_views_update", json!({ "viewId": page["id"], "data": { "kind": "board", "config": { "groupBy": field["id"] } } }));
+    assert_eq!((saved["kind"].as_str(), &saved["config"]["groupBy"]), (Some("board"), &field["id"]));
+    let embed = h.ok("tag_views_create", json!({ "tagId": tag["id"] }));
+    assert_eq!(h.ok("tag_views_get", json!({ "viewId": embed["id"] }))["id"], embed["id"]);
+    h.ok("tag_views_delete", json!({ "viewId": embed["id"] }));
+    assert_eq!(h.ok("tag_views_get", json!({ "viewId": embed["id"] })), Value::Null);
+
+    h.ok("field_values_clear", json!({ "fieldId": field["id"], "targetId": note["id"] }));
+    h.ok("tag_fields_update", json!({ "fieldId": field["id"], "data": { "name": "State" } }));
+    assert_eq!(h.ok("tag_fields_list", json!({ "tagId": tag["id"] }))[0]["name"], "State");
+    h.ok("tag_fields_delete", json!({ "fieldId": field["id"] }));
+}
+
+#[test]
 fn settings_and_attachments_need_a_user() {
     let h = harness();
     assert!(h.call("settings_read", json!({ "file": "settings" })).is_err());

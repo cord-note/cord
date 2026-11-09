@@ -2,6 +2,7 @@ pub mod app;
 pub mod attachments;
 pub mod auth;
 pub mod blocks;
+pub mod fields;
 pub mod fragments;
 pub mod notes;
 pub mod settings;

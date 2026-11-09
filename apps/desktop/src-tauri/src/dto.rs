@@ -1,9 +1,11 @@
 //! What crosses the IPC boundary where it differs from cord-core's own types.
 
 use cord_core::model::{
-    BlockAnnotation, BlockLink, NewBlockLink, NewNote, NewTag, NewVault, NoteChanges, Tag, TagChanges, VaultChanges,
+    BlockAnnotation, BlockLink, FieldChanges, NewBlockLink, NewField, NewNote, NewTag, NewVault, NoteChanges, SelectOption,
+    SetValue, Tag, TagChanges, VaultChanges, ViewChanges,
 };
 use serde::{Deserialize, Deserializer, Serialize};
+use serde_json::Value;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -257,5 +259,65 @@ mod tests {
         assert!(bad.new_note().is_err());
         let good: CreateNoteIn = serde_json::from_value(json!({ "vaultId": "v", "bodyJson": "{\"type\":\"doc\"}" })).unwrap();
         assert_eq!(good.new_note().unwrap().body, Some(json!({ "type": "doc" })));
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateFieldIn {
+    pub tag_id: String,
+    pub name: String,
+    #[serde(rename = "type")]
+    pub kind: String,
+    #[serde(default)]
+    pub options: Vec<SelectOption>,
+}
+
+impl From<CreateFieldIn> for NewField {
+    fn from(f: CreateFieldIn) -> Self {
+        NewField { tag_id: f.tag_id, name: f.name, kind: f.kind, options: f.options }
+    }
+}
+
+#[derive(Deserialize)]
+pub struct UpdateFieldIn {
+    pub name: Option<String>,
+    #[serde(rename = "type")]
+    pub kind: Option<String>,
+    pub options: Option<Vec<SelectOption>>,
+    pub sort: Option<i64>,
+}
+
+impl From<UpdateFieldIn> for FieldChanges {
+    fn from(f: UpdateFieldIn) -> Self {
+        FieldChanges { name: f.name, kind: f.kind, options: f.options, sort: f.sort }
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SetValueIn {
+    pub field_id: String,
+    pub target_id: String,
+    pub target_kind: String,
+    pub note_id: String,
+    pub value: Value,
+}
+
+impl From<SetValueIn> for SetValue {
+    fn from(v: SetValueIn) -> Self {
+        SetValue { field_id: v.field_id, target_id: v.target_id, target_kind: v.target_kind, note_id: v.note_id, value: v.value }
+    }
+}
+
+#[derive(Deserialize)]
+pub struct UpdateViewIn {
+    pub kind: Option<String>,
+    pub config: Option<Value>,
+}
+
+impl From<UpdateViewIn> for ViewChanges {
+    fn from(v: UpdateViewIn) -> Self {
+        ViewChanges { kind: v.kind, config: v.config }
     }
 }
