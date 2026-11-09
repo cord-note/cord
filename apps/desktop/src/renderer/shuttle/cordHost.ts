@@ -1,4 +1,4 @@
-import type { BlockSummary, FragmentActionType, NoteRef, ShuttleHost, KeybindingId } from 'shuttle-editor';
+import type { BlockSummary, FragmentActionType, NoteRef, ShuttleHost, KeybindingId, TagViewControls } from 'shuttle-editor';
 import type { Attachment, Block, BlockRefTarget, CreateAttachmentInput } from '@shared/types';
 import type { LogLevel } from '../lib/log';
 
@@ -37,6 +37,10 @@ export interface CordHostDeps {
   onLinksMaybeChanged(docKey: string): void;
   keybindingOverrides: Partial<Record<KeybindingId, string>>;
   log(level: LogLevel, scope: string, message: string, data?: unknown): void;
+  /** Ask which tag to show and create a view; null when cancelled. */
+  createTagView(): Promise<string | null>;
+  /** Draw a tag view into a block; returns its cleanup. */
+  renderTagView(container: HTMLElement, viewId: string, controls: TagViewControls): () => void;
 }
 
 const toRef = (n: HostNote): NoteRef => ({ id: n.id, title: n.title });
@@ -121,6 +125,8 @@ export function createCordHost(deps: CordHostDeps): ShuttleHost {
 
     onFragmentAction: (action) => deps.onFragmentAction(action),
     openNote: (noteId, blockId) => deps.openNote(noteId, blockId),
+    createTagView: () => deps.createTagView(),
+    renderTagView: (container, viewId, controls) => deps.renderTagView(container, viewId, controls),
     log: (level, message, data) => deps.log(level, 'shuttle', message, data),
     keybindings: deps.keybindingOverrides,
   };

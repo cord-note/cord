@@ -11,13 +11,25 @@ import TrashView from '../components/TrashView';
 import SettingsPage from '../components/SettingsPage';
 import Editor from '../components/Editor';
 import Dither from '../components/Dither';
+import { TagPage } from '../components/tags/TagPage';
+import { TagViewPicker } from '../components/tags/TagViewPicker';
+import { useFragmentStore } from '../store/fragments';
 import styles from './NotesPage.module.css';
 
 export default function NotesPage() {
   const { loadVaults, vaults, activeVaultId, setActiveVault } = useVaultStore();
-  const { notes, activeNoteId, activeNoteLoading, loadNotes } = useNoteStore();
+  const { notes, activeNoteId, activeNoteLoading, loadNotes, setActiveNote, loadLinks } = useNoteStore();
   const { loadTags } = useTagStore();
-  const { view, setView, openSettings } = useUIStore();
+  const { view, setView, openSettings, tagPageId } = useUIStore();
+  const setPendingScroll = useFragmentStore((s) => s.setPendingScroll);
+
+  // A row of a tag view opens its note, scrolled to the block for block rows.
+  const openFromTag = (noteId: string, blockId?: string): void => {
+    setView('notes');
+    void setActiveNote(noteId);
+    void loadLinks(noteId);
+    if (blockId) setPendingScroll(blockId);
+  };
 
   const [panelCollapsed, setPanelCollapsed] = useState(() => !useVaultStore.getState().activeVaultId);
   // Keep NoteList mounted while the close animation plays, then unmount
@@ -99,6 +111,7 @@ export default function NotesPage() {
   function renderMain() {
     if (view === 'settings') return <SettingsPage />;
     if (view === 'trash')    return <TrashView />;
+    if (view === 'tag' && tagPageId) return <TagPage tagId={tagPageId} onOpen={openFromTag} />;
     if (activeNote) {
       // Body is fetched asynchronously after selection — wait for it before
       // mounting the editor. An unfetched body is a placeholder, and an editor
@@ -141,6 +154,8 @@ export default function NotesPage() {
       <main className={`${styles.main} cord-main`}>
         {renderMain()}
       </main>
+
+      <TagViewPicker />
     </div>
   );
 }

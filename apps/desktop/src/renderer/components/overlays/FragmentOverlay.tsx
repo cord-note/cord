@@ -4,6 +4,13 @@ import { X } from 'lucide-react';
 import { useFragmentStore } from '../../store/fragments';
 import { useNoteStore } from '../../store/notes';
 import { useTagStore } from '../../store/tags';
+import { useUIStore } from '../../store/ui';
+import { useFieldsVersion } from '../../store/fieldsVersion';
+import { api } from '../../ipc';
+import { log } from '../../lib/log';
+import { displayText } from '../../fields/values';
+import { ValueEditor } from '../tags/ValueEditor';
+import type { NoteFields, TagField } from '@shared/types';
 import { blockElement } from './blockDom';
 import styles from './FragmentOverlay.module.css';
 
@@ -19,6 +26,22 @@ export function FragmentOverlay({ editor, noteId: _noteId, contentEl }: Props) {
   const tags = useTagStore((s) => s.tags);
   // Read through the tag store so renames, recolours and deletes show at once.
   const tagById = new Map(tags.map((t) => [t.id, t]));
+  const openTag = useUIStore((s) => s.openTag);
+
+  // Field values of tagged blocks, shown as chips beside their tags.
+  const fieldsVersion = useFieldsVersion((s) => s.version);
+  const bumpFields = useFieldsVersion((s) => s.bump);
+  const [noteFields, setNoteFields] = useState<NoteFields | null>(null);
+  const [editing, setEditing] = useState<{ blockId: string; field: TagField } | null>(null);
+  useEffect(() => { void api.fields.forNote(_noteId).then(setNoteFields); }, [_noteId, fieldsVersion, annotations]);
+  const blockValue = (blockId: string, fieldId: string): unknown =>
+    noteFields?.values.find((v) => v.targetKind === 'block' && v.targetId === blockId && v.fieldId === fieldId)?.value ?? null;
+  const commitBlockValue = (blockId: string, fieldId: string, value: unknown): void => {
+    const write = value === null
+      ? api.fields.clearValue(fieldId, blockId)
+      : api.fields.setValue({ fieldId, targetId: blockId, targetKind: 'block', noteId: _noteId, value });
+    write.then(bumpFields).catch((e: unknown) => log('warn', 'tags', 'Setting a value failed', { error: String(e) }));
+  };
 
   const removeLinkFromEditor = useCallback((linkId: string) => {
     const { state, view } = editor;
@@ -123,7 +146,7 @@ export function FragmentOverlay({ editor, noteId: _noteId, contentEl }: Props) {
                 onMouseLeave={() => setHighlightedBlockId(null)}
               >
                 <span className={styles.dot} style={{ background: tag.color ?? 'var(--text-muted)' }} />
-                {tag.name}
+                <button type="button" className={styles.chipName} onClick={() => openTag(tag.id)} title={`Open #${tag.name}`}>{tag.name}</button>
                 <button
                   className={styles.chipRemove}
                   onClick={() => detachTag(blockId, tag.id)}
@@ -133,6 +156,25 @@ export function FragmentOverlay({ editor, noteId: _noteId, contentEl }: Props) {
                 </button>
               </span>
             ))}
+
+            {(noteFields?.fields ?? [])
+              .filter((f) => annotation.tags.some((t) => t.id === f.tagId))
+              .map((f) => {
+                const text = displayText(f, blockValue(blockId, f.id));
+                const isOpen = editing?.blockId === blockId && editing.field.id === f.id;
+                return (
+                  <span key={`fv-${f.id}`} className={`${styles.valueChip} cord-chip cord-chip--value`}>
+                    <button type="button" className={styles.chipName} onClick={() => setEditing(isOpen ? null : { blockId, field: f })}>
+                      {f.name}: {text || '—'}
+                    </button>
+                    {isOpen && (
+                      <span className={`${styles.valuePopover} cord-menu`}>
+                        <ValueEditor field={f} value={blockValue(blockId, f.id)} onCommit={(v) => commitBlockValue(blockId, f.id, v)} />
+                      </span>
+                    )}
+                  </span>
+                );
+              })}
 
             {annotation.links.map((link) => (
               <span

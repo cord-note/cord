@@ -44,10 +44,25 @@ function harness(overrides: Partial<CordHostDeps> = {}): Harness {
     onLinksMaybeChanged: record('onLinksMaybeChanged'),
     keybindingOverrides: { 'editor.bold': 'Mod+J' },
     log: record('log'),
+    createTagView: async () => 'view-9',
+    renderTagView: (el, viewId) => { el.textContent = viewId; return () => { el.textContent = ''; }; },
     ...overrides,
   };
   return { deps, calls, setNotes: (next) => { notes = next; } };
 }
+
+describe('createCordHost tag views', () => {
+  it('passes tag view callbacks through', async () => {
+    const host = createCordHost(harness().deps);
+    expect(await host.createTagView!()).toBe('view-9');
+    // No DOM in these tests; the host only passes the element through.
+    const el = { textContent: '' } as HTMLElement;
+    const stop = host.renderTagView!(el, 'view-9', { remove() {} });
+    expect(el.textContent).toBe('view-9');
+    stop();
+    expect(el.textContent).toBe('');
+  });
+});
 
 describe('createCordHost lookups', () => {
   it('searches live notes by title, case-insensitively', async () => {

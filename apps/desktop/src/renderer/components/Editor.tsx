@@ -10,6 +10,9 @@ import { useFragmentStore } from '../store/fragments';
 import { useNoteStore } from '../store/notes';
 import { useTagStore } from '../store/tags';
 import { TagPicker } from './TagPicker';
+import { PropertiesStrip } from './tags/PropertiesStrip';
+import { mountTagView } from './tags/mountTagView';
+import { useTagViewPicker } from '../store/tagViewPicker';
 import { useVaultStore } from '../store/vaults';
 import { setSetting, snapToSetting, useSetting } from '../settings';
 import { useUIStore } from '../store/ui';
@@ -55,7 +58,7 @@ export default function Editor({ note }: Props) {
   const saveDelay = useSetting('editor.autosaveDelay');
   const tags = useTagStore((s) => s.tags);
   const { activeVaultId } = useVaultStore();
-  const { setView } = useUIStore();
+  const { setView, openTag } = useUIStore();
   const bindings = useKeybindingStore((s) => s.bindings);
   const colorScheme = useResolvedScheme();
   const [showTagPicker, setShowTagPicker] = useState(false);
@@ -106,6 +109,12 @@ export default function Editor({ note }: Props) {
     onLinksMaybeChanged: () => { linksDirty.current = true; },
     keybindingOverrides: shuttleOverrides(bindings),
     log,
+    createTagView: async () => {
+      const tagId = await useTagViewPicker.getState().request();
+      if (!tagId) return null;
+      return (await api.views.create(tagId)).id;
+    },
+    renderTagView: (container, viewId, controls) => mountTagView(container, viewId, controls, openNote),
   }), [notes, activeVaultId, openNote, loadFragments, bindings]);
 
   // Saving is Yjs's job (below); this only refreshes the outbound mentions.
@@ -298,7 +307,7 @@ export default function Editor({ note }: Props) {
               className={styles.tagChipDot}
               style={{ background: tag.color ?? 'var(--text-muted)' }}
             />
-            {tag.name}
+            <button type="button" className={styles.tagChipName} onClick={() => openTag(tag.id)} title={`Open #${tag.name}`}>{tag.name}</button>
             <button
               className={styles.tagChipRemove}
               onClick={() => detachTag(note.id, tag.id)}
@@ -307,6 +316,8 @@ export default function Editor({ note }: Props) {
           </span>
         ))}
       </div>
+
+      <PropertiesStrip noteId={note.id} tags={noteTags} />
 
       <div className={`${styles.content} cord-editor__body`} ref={contentRef}>
         {body?.noteId === note.id && (

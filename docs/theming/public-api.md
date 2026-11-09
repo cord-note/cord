@@ -303,6 +303,7 @@ The command palette dropdown, the new-note menu and the editor context menu.
 | `cord-editor` | The editor column |
 | `cord-editor__title` | Note title field |
 | `cord-editor__tags` | Tag row under the title |
+| `cord-editor__properties` | The note's tag field values, under the tag row |
 | `cord-editor__body` | Note content — see rule 3 for styling inside it |
 | `cord-editor__status-bar` | Word count and backlinks bar |
 
@@ -315,6 +316,14 @@ The command palette dropdown, the new-note menu and the editor context menu.
 | `cord-chip--backlink` | A note linking here |
 | `cord-chip--unlinked` | An unlinked mention |
 | `cord-chip--link` | A block's outgoing link, beside the block |
+| `cord-chip--value` | A tag field's value, beside a tagged block |
+
+### Tag pages
+
+| Class | Surface |
+|---|---|
+| `cord-tag-page` | A tag's own page: its fields, table and board |
+| `cord-tag-embed` | A tag view inside a note |
 
 ### Dither
 
