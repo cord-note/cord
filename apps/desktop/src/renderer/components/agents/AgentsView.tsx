@@ -95,6 +95,7 @@ export default function AgentsView({ onOpenNote }: Props) {
       </header>
 
       <div className={styles.body}>
+        <div className={styles.mainCol}>
         <p className={styles.lead}>
           Let AI agents (Claude Desktop, Claude Code and other MCP clients) work with your notes while Cord is
           open and unlocked. They only see the vaults you pick.
@@ -226,7 +227,9 @@ export default function AgentsView({ onOpenNote }: Props) {
           </div>
         </section>
 
-        <section className={styles.section}>
+        </div>
+
+        <section className={`${styles.section} ${styles.sideCol}`}>
           <div className={styles.sectionHead}>
             <h3 className={styles.heading}>Activity</h3>
             <div className={styles.segmented}>

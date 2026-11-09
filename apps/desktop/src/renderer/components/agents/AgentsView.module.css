@@ -25,12 +25,25 @@
 }
 @keyframes breathe { 50% { opacity: 0.35; } }
 
+/* One column on narrow windows; on wide ones the activity feed gets its own
+   column beside the settings, so the page uses the full width. */
 .body {
   flex: 1; overflow-y: auto;
   padding: var(--space-5) var(--space-12) var(--space-10);
-  display: flex; flex-direction: column; gap: var(--space-6);
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-6);
+  align-content: start;
 }
-.body > * { max-width: 760px; }
+.mainCol { display: flex; flex-direction: column; gap: var(--space-6); min-width: 0; }
+.sideCol { min-width: 0; }
+@media (min-width: 1180px) {
+  .body { grid-template-columns: minmax(0, 3fr) minmax(320px, 2fr); column-gap: var(--space-10); }
+  .sideCol {
+    position: sticky; top: 0; align-self: start;
+    max-height: calc(100vh - 160px); overflow: hidden;
+    border-left: 1px solid var(--border); padding-left: var(--space-8);
+  }
+  .sideCol .feed { flex: 1; overflow-y: auto; min-height: 0; }
+}
 .lead { margin: 0; font-size: var(--text-md); color: var(--text-secondary); line-height: 1.5; }
 
 .card { border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-panel); }
@@ -61,7 +74,7 @@
 :global([data-scheme="light"]) .thumb { background: var(--bg); }
 .switchOn .thumb { transform: translateX(14px); background: var(--accent-fg); }
 
-.section { display: flex; flex-direction: column; gap: var(--space-2-5); transition: opacity var(--duration-base); }
+.section { display: flex; flex-direction: column; min-height: 0; gap: var(--space-2-5); transition: opacity var(--duration-base); }
 .sectionHead { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
 .heading { margin: 0; font-size: var(--text-sm); font-weight: 600; color: var(--text-secondary); }
 .headActions { display: flex; gap: var(--space-3); }
