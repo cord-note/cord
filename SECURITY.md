@@ -55,5 +55,5 @@ These are deliberate and documented rather than oversights:
 
 ## Supported versions
 
-Cord is pre-1.0 and under active development. Only the latest `main` is
+Cord is ongoing v3-4 and under active development. Only the latest `main` is
 supported; there are no backports to earlier tags.
