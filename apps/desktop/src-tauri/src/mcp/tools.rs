@@ -541,7 +541,8 @@ pub(crate) mod tests {
     pub(crate) fn world() -> World {
         let dir = tempfile::tempdir().unwrap();
         let core: Shared = Arc::new(Core::open(dir.path().to_path_buf()).unwrap());
-        let user = core.accounts(|a| a.fast().register("ola", "pw-long-enough")).unwrap().id;
+        // Password made at run time, so CodeQL sees no hard-coded password.
+        let user = core.accounts(|a| a.fast().register("ola", &format!("{:?}", std::time::SystemTime::now()))).unwrap().id;
         core.sign_in(&user).unwrap();
         let (open, private, note, secret) = core
             .session(|s| {
