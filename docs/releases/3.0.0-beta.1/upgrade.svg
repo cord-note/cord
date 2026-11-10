@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 200" width="880" height="200" role="img" aria-label="On first start, Cord 3.0 copies your 2.x database into the new format once. The old cord.db is never changed.">
+  <style>
+    .bg { fill: #f4f4f5; } .box { fill: #ffffff; stroke: #c9c9cf; stroke-width: 1.4; }
+    .h { font: 600 15px system-ui, -apple-system, 'Segoe UI', sans-serif; fill: #18181b; }
+    .s { font: 400 13px system-ui, -apple-system, 'Segoe UI', sans-serif; fill: #52525b; }
+    .m { font: 400 13px ui-monospace, 'Cascadia Mono', Menlo, monospace; fill: #18181b; }
+    .arrow { stroke: #52525b; stroke-width: 1.6; fill: none; } .head { fill: #52525b; }
+    .lock { fill: none; stroke: #57a95b; stroke-width: 1.8; }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #18181b; } .box { fill: #232326; stroke: #3f3f46; }
+      .h, .m { fill: #f4f4f5; } .s { fill: #a1a1aa; } .arrow { stroke: #a1a1aa; } .head { fill: #a1a1aa; }
+    }
+  </style>
+  <rect class="bg" width="880" height="200" rx="14"/>
+
+  <rect class="box" x="32" y="40" width="250" height="120" rx="10"/>
+  <text class="m" x="52" y="72">cord.db</text>
+  <text class="h" x="52" y="98">Cord 2.x data</text>
+  <rect class="lock" x="52" y="118" width="14" height="11" rx="2"/>
+  <path class="lock" d="M55 118 v-4 a4 4 0 0 1 8 0 v4"/>
+  <text class="s" x="76" y="129">only read, never changed</text>
+
+  <path class="arrow" d="M282 100 H402"/><path class="head" d="M402 95 l9 5 l-9 5 z"/>
+  <text class="h" x="296" y="88">copied once</text>
+  <text class="s" x="296" y="124">on first start</text>
+
+  <rect class="box" x="414" y="40" width="434" height="120" rx="10"/>
+  <text class="h" x="434" y="72">Cord 3.0 data, a folder per account</text>
+  <text class="s" x="434" y="98">notes, tags, attachments and settings,</text>
+  <text class="s" x="434" y="118">in a format built for sync later on</text>
+  <text class="s" x="434" y="142">A stopped copy starts over cleanly next time.</text>
+</svg>
