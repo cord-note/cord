@@ -24,6 +24,9 @@ packageExtensions:
     dependencies:
       prosemirror-transform: ^1.12.0
 
-# Security fix (GHSA re2js lookbehind DoS): find-and-replace pulls re2js 2.8.6.
+# Security fixes for packages that arrive through other packages:
+# re2js (lookbehind DoS) via Tiptap's find-and-replace, and minimatch 9
+# (globparts DoS) via typescript-eslint, which is dev tooling only.
 overrides:
   re2js: ^2.8.7
+  'minimatch@>=7 <11.0.1': ^11.0.1
