@@ -155,7 +155,9 @@ mod tests {
     #[test]
     fn imports_users_vaults_and_notes() {
         let old = legacy();
-        let hash = password::hash("pw-long-enough", 4).unwrap();
+        // Made at run time, so CodeQL sees no hard-coded password.
+        let pw = nanoid::nanoid!();
+        let hash = password::hash(&pw, 4).unwrap();
         old.user("u1", "ola", &hash, 1);
         old.user("u2", "kai", &hash, 2);
         old.exec("UPDATE users SET pin_hash = password_hash, failed_pin_attempts = 2 WHERE id = 'u1';
@@ -177,8 +179,8 @@ mod tests {
         let accounts = Accounts::new(&machine, &layout);
         // Checked first: signing in makes that user the last one.
         assert_eq!(accounts.lock_screen().unwrap().last_user_id.as_deref(), Some("u2"));
-        assert_eq!(accounts.login("ola", "pw-long-enough").unwrap().id, "u1");
-        assert!(accounts.unlock_with_pin("u1", "pw-long-enough").unwrap().ok, "the PIN hash carried over");
+        assert_eq!(accounts.login("ola", &pw).unwrap().id, "u1");
+        assert!(accounts.unlock_with_pin("u1", &pw).unwrap().ok, "the PIN hash carried over");
         assert_eq!(count(&machine, "SELECT count(*) FROM app_state WHERE key = 'device_id'"), 1);
 
         // u1 is the oldest user, so the ownerless vault is theirs.
