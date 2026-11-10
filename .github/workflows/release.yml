@@ -201,12 +201,13 @@ jobs:
 
     steps:
       # The runner's own tooling is not in the container, and actions/checkout
-      # silently degrades to a tarball download without git.
+      # silently degrades to a tarball download without git. perl (with its core
+      # modules) is for the OpenSSL that cord-core builds from source.
       - name: Install build tooling and Tauri system dependencies
         run: |
           dnf install -y \
             git tar gzip xz unzip which findutils curl \
-            gcc gcc-c++ make openssl-devel \
+            gcc gcc-c++ make openssl-devel perl \
             webkit2gtk4.1-devel gtk3-devel libappindicator-gtk3-devel librsvg2-devel \
             appstream desktop-file-utils rpmlint
 
@@ -351,6 +352,10 @@ jobs:
           [ -n "$deb" ] || { echo "::error::no .deb in the build artifact"; exit 1; }
           cp "$deb" "packaging/aur/$(basename "$deb")"
           cd packaging/aur
+          # The PKGBUILD carries the last stable version (aur.yml sets it on
+          # release), so take the version from the .deb this run built.
+          ver=$(basename "$deb" | sed -E 's/^Cord_([^_]+)_amd64\.deb$/\1/')
+          sed -i "s|^pkgver=.*|pkgver=${ver//-/_}|" PKGBUILD
           # A local source file, so makepkg neither downloads nor needs the
           # stable tag that only exists for a real release.
           sed -i "s|^source=.*|source=(\"\${_deb}\")|" PKGBUILD
