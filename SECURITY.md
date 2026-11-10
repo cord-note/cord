@@ -17,9 +17,11 @@ left waiting.
 
 ## What is in scope
 
-Cord is a local-first desktop app. It has no server, no accounts and no network
-calls — everything lives in a SQLite database on your machine. That shapes what
-counts as a vulnerability here:
+Cord is a local-first desktop app. It has no cloud service and no online
+accounts — everything lives in SQLite databases on your machine. The only
+network calls are the update check and theme imports you start yourself, and the
+Agents server, which listens on `127.0.0.1` only. That shapes what counts as a
+vulnerability here:
 
 **In scope**
 
@@ -30,8 +32,9 @@ counts as a vulnerability here:
   document, a pasted payload, a crafted `body_json`.
 - Escapes from the Tauri webview into the host, or IPC commands that do more
   than they should.
-- Anything that lets the Bun sidecar be reached or driven by something other
-  than the app itself.
+- Anything that lets the Agents (MCP) server be reached without its token, see
+  vaults it was not given, or write when editing is off.
+- Theme files that run code or load remote content past the theme sanitizer.
 
 **Not in scope**
 
@@ -47,11 +50,12 @@ counts as a vulnerability here:
 These are deliberate and documented rather than oversights:
 
 - **Note content is not encrypted at rest.** The password gates the UI and is
-  stored as a bcrypt hash; it does not encrypt the database. Anyone with
-  filesystem access can read `cord.db` directly. Encryption is a candidate for a
+  stored as a bcrypt hash; it does not encrypt the databases. Anyone with
+  filesystem access can read them directly. Encryption is a candidate for a
   later release and is tracked as a feature, not a fix.
-- **Cord has no sync and makes no network requests.** If you observe it talking
-  to the network, that is a bug worth reporting.
+- **Cord has no sync yet.** Beyond the update check, theme imports you start,
+  and the local Agents server, it makes no network requests. If you see it
+  talking to the network otherwise, that is a bug worth reporting.
 
 ## Supported versions
 

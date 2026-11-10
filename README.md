@@ -6,12 +6,16 @@
 
 Local-first desktop note-taking app. Vaults → Notes → Links → Tags — a knowledge graph, not a filing cabinet.
 
-**Status:** v2.4.0. Notes are written in
+**Status:** 3.0, in beta (first build `v3.0.0-beta.1`); 2.4.1 is the current
+stable release. Notes are written in
 [Shuttle](https://github.com/cord-note/shuttle), Cord's Tiptap 3 editor, and
-local accounts unlock with a PIN. Cord runs on a Tauri shell with a Bun sidecar,
-and full-text search runs natively in Rust against SQLite FTS5. Themes can be
+local accounts unlock with a PIN. Since 3.0 everything runs in one process: a
+Tauri shell over a Rust core (`crates/cord-core`), with notes stored in a
+format built for sync between devices. Tags can carry fields and be shown as
+tables or boards, and AI agents can reach your notes through the **Agents** tab
+(see [cord-mcp](https://github.com/cord-note/cord-mcp)). Themes can be
 imported from a folder, a zip or a Git repo; see
-[cord-themes](https://github.com/cord-note/cord-themes) for nine to start with.
+[cord-themes](https://github.com/cord-note/cord-themes) for 32 to start with.
 What changed in each version is in [CHANGELOG.md](CHANGELOG.md).
 
 ## Install
@@ -82,25 +86,34 @@ with `--appimage-extract-and-run`.
 
 ### Intel Macs
 
-Not built. It needs a second runner and a fourth sidecar target, and an unsigned
+Not built. It needs a second macOS runner, and an unsigned
 `.app` is awkward to open on any Mac until code signing exists, so the cost buys
 little today. Build from source meanwhile — see [Develop](#develop).
 
 ### Your notes
 
-Cord keeps everything in a local SQLite database, with images you paste into
-notes as files beside it. Nothing is uploaded anywhere: there is no account, no
-telemetry and no sync yet.
+Cord keeps everything in local SQLite databases in its data folder, with images
+you paste into notes as files beside them. Nothing is uploaded anywhere: there is
+no cloud account, no telemetry and no sync yet.
 
 | Platform | Location |
 |---|---|
 | Linux | `$XDG_DATA_HOME/cord/`, or `~/.local/share/cord/` |
 | macOS, Windows | `~/.cord/` |
 
+Inside it, `machine.db` holds the local accounts, and each account has its own
+folder under `users/<id>/` with its notes (`cord.db`), search index, attachments
+and settings.
+
 Linux follows the XDG base directory specification so that a package installed
 by apt, dnf or pacman behaves the way its distribution expects. An existing
 `~/.cord` is moved there once, on the first launch of a version that looks for
 it — nothing is deleted.
+
+**Upgrading from 2.x:** on first start, Cord 3.0 copies your notes, tags,
+attachments and settings from the 2.x `cord.db` into the new format. The old
+database is never changed, and a copy that was stopped halfway starts over
+cleanly. Back up the data folder before trying a beta.
 
 ## Updating
 
@@ -126,12 +139,12 @@ installed copies — worth knowing before flagging one.
 | Desktop shell | Tauri (Rust) |
 | Frontend | React + Vite + TypeScript |
 | Editor | [Shuttle](https://github.com/cord-note/shuttle) (`shuttle-editor` on npm, official Tiptap 3) — [see below](#shuttle) |
-| Backend | Bun sidecar (local socket) |
-| Database | SQLite via `bun:sqlite` |
-| ORM | Drizzle |
+| Core | `cord-core`, a Rust crate (no Tauri) |
+| Database | SQLite via `rusqlite`, FTS5 for search |
+| Note bodies | Yjs documents (`yrs` in Rust, `yjs` in the editor) |
 | State | Zustand |
 | Graph | Cytoscape.js |
-| Tests | `bun test` |
+| Tests | `bun test` (renderer), `cargo test` (core and shell) |
 
 ## Note kinds
 
@@ -146,39 +159,36 @@ turned on, so switching kind changes nothing but the `kind` column. A notepad is
 one ProseMirror instance, never one editor per block. Blocks are flat, and a
 whole list is one block.
 
-Notepads written before Shuttle wrapped each block in a `notepadBlock` node. They
-open read-only, stay searchable, and are never rewritten.
-
 ## Architecture principles
 
-1. Local DB is the source of truth. Cloud is a replication target.
-2. Every write appends to `operation_log`, with one documented exception: the
-   `blocks` table is a derived index, so reprojecting it logs nothing. The
-   `body_json` it is derived from is logged, and a sync receiver reprojects
-   locally from that.
-3. No hard deletes — `deleted_at` / `archived_at` only. Same exception: `blocks`
-   rows are replaced wholesale on save, because that table holds no authored
-   data. Authored per-block data lives in `fragments` and is never reprojected.
-4. `body_json` is the source of truth, and the only stored representation of a
-   document. `body_markdown` was removed in v1.6; markdown is input UX only, via
-   the clipboard. Searchable text comes from `blocks.text`. `note_links` is
-   derived from `body_json` on every save, like `blocks`: the wiki links in the
-   document decide which links exist.
-5. The Tauri Rust layer stays thin by default. Business logic lives in the Bun sidecar; logic moves to Rust only for approved, measurable hot paths (currently just FTS5 search).
+1. Local DB is the source of truth. Other devices and servers are replication
+   targets.
+2. Every synced write goes through one path in `cord-core` (`Session::write`),
+   which stamps it with a hybrid logical clock and records it in the outbox
+   (`changes`) in the same transaction. Machine-local data — accounts, PIN and
+   recovery hashes, settings files — is never synced or recorded.
+3. No hard deletes — `deleted_at` / `archived_at` only. The one exception is the
+   derived index, which holds no authored data.
+4. A note's body is a Yjs document; `body_json` is derived from it, and markdown
+   is input UX only, via the clipboard. The block index, search and
+   `note_links` are derived from the body on every save, in a separate
+   `index.db` that can be rebuilt at any time.
+5. The Tauri layer stays thin: commands are short calls into `cord-core`, which
+   holds the domain logic and has no Tauri in it.
 6. Plugin-driven UI registry — no hardcoded UI for module surfaces.
 
 ## Layout
 
 ```
 cord/
+  crates/
+    cord-core/            Rust domain core: storage, clocks, outbox, services, import
   apps/
     desktop/
-      src-tauri/          Rust shell + FTS5 search
+      src-tauri/          Tauri shell: thin commands, MCP server for agents
       src/
         renderer/         React + Vite frontend (components, pages, hooks, store)
-        sidecar/          Bun backend — domain services, Drizzle schema, adapters
-        shared/           DTOs and constants shared across the IPC boundary
-  packages/               core / sync / notebook / export (phased)
+        shared/           types and theming code shared across the IPC boundary
 ```
 
 ## Shuttle
@@ -191,39 +201,48 @@ input UX only — syntax disappears as you type and storage is Tiptap JSON.
 Cord depends on it from npm like any other package. Shuttle never imports Cord:
 Cord supplies a `ShuttleHost` (`apps/desktop/src/renderer/shuttle/cordHost.ts`)
 that answers note lookups, stores pasted images, resolves transclusions and
-handles navigation over Cord's stores and IPC. The sidecar reads saved documents
-through `shuttle-editor/doc`, a React-free entry, so the block index and the
-derived links see exactly what the editor wrote.
+handles navigation over Cord's stores and IPC. The editor edits the note's Yjs
+document directly (the `ydoc` prop), and Cord sends the updates to the core as
+raw bytes. The core reads documents with its own port of `shuttle-editor/doc`
+(`crates/cord-core/src/doc/`), checked against the same fixtures as the
+TypeScript original.
 
-Pasted and dropped images are stored as files in `attachments/` beside the
-database and referenced from the document as `attachment:<id>`; the Tauri shell serves them
+Pasted and dropped images are stored as files in the account's `attachments/`
+folder and referenced from the document as `attachment:<id>`; the Tauri shell serves them
 to the editor through a `cord-attachment` URI scheme.
 
 ## Develop
 
-Requires Node 22+, pnpm 10+, [Bun](https://bun.sh), and the
+Requires Node 22+, pnpm 10+, [Bun](https://bun.sh) (test runner and renderer
+build), Rust, and the
 [Tauri prerequisites](https://tauri.app/start/prerequisites/) for your platform.
 
 ```bash
 git clone https://github.com/cord-note/cord.git
 cd cord
 pnpm install
-pnpm dev          # tauri dev — Vite + Bun sidecar + Rust shell
-pnpm test         # bun test
+pnpm dev          # tauri dev — Vite + Rust shell
+pnpm test         # bun test (renderer)
 pnpm typecheck
-pnpm build        # renderer + sidecar binaries for all three targets
 ```
 
-The Rust shell embeds the Bun sidecar as an `externalBin`, so `pnpm build` must
-run before `tauri build` — the build script fails if no sidecar exists for the
-host triple.
+The Rust tests run with `cargo test`, in `crates/cord-core` and in
+`apps/desktop/src-tauri`. The shell tests drive the real commands through
+Tauri's mock IPC.
+
+To keep a development build away from your real notes, point it at another data
+folder with `CORD_DATA_DIR` (a copy of your data folder is fine):
+
+```bash
+CORD_DATA_DIR=/tmp/cord-dev pnpm dev
+```
 
 ## Releasing
 
 Tauri cannot cross-compile: every platform links against its own native webview
 and system linker. So releases are built by one CI runner per operating system —
-`windows-latest`, `macos-latest`, and `ubuntu-22.04` — each compiling its own Bun
-sidecar, building the Rust shell for its target, and bundling its own installer.
+`windows-latest`, `macos-latest`, and `ubuntu-22.04` — each building the
+renderer and the Rust app for its target and bundling its own installer.
 
 Linux is pinned to 22.04 rather than `ubuntu-latest` on purpose: an AppImage
 links against the glibc of the machine that built it, so building on a newer
@@ -255,14 +274,13 @@ fail.
 ## IPC flow
 
 ```
-React → invoke('entity:action', payload)
-  → Tauri command (thin: receive, validate, forward)
-  → HTTP POST to Bun sidecar (local socket)
-  → domain service → SQLite write + operation_log append
+React → invoke('entity_action', payload)
+  → Tauri command (thin: receive, check, call cord-core)
+  → domain service → SQLite write + outbox entry, one transaction
   → response → React re-render
 ```
 
-Rust-native search skips the sidecar hop and queries SQLite FTS5 directly.
+Everything runs in the one Cord process; there is no sidecar since 3.0.
 
 ## License
 
@@ -277,4 +295,4 @@ licence, with source. That network clause (AGPL §13) is the reason for choosing
 AGPL over GPL: it covers a hosted sync backend, which a plain GPL would not.
 
 Cord depends on MIT- and Apache-licensed work, including Tiptap OSS, React,
-Tauri and Drizzle; those licences continue to govern those components.
+Tauri and Yjs; those licences continue to govern those components.
