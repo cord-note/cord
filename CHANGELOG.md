@@ -1,6 +1,6 @@
 # Changelog
 
-## 3.0.0-beta.1
+## 3.0.0-beta.1 - 2026-11-10
 
 **This is a beta.** Cord 3.0 stores your notes in a new format. Read *Before you upgrade* first.
 
