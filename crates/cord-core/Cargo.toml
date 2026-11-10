@@ -20,5 +20,5 @@ pulldown-cmark = { version = "0.13", default-features = false }
 url = "2"
 percent-encoding = "2"
 base64 = "0.22"
-zip = { version = "2", default-features = false, features = ["deflate"] }
+zip = { version = "9.5", default-features = false, features = ["deflate"] }
 tempfile = "3"

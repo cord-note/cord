@@ -215,7 +215,7 @@ fn extract_zip(bytes: &[u8], into: &Path) -> Result<()> {
             continue;
         }
         // Zip-slip: an entry may never land outside the extraction folder.
-        let rel = file.enclosed_name().ok_or_else(|| Error::Invalid(format!("Unsafe path in zip: {}", file.name())))?;
+        let rel = file.enclosed_name().ok_or_else(|| Error::Invalid(format!("Unsafe path in zip: {}", file.name().unwrap_or_default())))?;
         let target = into.join(rel);
         if let Some(parent) = target.parent() {
             std::fs::create_dir_all(parent)?;

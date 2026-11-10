@@ -23,3 +23,7 @@ packageExtensions:
   '@tiptap/y-tiptap':
     dependencies:
       prosemirror-transform: ^1.12.0
+
+# Security fix (GHSA re2js lookbehind DoS): find-and-replace pulls re2js 2.8.6.
+overrides:
+  re2js: ^2.8.7
