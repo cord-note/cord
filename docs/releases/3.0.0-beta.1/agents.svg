@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 250" width="880" height="250" role="img" aria-label="An agent such as Claude starts cord --mcp, which talks to Cord on 127.0.0.1 with a token. Cord answers only for the vaults you picked.">
+  <style>
+    .bg { fill: #f4f4f5; } .box { fill: #ffffff; stroke: #c9c9cf; stroke-width: 1.4; }
+    .pc { fill: none; stroke: #a1a1aa; stroke-width: 1.2; stroke-dasharray: 6 5; }
+    .h { font: 600 15px system-ui, -apple-system, 'Segoe UI', sans-serif; fill: #18181b; }
+    .s { font: 400 13px system-ui, -apple-system, 'Segoe UI', sans-serif; fill: #52525b; }
+    .m { font: 400 13px ui-monospace, 'Cascadia Mono', Menlo, monospace; fill: #18181b; }
+    .k { font: 600 12px system-ui, -apple-system, 'Segoe UI', sans-serif; fill: #71717a; letter-spacing: .06em; }
+    .arrow { stroke: #52525b; stroke-width: 1.6; fill: none; } .head { fill: #52525b; }
+    .vault-off { fill: none; stroke: #a1a1aa; stroke-dasharray: 4 3; }
+    .off { font: 400 13px system-ui, -apple-system, 'Segoe UI', sans-serif; fill: #a1a1aa; }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #18181b; } .box { fill: #232326; stroke: #3f3f46; } .pc { stroke: #52525b; }
+      .h, .m { fill: #f4f4f5; } .s, .k { fill: #a1a1aa; }
+      .arrow { stroke: #a1a1aa; } .head { fill: #a1a1aa; } .vault-off { stroke: #52525b; } .off { fill: #71717a; }
+    }
+  </style>
+  <rect class="bg" width="880" height="250" rx="14"/>
+  <rect class="pc" x="16" y="16" width="848" height="218" rx="12"/>
+  <text class="k" x="34" y="42">YOUR COMPUTER</text>
+
+  <rect class="box" x="34" y="70" width="190" height="120" rx="10"/>
+  <text class="h" x="52" y="100">Claude</text>
+  <text class="s" x="52" y="122">Desktop, Code or any</text>
+  <text class="s" x="52" y="140">MCP client</text>
+
+  <path class="arrow" d="M224 130 H272"/><path class="head" d="M272 125 l9 5 l-9 5 z"/>
+  <rect class="box" x="282" y="96" width="132" height="68" rx="10"/>
+  <text class="m" x="300" y="126">cord --mcp</text>
+  <text class="s" x="300" y="146">bridge</text>
+
+  <path class="arrow" d="M414 130 H462"/><path class="head" d="M462 125 l9 5 l-9 5 z"/>
+  <text class="s" x="421" y="118">token</text>
+
+  <rect class="box" x="472" y="70" width="374" height="140" rx="10"/>
+  <text class="h" x="490" y="100">Cord, open and unlocked</text>
+  <text class="m" x="490" y="122">127.0.0.1 only</text>
+  <rect x="490" y="146" width="96" height="30" rx="15" fill="#7c6cf2" fill-opacity=".18"/>
+  <circle cx="506" cy="161" r="4" fill="#7c6cf2"/>
+  <text class="h" x="516" y="166" style="font-size:13px">Studio</text>
+  <text class="s" x="490" y="198">seen by agents</text>
+  <rect class="vault-off" x="600" y="146" width="88" height="30" rx="15"/>
+  <circle cx="616" cy="161" r="4" fill="#57a95b" fill-opacity=".5"/>
+  <text class="off" x="626" y="166">Home</text>
+  <text class="off" x="600" y="198">hidden</text>
+</svg>
