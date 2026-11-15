@@ -33,7 +33,7 @@
     "react-router-dom": "^6.30.6",
     "shuttle-editor": "^0.5.0",
     "yjs": "13.6.33",
-    "zustand": "^4.5.2"
+    "zustand": "^5.1.0"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.12.4",
