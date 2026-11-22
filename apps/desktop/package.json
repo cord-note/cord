@@ -21,8 +21,8 @@
     "lint": "eslint src --ext .ts,.tsx --max-warnings 0"
   },
   "dependencies": {
-    "@tauri-apps/api": "^2.12.4",
-    "@tauri-apps/plugin-dialog": "2.7.3",
+    "@tauri-apps/api": "^2.12.5",
+    "@tauri-apps/plugin-dialog": "2.8.4",
     "@tauri-apps/plugin-shell": "^2.6.0",
     "@tauri-apps/plugin-updater": "^2.14.1",
     "jsonc-parser": "^3.3.1",
