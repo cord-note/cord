@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 300" width="880" height="300" role="img" aria-label="A note tagged book gets fields for author, status and rating. Every note with the tag becomes a row in the book table.">
+  <style>
+    .bg { fill: #f4f4f5; } .card { fill: #ffffff; stroke: #d4d4d8; stroke-width: 1.2; }
+    .h { font: 650 18px system-ui, -apple-system, 'Segoe UI', sans-serif; fill: #18181b; }
+    .t { font: 400 13px system-ui, -apple-system, 'Segoe UI', sans-serif; fill: #27272a; }
+    .m { font: 400 13px system-ui, -apple-system, 'Segoe UI', sans-serif; fill: #71717a; }
+    .k { font: 600 11px system-ui, -apple-system, 'Segoe UI', sans-serif; fill: #71717a; letter-spacing: .06em; }
+    .chip { fill: #f3e8f6; stroke: #ba68c8; stroke-width: 1.2; } .dot { fill: #ba68c8; }
+    .rule { stroke: #e4e4e7; } .arrow { stroke: #a1a1aa; stroke-width: 1.6; fill: none; }
+    .pill { fill: #e8f5e9; } .pill2 { fill: #fff3e0; } .pill3 { fill: #eceff1; }
+    .hl { fill: #ba68c8; opacity: .08; }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #18181b; } .card { fill: #232326; stroke: #3f3f46; }
+      .h { fill: #f4f4f5; } .t { fill: #e4e4e7; } .m { fill: #a1a1aa; } .k { fill: #a1a1aa; }
+      .chip { fill: #3a2a40; } .rule { stroke: #34343a; } .arrow { stroke: #71717a; }
+      .pill { fill: #22382a; } .pill2 { fill: #3d2f1c; } .pill3 { fill: #2f3437; } .hl { opacity: .16; }
+    }
+    .f { opacity: 0; animation: show 9s infinite; }
+    .f1 { animation-name: f1; } .f2 { animation-name: f2; } .f3 { animation-name: f3; }
+    .r1 { animation-name: r1; } .r2 { animation-name: r2; } .r3 { animation-name: r3; } .r4 { animation-name: r4; }
+    .go { animation-name: go; }
+    @keyframes f1 { 0%,8% { opacity: 0; transform: translateY(6px) } 14%,92% { opacity: 1; transform: none } 100% { opacity: 0 } }
+    @keyframes f2 { 0%,14% { opacity: 0; transform: translateY(6px) } 20%,92% { opacity: 1; transform: none } 100% { opacity: 0 } }
+    @keyframes f3 { 0%,20% { opacity: 0; transform: translateY(6px) } 26%,92% { opacity: 1; transform: none } 100% { opacity: 0 } }
+    @keyframes go { 0%,30% { opacity: 0 } 36%,92% { opacity: 1 } 100% { opacity: 0 } }
+    @keyframes r1 { 0%,38% { opacity: 0; transform: translateX(-10px) } 44%,92% { opacity: 1; transform: none } 100% { opacity: 0 } }
+    @keyframes r2 { 0%,46% { opacity: 0; transform: translateX(-10px) } 52%,92% { opacity: 1; transform: none } 100% { opacity: 0 } }
+    @keyframes r3 { 0%,54% { opacity: 0; transform: translateX(-10px) } 60%,92% { opacity: 1; transform: none } 100% { opacity: 0 } }
+    @keyframes r4 { 0%,62% { opacity: 0; transform: translateX(-10px) } 68%,92% { opacity: 1; transform: none } 100% { opacity: 0 } }
+    @media (prefers-reduced-motion: reduce) { .f { animation: none; opacity: 1; } }
+  </style>
+  <rect class="bg" width="880" height="300" rx="14"/>
+
+  <!-- The note -->
+  <text class="k" x="32" y="40">A NOTE</text>
+  <rect class="card" x="32" y="54" width="300" height="214" rx="10"/>
+  <text class="h" x="52" y="88">Piranesi</text>
+  <rect class="chip" x="52" y="102" width="62" height="24" rx="12"/>
+  <circle class="dot" cx="66" cy="114" r="3.5"/>
+  <text class="t" x="76" y="119">book</text>
+  <g class="f f1"><text class="m" x="52" y="158">Author</text><text class="t" x="142" y="158">Susanna Clarke</text></g>
+  <g class="f f2"><text class="m" x="52" y="186">Status</text><rect class="pill" x="138" y="172" width="66" height="20" rx="10"/><text class="t" x="148" y="186">Finished</text></g>
+  <g class="f f3"><text class="m" x="52" y="214">Rating</text><text class="t" x="142" y="214">5</text></g>
+  <text class="m" x="52" y="250">Read it in two evenings.</text>
+
+  <!-- Arrow -->
+  <g class="f go"><path class="arrow" d="M346 160 H392 M384 152 L392 160 L384 168"/></g>
+
+  <!-- The table -->
+  <text class="k" x="406" y="40">#BOOK, AS A TABLE</text>
+  <rect class="card" x="406" y="54" width="442" height="214" rx="10"/>
+  <text class="m" x="424" y="84">Title</text><text class="m" x="604" y="84">Author</text><text class="m" x="740" y="84">Status</text>
+  <line class="rule" x1="406" y1="98" x2="848" y2="98"/>
+  <g class="f r1"><rect class="hl" x="407" y="99" width="440" height="40"/><text class="t" x="424" y="124">Piranesi</text><text class="t" x="604" y="124">Susanna Clarke</text><rect class="pill" x="736" y="110" width="66" height="20" rx="10"/><text class="t" x="746" y="124">Finished</text></g>
+  <g class="f r2"><text class="t" x="424" y="164">The Left Hand of Darkness</text><text class="t" x="604" y="164">Ursula K. Le Guin</text><rect class="pill2" x="736" y="150" width="62" height="20" rx="10"/><text class="t" x="746" y="164">Reading</text></g>
+  <g class="f r3"><text class="t" x="424" y="204">Four Thousand Weeks</text><text class="t" x="604" y="204">Oliver Burkeman</text><rect class="pill" x="736" y="190" width="66" height="20" rx="10"/><text class="t" x="746" y="204">Finished</text></g>
+  <g class="f r4"><text class="t" x="424" y="244">Project Hail Mary</text><text class="t" x="604" y="244">Andy Weir</text><rect class="pill3" x="736" y="230" width="94" height="20" rx="10"/><text class="t" x="746" y="244">Want to read</text></g>
+</svg>

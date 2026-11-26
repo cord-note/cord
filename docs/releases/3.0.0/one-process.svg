@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 240" width="880" height="240" role="img" aria-label="Cord 2.x ran its core as a separate background process. In 3.0 the core moved inside the app: one process.">
+  <style>
+    .bg { fill: #f4f4f5; } .box { fill: #ffffff; stroke: #c9c9cf; stroke-width: 1.4; } .core { fill: #ececef; stroke: #c9c9cf; stroke-width: 1.2; }
+    .h { font: 600 15px system-ui, -apple-system, 'Segoe UI', sans-serif; fill: #18181b; }
+    .s { font: 400 13px system-ui, -apple-system, 'Segoe UI', sans-serif; fill: #52525b; }
+    .k { font: 600 11px system-ui, -apple-system, 'Segoe UI', sans-serif; fill: #71717a; letter-spacing: .06em; }
+    .line { stroke: #a1a1aa; stroke-width: 1.4; stroke-dasharray: 4 4; fill: none; }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #18181b; } .box { fill: #232326; stroke: #3f3f46; } .core { fill: #2c2c30; stroke: #3f3f46; }
+      .h { fill: #f4f4f5; } .s { fill: #a1a1aa; } .k { fill: #a1a1aa; } .line { stroke: #71717a; }
+    }
+    /* The core box slides from outside the app to inside it, and the HTTP link fades. */
+    .move { animation: move 7s infinite ease-in-out; }
+    .link { animation: link 7s infinite ease-in-out; }
+    .v2 { animation: v2 7s infinite; } .v3 { animation: v3 7s infinite; }
+    @keyframes move { 0%,25% { transform: translateX(0) } 55%,90% { transform: translateX(-312px) } 100% { transform: translateX(0) } }
+    @keyframes link { 0%,25% { opacity: 1 } 40%,95% { opacity: 0 } 100% { opacity: 1 } }
+    @keyframes v2 { 0%,30% { opacity: 1 } 45%,92% { opacity: 0 } 100% { opacity: 1 } }
+    @keyframes v3 { 0%,45% { opacity: 0 } 58%,90% { opacity: 1 } 100% { opacity: 0 } }
+    @media (prefers-reduced-motion: reduce) { .move { animation: none; transform: translateX(-312px) } .link, .v2 { animation: none; opacity: 0 } .v3 { animation: none; opacity: 1 } }
+  </style>
+  <rect class="bg" width="880" height="240" rx="14"/>
+  <text class="k v2" x="32" y="44">CORD 2.X: TWO PROCESSES</text>
+  <text class="k v3" x="32" y="44">CORD 3.0: ONE PROCESS</text>
+
+  <rect class="box" x="32" y="62" width="520" height="140" rx="10"/>
+  <text class="h" x="52" y="94">Cord app</text>
+  <text class="s" x="52" y="116">window, editor</text>
+
+  <g class="link"><path class="line" d="M552 132 H612"/><text class="s" x="562" y="124">HTTP</text></g>
+
+  <g class="move">
+    <rect class="core" x="612" y="78" width="236" height="108" rx="9"/>
+    <text class="h" x="632" y="108">Cord core</text>
+    <text class="s" x="632" y="130">notes, tags, search,</text>
+    <text class="s" x="632" y="148">accounts, agents</text>
+    <text class="s v2" x="632" y="172">started on its own</text>
+    <text class="s v3" x="632" y="172">built into the app</text>
+  </g>
+  <text class="s" x="32" y="226">Nothing extra to start, and nothing to fail on its own.</text>
+</svg>

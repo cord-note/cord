@@ -12,10 +12,90 @@ local accounts unlock with a PIN. Since 3.0 everything runs in one process: a
 Tauri shell over a Rust core (`crates/cord-core`), with notes stored in a
 format built for sync between devices. Tags can carry fields and be shown as
 tables or boards, and AI agents can reach your notes through the **Agents** tab
-(see [cord-mcp](https://github.com/cord-note/cord-mcp)). Themes can be
-imported from a folder, a zip or a Git repo; see
-[cord-themes](https://github.com/cord-note/cord-themes) for 32 to start with.
+(see [cord-mcp](https://github.com/cord-note/cord-mcp)).
 What changed in each version is in [CHANGELOG.md](CHANGELOG.md).
+
+## What's in 3.0
+
+### Tags with fields
+
+A tag can carry fields: text, number, checkbox, select, multi-select and date.
+Tag a note and its fields appear under the title.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/releases/3.0.0/fields-dark.png">
+  <img alt="A note tagged book, with its author, status and rating" src="docs/releases/3.0.0/fields-light.png" width="720">
+</picture>
+
+Everything with the tag, whole notes or single blocks, becomes a row.
+
+![A tagged note becomes a row in the tag's table](docs/releases/3.0.0/tags-to-table.svg)
+
+### Tables and boards
+
+Open a tag to see its rows as a table or a board, with filters and sorting.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/releases/3.0.0/table-dark.png">
+  <img alt="The book tag as a table" src="docs/releases/3.0.0/table-light.png" width="860">
+</picture>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/releases/3.0.0/board-dark.png">
+  <img alt="The task tag as a board grouped by status" src="docs/releases/3.0.0/board-light.png" width="720">
+</picture>
+
+### Views inside notes
+
+Put a tag's table or board inside any note, and it stays live.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/releases/3.0.0/embed-dark.png">
+  <img alt="A board of tasks inside a weekly review note" src="docs/releases/3.0.0/embed-light.png" width="860">
+</picture>
+
+### Agents
+
+AI agents such as Claude Desktop and Claude Code can search and read your notes,
+and, if you allow it, create notes, add text, tag and set fields. You pick the
+vaults they see. They reach Cord only while it is open and unlocked, and every
+call shows up in the Agents tab. Setup is in
+[cord-mcp](https://github.com/cord-note/cord-mcp).
+
+![An agent calls Cord over a local connection; each call shows in the Agents tab](docs/releases/3.0.0/agents.svg)
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/releases/3.0.0/access-dark.png">
+  <img alt="Agent settings: allow, allow editing, vaults and the tools agents can use" src="docs/releases/3.0.0/access-light.png" width="600">
+</picture>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/releases/3.0.0/activity-dark.png">
+  <img alt="The Agents activity list" src="docs/releases/3.0.0/activity-light.png" width="380">
+</picture>
+
+### One process, ready for sync
+
+The core now runs inside the app, and notes are stored in a format built for
+sync between devices, which comes in a later release.
+
+![The core moved from a background process into the app](docs/releases/3.0.0/one-process.svg)
+
+Upgrading from 2.x copies your data once and never changes the old database.
+
+![Upgrading copies 2.x data into the new format](docs/releases/3.0.0/upgrade.svg)
+
+### Make it yours
+
+Cord follows your light or dark setting, and themes change the rest. Here are
+four of the 32 in [cord-themes](https://github.com/cord-note/cord-themes), which
+you can import all at once. A theme can also bring its own lock-screen scenes.
+
+| | |
+|---|---|
+| ![Catppuccin](docs/releases/3.0.0/theme-catppuccin.png) | ![Rosé Pine](docs/releases/3.0.0/theme-rose-pine.png) |
+| Catppuccin | Rosé Pine |
+| ![Gruvbox](docs/releases/3.0.0/theme-gruvbox.png) | ![Nord](docs/releases/3.0.0/theme-nord.png) |
+| Gruvbox | Nord |
 
 ## Install
 

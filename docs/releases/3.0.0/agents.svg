@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 280" width="880" height="280" role="img" aria-label="An agent such as Claude calls Cord over a connection that stays on your computer. Cord only answers while it is open and unlocked, and every call shows up in the Agents tab.">
+  <style>
+    .bg { fill: #f4f4f5; } .box { fill: #ffffff; stroke: #c9c9cf; stroke-width: 1.4; } .inner { fill: #ececef; stroke: #d4d4d8; }
+    .h { font: 600 15px system-ui, -apple-system, 'Segoe UI', sans-serif; fill: #18181b; }
+    .s { font: 400 13px system-ui, -apple-system, 'Segoe UI', sans-serif; fill: #52525b; }
+    .k { font: 600 11px system-ui, -apple-system, 'Segoe UI', sans-serif; fill: #71717a; letter-spacing: .06em; }
+    .line { stroke: #a1a1aa; stroke-width: 1.4; stroke-dasharray: 4 4; fill: none; }
+    .pulse { fill: #7c6af7; } .edge { fill: none; stroke: #a1a1aa; stroke-width: 1.2; stroke-dasharray: 6 5; }
+    .ico { fill: none; stroke: #71717a; stroke-width: 1.4; } .ico.w { stroke: #7c6af7; }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #18181b; } .box { fill: #232326; stroke: #3f3f46; } .inner { fill: #2c2c30; stroke: #3f3f46; }
+      .h { fill: #f4f4f5; } .s { fill: #a1a1aa; } .k { fill: #a1a1aa; } .line { stroke: #71717a; } .edge { stroke: #52525b; }
+      .ico { stroke: #a1a1aa; } .ico.w { stroke: #9d8ff9; }
+    }
+    .p { animation: travel 8s infinite linear; opacity: 0; }
+    .p2 { animation-delay: 2s; } .p3 { animation-delay: 4s; } .p4 { animation-delay: 6s; }
+    @keyframes travel { 0% { opacity: 0; transform: translateX(0) } 4% { opacity: 1 } 20% { opacity: 1; transform: translateX(212px) } 24%,100% { opacity: 0; transform: translateX(212px) } }
+    .a { opacity: 0; animation: row 8s infinite; }
+    .a1 { animation-name: a1; } .a2 { animation-name: a2; } .a3 { animation-name: a3; } .a4 { animation-name: a4; }
+    @keyframes a1 { 0%,20% { opacity: 0; transform: translateY(-6px) } 25%,94% { opacity: 1; transform: none } 100% { opacity: 0 } }
+    @keyframes a2 { 0%,45% { opacity: 0; transform: translateY(-6px) } 50%,94% { opacity: 1; transform: none } 100% { opacity: 0 } }
+    @keyframes a3 { 0%,70% { opacity: 0; transform: translateY(-6px) } 75%,94% { opacity: 1; transform: none } 100% { opacity: 0 } }
+    @keyframes a4 { 0%,92% { opacity: 0 } 94% { opacity: 1 } 100% { opacity: 0 } }
+    @media (prefers-reduced-motion: reduce) { .p { display: none } .a { animation: none; opacity: 1 } }
+  </style>
+  <rect class="bg" width="880" height="280" rx="14"/>
+
+  <text class="k" x="32" y="44">AGENT</text>
+  <rect class="box" x="32" y="62" width="190" height="150" rx="10"/>
+  <text class="h" x="50" y="94">Claude</text>
+  <text class="s" x="50" y="116">Desktop or Code,</text>
+  <text class="s" x="50" y="134">or any MCP client</text>
+  <text class="s" x="50" y="190">asks a question</text>
+
+  <path class="line" d="M222 137 H446"/>
+  <text class="s" x="246" y="126">127.0.0.1, with a token</text>
+  <text class="s" x="246" y="160">never leaves your computer</text>
+  <circle class="pulse p p1" cx="230" cy="137" r="5"/>
+  <circle class="pulse p p2" cx="230" cy="137" r="5"/>
+  <circle class="pulse p p3" cx="230" cy="137" r="5"/>
+
+  <text class="k" x="446" y="44">CORD, OPEN AND UNLOCKED</text>
+  <rect class="box" x="446" y="62" width="402" height="190" rx="10"/>
+  <text class="h" x="464" y="94">Agents tab</text>
+  <text class="s" x="464" y="114">only the vaults you picked</text>
+
+  <g class="a a1"><rect class="inner" x="464" y="128" width="366" height="32" rx="7"/>
+    <circle class="ico" cx="482" cy="144" r="6"/><circle class="ico" cx="482" cy="144" r="2"/>
+    <text class="s" x="498" y="149">searched for “Harbor”</text></g>
+  <g class="a a2"><rect class="inner" x="464" y="166" width="366" height="32" rx="7"/>
+    <circle class="ico" cx="482" cy="182" r="6"/><circle class="ico" cx="482" cy="182" r="2"/>
+    <text class="s" x="498" y="187">read Harbor Coffee rebrand</text></g>
+  <g class="a a3"><rect class="inner" x="464" y="204" width="366" height="32" rx="7"/>
+    <path class="ico w" d="M476 226 l3 -8 l9 -9 l5 5 l-9 9 z"/>
+    <text class="s" x="498" y="225">created Harbor Coffee call prep</text></g>
+</svg>
