@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.0.0 - 2026-11-26
+
+The stable release of 3.0. It is the same code as 3.0.0-beta.1, which turned up no issues in testing. Everything listed under 3.0.0-beta.1 below is new in 3.0.0.
+
+- 2.x installs (AppImage) are now offered 3.0.0 as an update.
+- Upgrading still copies your 2.x data into the new format on first start and never changes the old database. Backing up your data folder first is still a good idea.
+
 ## 3.0.0-beta.1 - 2026-11-10
 
 **This is a beta.** Cord 3.0 stores your notes in a new format. Read *Before you upgrade* first.

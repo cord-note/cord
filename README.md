@@ -6,8 +6,7 @@
 
 Local-first desktop note-taking app. Vaults → Notes → Links → Tags — a knowledge graph, not a filing cabinet.
 
-**Status:** 3.0, in beta (first build `v3.0.0-beta.1`); 2.4.1 is the current
-stable release. Notes are written in
+**Status:** 3.0.0 is the current stable release. Notes are written in
 [Shuttle](https://github.com/cord-note/shuttle), Cord's Tiptap 3 editor, and
 local accounts unlock with a PIN. Since 3.0 everything runs in one process: a
 Tauri shell over a Rust core (`crates/cord-core`), with notes stored in a
@@ -113,7 +112,7 @@ it — nothing is deleted.
 **Upgrading from 2.x:** on first start, Cord 3.0 copies your notes, tags,
 attachments and settings from the 2.x `cord.db` into the new format. The old
 database is never changed, and a copy that was stopped halfway starts over
-cleanly. Back up the data folder before trying a beta.
+cleanly. Back up the data folder before upgrading anyway.
 
 ## Updating
 
