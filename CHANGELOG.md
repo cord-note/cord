@@ -1,6 +1,6 @@
 # Changelog
 
-## 3.0.0 - 2026-11-26
+## 3.0.0 - 2026-11-27
 
 The stable release of 3.0. It is the same code as 3.0.0-beta.1, which turned up no issues in testing. Everything listed under 3.0.0-beta.1 below is new in 3.0.0.
 
