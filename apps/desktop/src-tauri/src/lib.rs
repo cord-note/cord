@@ -101,6 +101,18 @@ macro_rules! with_commands {
             $crate::commands::agents::agents_update,
             $crate::commands::agents::agents_new_token,
             $crate::commands::agents::agents_activity,
+            // sync
+            $crate::commands::sync::sync_servers,
+            $crate::commands::sync::sync_add_server,
+            $crate::commands::sync::sync_remove_server,
+            $crate::commands::sync::sync_server_vaults,
+            $crate::commands::sync::sync_link_vault,
+            $crate::commands::sync::sync_pull_vault,
+            $crate::commands::sync::sync_unlink_vault,
+            $crate::commands::sync::sync_now,
+            $crate::commands::sync::sync_pause,
+            $crate::commands::sync::sync_resume,
+            $crate::commands::sync::sync_status,
         ])
     };
 }
@@ -133,13 +145,16 @@ pub fn run() {
                 Ok(core) => {
                     app.manage::<Shared>(Arc::new(core));
                     app.manage(McpState::default());
-                    // Agents: keep the MCP server in step with who is signed in.
+                    app.manage(crate::sync::state::SyncState::default());
+                    // Keep the MCP server and the sync tasks in step with who is signed in.
                     let handle = app.handle().clone();
                     tauri::async_runtime::spawn(async move {
                         loop {
                             let core = handle.state::<Shared>().inner().clone();
                             let state = handle.state::<McpState>();
-                            mcp_server::reconcile(core, Some(handle.clone()), &state).await;
+                            mcp_server::reconcile(core.clone(), Some(handle.clone()), &state).await;
+                            let sync_state = handle.state::<crate::sync::state::SyncState>();
+                            crate::sync::state::reconcile(core.clone(), Some(handle.clone()), &sync_state).await;
                             tokio::time::sleep(Duration::from_secs(1)).await;
                         }
                     });

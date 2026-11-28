@@ -526,3 +526,44 @@ export interface AgentActivity {
   /** The note the call touched, when the target names one (or one of its blocks). */
   note: { id: string; title: string; vaultId: string; deleted: boolean } | null;
 }
+
+// ── Sync ─────────────────────────────────────────────────────────────────────
+
+/** A sync server this user is connected to. The token never leaves Rust. */
+export interface SyncServer {
+  id: string;
+  url: string;
+  username: string;
+  serverUserId: string | null;
+  paused: boolean;
+  lastSyncAt: number | null;
+  createdAt: number;
+}
+
+export interface AddSyncServerInput {
+  url: string;
+  username: string;
+  password: string;
+  /** Needed for a new account; leave out to sign in to an existing one. */
+  inviteCode?: string;
+  deviceName: string;
+}
+
+/** A vault on the server this user may sync. */
+export interface SyncServerVault {
+  id: string;
+  name: string;
+  role: string;
+  /** Already linked on this device. */
+  linked: boolean;
+}
+
+export type SyncState = 'connecting' | 'connected' | 'offline' | 'paused' | 'signedOut' | 'updateNeeded';
+
+/** One server's state; the full list also arrives as the `sync-status` event. */
+export interface SyncStatus {
+  id: string;
+  state: SyncState;
+  since: number | null;
+  message: string | null;
+}
