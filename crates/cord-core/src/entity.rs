@@ -26,6 +26,25 @@ pub enum Entity {
 }
 
 impl Entity {
+    /// Every entity, parents before children, so a vault is sent in an order
+    /// where each row's parent arrives first.
+    pub const ALL: [Entity; 10] = [
+        Self::Vault,
+        Self::Tag,
+        Self::TagField,
+        Self::TagView,
+        Self::Note,
+        Self::Attachment,
+        Self::NoteTag,
+        Self::BlockTag,
+        Self::BlockLink,
+        Self::FieldValue,
+    ];
+
+    pub fn parse(s: &str) -> Option<Self> {
+        Self::ALL.into_iter().find(|e| e.as_str() == s)
+    }
+
     pub fn as_str(self) -> &'static str {
         match self {
             Self::Vault => "vault",
@@ -41,7 +60,7 @@ impl Entity {
         }
     }
 
-    fn table(self) -> &'static str {
+    pub(crate) fn table(self) -> &'static str {
         match self {
             Self::Vault => "vaults",
             Self::Note => "notes",
@@ -57,7 +76,7 @@ impl Entity {
     }
 
     /// Key columns. A composite key is joined with ':' in the entity id.
-    fn key(self) -> &'static [&'static str] {
+    pub(crate) fn key(self) -> &'static [&'static str] {
         match self {
             Self::NoteTag => &["note_id", "tag_id"],
             Self::BlockTag => &["block_id", "tag_id"],
@@ -81,7 +100,7 @@ impl Entity {
     }
 
     /// Columns set once, at create.
-    fn fixed(self) -> &'static [&'static str] {
+    pub(crate) fn fixed(self) -> &'static [&'static str] {
         match self {
             Self::Vault => &["created_at", "updated_at"],
             Self::Note => &["vault_id", "created_at", "updated_at"],
@@ -379,6 +398,15 @@ mod tests {
         json_to_state(&json!({ "type": "doc", "content": [
             { "type": "paragraph", "attrs": { "blockId": "b1" }, "content": [{ "type": "text", "text": text }] }
         ]})).unwrap()
+    }
+
+    #[test]
+    fn every_entity_parses_back_from_its_name() {
+        for e in Entity::ALL {
+            assert_eq!(Entity::parse(e.as_str()), Some(e));
+        }
+        assert_eq!(Entity::parse("users"), None);
+        assert_eq!(Entity::ALL[0], Entity::Vault);
     }
 
     #[test]

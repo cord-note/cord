@@ -5,7 +5,7 @@
 pub const MACHINE: &[&str] = &[MACHINE_V1];
 
 /// `users/<id>/cord.db` — authored data and local-only sync tables.
-pub const CORD: &[&str] = &[CORD_V1, CORD_V2];
+pub const CORD: &[&str] = &[CORD_V1, CORD_V2, CORD_V3];
 
 /// `users/<id>/index.db` is derived and never migrated: a different version
 /// means the file is deleted and rebuilt.
@@ -226,6 +226,20 @@ CREATE TABLE tag_views (
 CREATE INDEX idx_tag_views_tag ON tag_views (tag_id);
 "#;
 
+/// Sync: received changes that could not apply yet. Local-only, never synced.
+const CORD_V3: &str = r#"
+CREATE TABLE sync_parked (
+  id            TEXT NOT NULL,
+  connection_id TEXT NOT NULL,
+  vault_id      TEXT NOT NULL,
+  change_json   TEXT NOT NULL,
+  reason        TEXT NOT NULL,
+  attempts      INTEGER NOT NULL DEFAULT 0,
+  created_at    INTEGER NOT NULL,
+  PRIMARY KEY (id, connection_id)
+) WITHOUT ROWID;
+"#;
+
 pub const INDEX: &str = r#"
 CREATE TABLE note_docs (
   note_id           TEXT PRIMARY KEY,
@@ -296,6 +310,20 @@ mod tests {
     }
 
     #[test]
+    fn v3_adds_the_parked_changes_table() {
+        let conn = Connection::open_in_memory().unwrap();
+        crate::store::migrate::run(&conn, CORD).unwrap();
+        conn.execute(
+            "INSERT INTO sync_parked (id, connection_id, vault_id, change_json, reason, created_at)
+             VALUES ('c1', 'k1', 'v1', '{}', 'why', 1)",
+            [],
+        )
+        .unwrap();
+        let attempts: i64 = conn.query_row("SELECT attempts FROM sync_parked", [], |r| r.get(0)).unwrap();
+        assert_eq!(attempts, 0);
+    }
+
+    #[test]
     fn machine_schema_creates_its_tables() {
         let conn = Connection::open_in_memory().unwrap();
         migrate::run(&conn, MACHINE).unwrap();
@@ -310,7 +338,7 @@ mod tests {
             tables(&conn),
             [
                 "attachments", "block_links", "block_tags", "change_pending", "changes",
-                "connections", "field_clocks", "field_values", "note_bodies", "note_tags", "notes",
+                "connections", "field_clocks", "field_values", "note_bodies", "note_tags", "notes", "sync_parked",
                 "tag_fields", "tag_views", "tags", "vault_connections", "vaults",
             ]
         );

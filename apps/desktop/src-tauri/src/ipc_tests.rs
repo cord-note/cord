@@ -20,9 +20,12 @@ struct Harness {
 fn harness() -> Harness {
     let dir = tempfile::tempdir().unwrap();
     let core: Shared = Arc::new(Core::open(dir.path().to_path_buf()).unwrap());
-    let app = with_commands!(mock_builder().manage(core).manage(crate::mcp::server::McpState::default()))
-        .build(mock_context(noop_assets()))
-        .unwrap();
+    let app = with_commands!(mock_builder()
+        .manage(core)
+        .manage(crate::mcp::server::McpState::default())
+        .manage(crate::sync::state::SyncState::default()))
+    .build(mock_context(noop_assets()))
+    .unwrap();
     let webview = WebviewWindowBuilder::new(&app, "main", Default::default()).build().unwrap();
     Harness { _dir: dir, _app: app, webview }
 }
@@ -279,4 +282,19 @@ fn settings_and_attachments_need_a_user() {
     assert_eq!(res.headers()["content-type"], "image/png");
     assert_eq!(crate::attachment(Some(&core), "../machine.db").status(), 404);
     assert!(h.call("attachments_create", json!({ "data": { "vaultId": vault["id"], "mime": "image/png", "dataBase64": "%%%" } })).is_err());
+}
+
+#[test]
+fn sync_commands_list_servers_and_refuse_plain_http_elsewhere() {
+    let h = harness();
+    h.ok("auth_register", json!({ "data": { "username": "ola", "password": "pw-long-enough" } }));
+    assert_eq!(h.ok("sync_servers", json!({})), json!([]));
+    assert_eq!(h.ok("sync_status", json!({})), json!([]));
+    let refused = h
+        .call(
+            "sync_add_server",
+            json!({ "data": { "url": "http://notes.example.org", "username": "ola", "password": "x", "deviceName": "t" } }),
+        )
+        .unwrap_err();
+    assert!(refused.to_string().contains("https"));
 }

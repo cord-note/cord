@@ -17,6 +17,7 @@ import type {
   TagField, CreateFieldInput, UpdateFieldInput, SetFieldValueInput, NoteFields,
   TagView, UpdateViewInput, TagRow,
   AgentsState, UpdateAgentsInput, AgentActivity,
+  SyncServer, AddSyncServerInput, SyncServerVault, SyncStatus,
 } from '@shared/types';
 import { assembleLibrary } from '@shared/theming/assembleLibrary';
 
@@ -71,6 +72,22 @@ export const api = {
     update:   (data: UpdateAgentsInput) => invoke<AgentsState>('agents_update', { data }),
     newToken: ()                        => invoke<{ token: string }>('agents_new_token'),
     activity: ()                        => invoke<AgentActivity[]>('agents_activity'),
+  },
+
+  sync: {
+    servers:      ()                                 => invoke<SyncServer[]>('sync_servers'),
+    addServer:    (data: AddSyncServerInput)         => invoke<SyncServer>('sync_add_server', { data }),
+    removeServer: (id: string)                       => invoke<null>('sync_remove_server', { data: { id } }),
+    serverVaults: (id: string)                       => invoke<SyncServerVault[]>('sync_server_vaults', { data: { id } }),
+    /** Returns how many changes were queued. */
+    linkVault:    (id: string, vaultId: string)      => invoke<number>('sync_link_vault', { data: { id, vaultId } }),
+    /** Returns how many changes were applied. */
+    pullVault:    (id: string, vaultId: string)      => invoke<number>('sync_pull_vault', { data: { id, vaultId } }),
+    unlinkVault:  (id: string, vaultId: string)      => invoke<null>('sync_unlink_vault', { data: { id, vaultId } }),
+    now:          (id: string)                       => invoke<null>('sync_now', { data: { id } }),
+    pause:        (id: string)                       => invoke<null>('sync_pause', { data: { id } }),
+    resume:       (id: string)                       => invoke<null>('sync_resume', { data: { id } }),
+    status:       ()                                 => invoke<SyncStatus[]>('sync_status'),
   },
 
   blocks: {

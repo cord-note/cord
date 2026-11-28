@@ -97,3 +97,25 @@ jobs:
       - name: Test cord-core
         working-directory: crates/cord-core
         run: cargo test
+
+  server:
+    name: cord-server
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: crates/cord-server
+
+      - name: Test cord-server
+        working-directory: crates/cord-server
+        run: cargo test
+
+      - name: Build the image
+        run: docker build -f crates/cord-server/Dockerfile -t cord-server crates
+
+      - name: Smoke test the image
+        run: bash crates/cord-server/smoke.sh cord-server

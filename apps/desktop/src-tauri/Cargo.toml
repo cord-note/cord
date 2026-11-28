@@ -25,6 +25,8 @@ cord-core = { path = "../../../crates/cord-core" }
 rmcp = { version = "3.9", features = ["server", "macros", "transport-streamable-http-server", "schemars"] }
 axum = "0.8"
 tokio-util = "0.7"
+tokio-tungstenite = { version = "0.26", features = ["native-tls"] }
+futures-util = "0.3"
 
 [profile.release]
 panic = "abort"
@@ -44,3 +46,4 @@ opt-level = 3
 tempfile = "3"
 rmcp = { version = "3.9", features = ["client", "transport-streamable-http-client-reqwest", "reqwest"] }
 tauri = { version = "2", features = ["test"] }
+cord-server = { path = "../../../crates/cord-server" }

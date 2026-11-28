@@ -7,6 +7,7 @@ pub mod fields;
 pub mod fragments;
 pub mod notes;
 pub mod settings;
+pub mod sync;
 pub mod tags;
 pub mod themes;
 pub mod vaults;
