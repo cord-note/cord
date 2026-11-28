@@ -1,6 +1,7 @@
 mod commands;
 mod core;
 mod dto;
+mod sync;
 pub mod mcp;
 
 use std::collections::HashMap;
