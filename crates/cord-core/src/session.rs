@@ -32,6 +32,16 @@ pub struct Writer<'a> {
     now: i64,
 }
 
+/// What applying received changes can use: the transaction, the clock to
+/// observe their stamps, and who this device and user are.
+pub struct Inbound<'a> {
+    pub conn: &'a Connection,
+    pub clock: &'a mut HlcClock,
+    pub device_id: &'a str,
+    pub user_id: &'a str,
+    pub now: i64,
+}
+
 pub(crate) fn now_ms() -> i64 {
     SystemTime::now().duration_since(UNIX_EPOCH).map_or(0, |d| d.as_millis() as i64)
 }
@@ -58,6 +68,26 @@ impl Session {
 
     pub fn user_id(&self) -> &str {
         &self.user_id
+    }
+
+    pub fn device_id(&self) -> &str {
+        &self.device_id
+    }
+
+    /// Run `f` in one transaction with the clock lent out. For applying
+    /// received changes and queueing a vault's state; never for local edits.
+    pub fn inbound<T>(&mut self, f: impl FnOnce(&mut Inbound<'_>) -> Result<T>) -> Result<T> {
+        let tx = self.db.conn.unchecked_transaction()?;
+        let mut inbound = Inbound {
+            conn: &tx,
+            clock: &mut self.clock,
+            device_id: &self.device_id,
+            user_id: &self.user_id,
+            now: now_ms(),
+        };
+        let out = f(&mut inbound)?;
+        tx.commit()?;
+        Ok(out)
     }
 
     pub fn attachments_dir(&self) -> Result<PathBuf> {
@@ -226,6 +256,22 @@ mod tests {
         s.write(|w| w.create(Entity::Vault, "v1", vault_row("v1"))).unwrap();
         assert!(!s.write(|w| w.create(Entity::Vault, "v1", vault_row("v1"))).unwrap());
         assert_eq!(count(&s, "SELECT count(*) FROM changes"), 1);
+    }
+
+    #[test]
+    fn inbound_lends_the_clock_in_one_transaction() {
+        let (_d, mut s) = test_session();
+        assert_eq!(s.device_id(), "dev");
+        let far = Hlc { wall: 9_000_000_000_000, counter: 3, device: "other".into() };
+        s.inbound(|i| {
+            i.clock.observe(&far, i.now as u64);
+            Ok(())
+        })
+        .unwrap();
+        connect(&s, "v1");
+        s.write(|w| w.create(Entity::Vault, "v1", vault_row("v1"))).unwrap();
+        let hlc: String = s.conn().query_row("SELECT hlc FROM changes", [], |r| r.get(0)).unwrap();
+        assert!(Hlc::parse(&hlc).unwrap() > far);
     }
 
     #[test]
