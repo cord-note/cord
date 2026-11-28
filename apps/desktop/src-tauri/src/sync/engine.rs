@@ -17,15 +17,20 @@ pub async fn push_all(core: &Shared, client: &Client, conn_id: &str) -> Result<u
     let mut sent = 0;
     loop {
         let id = conn_id.to_owned();
-        let batch = with_session(core, move |s| outbox::next_batch(s.conn(), &id)).await?;
+        let (batch, server_user, device) = with_session(core, move |s| {
+            let server_user = connections::get(s.conn(), &id)?.and_then(|r| r.server_user_id);
+            Ok((outbox::next_batch(s.conn(), &id)?, server_user, s.device_id().to_owned()))
+        })
+        .await?;
         if batch.changes.is_empty() {
             return Ok(sent);
         }
+        let changes = as_server_user(&batch.changes, server_user.as_deref(), &device);
         let mut accepted: Vec<String> = Vec::new();
         let mut rejected: Vec<Rejected> = Vec::new();
         let mut gone: Vec<String> = Vec::new();
         let mut failure = None;
-        for (vault, changes) in by_vault(&batch.changes) {
+        for (vault, changes) in by_vault(&changes) {
             match client.push(&vault, changes).await {
                 Ok(reply) => {
                     accepted.extend(reply.accepted);
@@ -57,6 +62,18 @@ pub async fn push_all(core: &Shared, client: &Client, conn_id: &str) -> Result<u
             return Ok(sent);
         }
     }
+}
+
+/// Changes are logged under the local account id; the server knows this
+/// device by its server account, so this device's own changes carry that.
+fn as_server_user(changes: &[WireChange], server_user: Option<&str>, device: &str) -> Vec<WireChange> {
+    let mut out = changes.to_vec();
+    if let Some(user) = server_user {
+        for c in out.iter_mut().filter(|c| c.author_device_id == device) {
+            c.author_user_id = user.to_owned();
+        }
+    }
+    out
 }
 
 /// Split a batch per vault, keeping order inside each.
@@ -153,5 +170,13 @@ mod tests {
         let ids: Vec<(String, Vec<String>)> =
             groups.into_iter().map(|(v, l)| (v, l.into_iter().map(|c| c.id).collect())).collect();
         assert_eq!(ids, [("a".into(), vec!["1".into(), "3".into()]), ("b".into(), vec!["2".into()])]);
+    }
+
+    #[test]
+    fn own_changes_carry_the_server_account() {
+        let mut other = c("2", "a");
+        other.author_device_id = "other".into();
+        let out = as_server_user(&[c("1", "a"), other], Some("srv-user"), "d");
+        assert_eq!((out[0].author_user_id.as_str(), out[1].author_user_id.as_str()), ("srv-user", "u"));
     }
 }
