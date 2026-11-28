@@ -6,3 +6,6 @@ pub mod outbox;
 pub mod apply;
 pub mod link;
 pub mod connections;
+
+#[cfg(test)]
+mod converge_tests;
