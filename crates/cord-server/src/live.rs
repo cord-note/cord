@@ -37,7 +37,9 @@ impl Default for Hub {
 /// One device's socket, until it closes or falls behind.
 pub async fn run(mut socket: WebSocket, server: Shared, user: String) {
     let mut pings = server.live.subscribe();
-    let mut keepalive = tokio::time::interval(Duration::from_secs(30));
+    // First keepalive after 30 s, not at once.
+    let every = Duration::from_secs(30);
+    let mut keepalive = tokio::time::interval_at(tokio::time::Instant::now() + every, every);
     loop {
         tokio::select! {
             got = pings.recv() => match got {
