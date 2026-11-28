@@ -52,12 +52,15 @@ pub fn record(conn: &Connection, change: &NewChange<'_>, now_ms: i64) -> Result<
     if targets.is_empty() {
         return Ok(None);
     }
+    record_for(conn, change, now_ms, &targets).map(Some)
+}
 
+/// Store the change for exactly these connections. Returns its id.
+pub fn record_for(conn: &Connection, change: &NewChange<'_>, now_ms: i64, targets: &[String]) -> Result<String> {
     let id = nanoid::nanoid!();
     let mut payload = Vec::with_capacity(change.payload.len() + 1);
     payload.push(PAYLOAD_FORMAT_V1);
     payload.extend_from_slice(change.payload);
-
     conn.execute(
         "INSERT INTO changes (id, vault_id, entity_type, entity_id, kind, field, hlc,
                               author_device_id, author_user_id, payload, created_at)
@@ -76,13 +79,13 @@ pub fn record(conn: &Connection, change: &NewChange<'_>, now_ms: i64) -> Result<
             now_ms,
         ],
     )?;
-    for target in &targets {
+    for target in targets {
         conn.execute(
             "INSERT INTO change_pending (change_id, connection_id) VALUES (?1, ?2)",
             params![id, target],
         )?;
     }
-    Ok(Some(id))
+    Ok(id)
 }
 
 /// A server confirmed the change. Drops it once no connection is owed it.
@@ -193,6 +196,16 @@ mod tests {
         confirm(&conn, &id, "c-b").unwrap();
         assert_eq!(count(&conn, "changes"), 0);
         assert_eq!(count(&conn, "change_pending"), 0);
+    }
+
+    #[test]
+    fn record_for_targets_only_the_given_connections() {
+        let conn = db();
+        connect(&conn, "v1", "c-a", "two_way");
+        connect(&conn, "v1", "c-b", "two_way");
+        let id = record_for(&conn, &title_change(&stamp(1), b"x"), 1, &["c-b".to_owned()]).unwrap();
+        assert!(pending_for(&conn, "c-a").unwrap().is_empty());
+        assert_eq!(pending_for(&conn, "c-b").unwrap(), [id]);
     }
 
     #[test]
