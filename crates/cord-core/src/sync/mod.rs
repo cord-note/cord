@@ -2,3 +2,4 @@
 //! incoming ones, linking vaults and server connections.
 
 pub mod wire;
+pub mod outbox;
