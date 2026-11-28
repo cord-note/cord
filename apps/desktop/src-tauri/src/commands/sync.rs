@@ -41,10 +41,23 @@ pub async fn sync_servers(core: State<'_, Shared>) -> Result<Value, String> {
     json(actions::list_servers(&core).await?)
 }
 
+/// The app handle for events, in the real app only. Commands that need one are
+/// generic over the runtime so the mock-runtime IPC tests can call them.
+fn events<R: Runtime>(app: &AppHandle<R>) -> Option<&AppHandle> {
+    (app as &dyn Any).downcast_ref::<AppHandle>()
+}
+
 #[tauri::command]
-pub async fn sync_add_server(core: State<'_, Shared>, state: State<'_, SyncState>, data: AddServerIn) -> Result<Value, String> {
+pub async fn sync_add_server<R: Runtime>(
+    app: AppHandle<R>,
+    core: State<'_, Shared>,
+    state: State<'_, SyncState>,
+    data: AddServerIn,
+) -> Result<Value, String> {
     let row = actions::add_server(&core, &data.url, &data.username, &data.password, data.invite_code.as_deref(), &data.device_name).await?;
-    crate::sync::state::reconcile(core.inner().clone(), None, &state).await;
+    // Starts the task now rather than on the next tick. It keeps the handle it
+    // starts with, so it must get the real one or it never tells the renderer.
+    crate::sync::state::reconcile(core.inner().clone(), events(&app).cloned(), &state).await;
     json(row)
 }
 
@@ -66,9 +79,7 @@ pub async fn sync_link_vault(core: State<'_, Shared>, state: State<'_, SyncState
 
 #[tauri::command]
 pub async fn sync_pull_vault<R: Runtime>(app: AppHandle<R>, core: State<'_, Shared>, data: VaultLinkIn) -> Result<Value, String> {
-    // Generic so the mock-runtime IPC tests can call it; events go out only in the real app.
-    let events = (&app as &dyn Any).downcast_ref::<AppHandle>();
-    json(actions::pull_vault(&core, events, &data.id, &data.vault_id).await?)
+    json(actions::pull_vault(&core, events(&app), &data.id, &data.vault_id).await?)
 }
 
 #[tauri::command]
