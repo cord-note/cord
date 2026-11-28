@@ -19,6 +19,7 @@ pub mod themes;
 pub mod data_dir;
 pub mod import;
 pub mod agents;
+pub mod sync;
 
 pub use error::{Error, Result};
 pub use rusqlite;
